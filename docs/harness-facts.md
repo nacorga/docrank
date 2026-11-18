@@ -54,6 +54,11 @@ directory" (command hooks print it "as the last non-empty line of stdout"), and
 "Because the hook replaces the default behavior entirely, `.worktreeinclude` is
 not processed".
 
+The hook's input fields are NOT DOCUMENTED on the page read: `hooks/worktree-create.mjs`
+reads `name` and `cwd` from it, as TraceLog's own hook, which runs live, does;
+slice 9's trial proves them from the installed plugin. No matcher is supported;
+the hook fires on every creation.
+
 Slice 6 without it (older Claude Code, `--tmux`): the repository's own
 settings carry the hook, which `init` offers to write.
 

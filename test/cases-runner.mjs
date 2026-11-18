@@ -22,7 +22,7 @@ import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const GUARD = path.join(here, "..", "hooks", "guard-bash.mjs");
-const STUBS = path.join(here, "stubs");
+export const STUBS = path.join(here, "stubs");
 
 export function parseCases(file) {
   let config;

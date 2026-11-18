@@ -19,17 +19,17 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 
 | Key | Type | Default | Read by |
 |---|---|---|---|
-| `branches.protected` | string[] | `["main", "master"]` | Bash guard: nothing lands on these by a push or a local write |
-| `branches.integration` | string | `"main"` | Bash guard, worktrees (cut from it), doc drift and `pr` defaults |
-| `branches.allowedPrBases` | glob[] | `[<integration>]` | Bash guard: `gh pr create` against any other base is refused |
+| `branches.protected` | string[] | `["main", "master"]` | Bash guard: refuses a push naming one, a bare push or a `git merge` while on one, any `gh pr merge` or `gh api` merge into one, whatever `allowedPrBases` says, and is a base `gh pr create` may name. Exact names, no globs |
+| `branches.integration` | string | `"main"` | Bash guard (the main checkout stays on it; a push of a commit `origin/<integration>` holds needs no gates record), worktrees (cut from it), doc drift and `pr` defaults |
+| `branches.allowedPrBases` | glob[] | `[<integration>]` | Bash guard: `gh pr merge` is allowed only for a pull request whose base matches and is not protected (GitHub is asked; `--admin` never), and `gh pr create` or `edit` may name a protected branch or one of these as base. `[]` leaves every merge to the user |
 
 ## `guard`
 
 | Key | Type | Default | Read by |
 |---|---|---|---|
-| `guard.blockedTagPatterns` | regex[] | `[]` | Bash guard: a tag push matching one is refused |
+| `guard.blockedTagPatterns` | regex[] | `[]` | Bash guard: a push of a tag whose name matches one is refused (`refs/tags/<name>`, or a name that is a local tag), and so are `--tags` and `--follow-tags`, which carry tags unnamed. Empty means tags are not checked |
 | `guard.publishBan` | boolean | `true` | Bash guard: refuses `npm publish` and `pnpm publish` |
-| `guard.extraDeny` | `{pattern: regex, reason: string}[]` | `[]` | Bash guard: a command matching `pattern` is refused with `reason` |
+| `guard.extraDeny` | `{pattern: regex, reason: string}[]` | `[]` | Bash guard: a command matching `pattern` is refused with `reason`. The pattern is tried against the whole command string, so anchor it to a command position if prose that merely quotes the command must pass |
 
 ## `gates`
 
@@ -37,8 +37,8 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 |---|---|---|---|
 | `gates.run` | `{name: string, command: string}[]` | `[]` | gates skill and runner: run in order, stop at the first failure; names are unique. Empty means no gates |
 | `gates.jobs` | map of name to command | `{}` | gates skill: run only when named |
-| `gates.requireBeforePush` | boolean | `true` | Bash guard: a push needs the record of a pass on the clean HEAD; moot while `gates.run` is empty |
-| `gates.record` | string | `"docrank-gates-passed"` | gates runner and Bash guard: file name, in the git common directory, holding the HEAD that passed |
+| `gates.requireBeforePush` | boolean | `true` | Bash guard: a push is refused unless the tip of each ref it pushes is listed in the record or is an ancestor of `origin/<integration>`; tags, deletions and dry runs are not checked; moot while `gates.run` is empty |
+| `gates.record` | string | `"docrank-gates-passed"` | gates runner and Bash guard: file name, in the git common directory, holding one commit sha per line, each a HEAD that passed |
 
 ## `dispatch`
 
@@ -151,3 +151,22 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 |---|---|---|---|
 | `messages.tools` | regex[] | `[]` | external-message guard: tool names whose first call is refused with `checklist`; empty means off |
 | `messages.checklist` | string | a generic claims check | external-message guard: the text of that refusal |
+
+## Example: guarding a local database
+
+`guard.extraDeny` is where a repository states what is irreversible for it. This
+one keeps a session from removing the volume of the shared development
+database:
+
+```json
+{
+  "guard": {
+    "extraDeny": [
+      {
+        "pattern": "docker[ \\t]+volume[ \\t]+rm\\b[^|&;]*\\bapp_pgdata\\b",
+        "reason": "that volume holds the development database every session shares. Ask the user to remove it."
+      }
+    ]
+  }
+}
+```

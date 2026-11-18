@@ -1,0 +1,27 @@
+# Settings that differ from the defaults: protected branches of the repository's
+# own naming, no allowed bases at all, and the publish ban off.
+# The gh stub answers the bases: 1 main, 2 develop.
+CONFIG|{"branches":{"protected":["trunk","release/1.x"],"integration":"trunk","allowedPrBases":[]},"guard":{"publishBan":false}}
+
+BLOCK|git push origin trunk
+BLOCK|git push origin HEAD:release/1.x
+BLOCK|@trunk|git push
+BLOCK|@release/1.x|git merge feat/x
+ALLOW|git push origin main
+ALLOW|@main|git push
+ALLOW|@feat/x|git merge trunk
+
+# With no allowed base every merge is the user's, a green one into `develop` too.
+BLOCK|gh pr merge 1 --merge
+BLOCK|gh pr merge 2 --merge
+# Protected bases still take a pull request; any other base is another's branch.
+ALLOW|gh pr create --base trunk --fill
+ALLOW|gh pr create --base release/1.x --fill
+BLOCK|gh pr create --base develop --fill
+
+BLOCK|@trunk|git switch -c feat/x
+ALLOW|@trunk|git switch trunk
+ALLOW|@wt:feat/y|git switch -c feat/z
+
+ALLOW|npm publish
+ALLOW|pnpm publish

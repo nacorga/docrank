@@ -1,0 +1,10 @@
+# A protected branch listed among the allowed bases is still never merged into by
+# a session: protection wins. `develop` is allowed and not protected.
+# The gh stub answers the bases: 1 main, 2 develop.
+CONFIG|{"branches":{"protected":["main"],"integration":"develop","allowedPrBases":["main","develop"]}}
+
+BLOCK|gh pr merge 1 --merge
+ALLOW|gh pr merge 2 --merge
+BLOCK|gh pr merge 2 --merge && gh pr merge 1 --merge
+ALLOW|gh pr create --base main --fill
+ALLOW|gh pr create --base develop --fill

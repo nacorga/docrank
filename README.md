@@ -54,7 +54,8 @@ did not follow (`docDrift.*`), a worktree cut from the fetched integration
 branch with the repository's ignored files copied in (`worktree.*`), the working
 principles at session start (`principles.*`), a hand-off request when the
 context grows past a threshold (`handoff.*`), and an optional link between
-Claude Code's memory and the repository's tracked `.claude/memory` (`memory.link`).
+Claude Code's memory and the repository's tracked `.claude/memory` (`memory.link`,
+experimental).
 
 An invalid `.claude/docrank.json` refuses every guarded call and names each
 problem. A guard stops accidents, not a determined attempt: every Bash
@@ -95,11 +96,11 @@ Trial runs of the installed plugin in two real repositories proved the Bash
 guard, the gates and their record before a push, format and lint on edit, the
 session-start principles, a judge review and its re-check count, doc drift on
 `Stop`, `WorktreeCreate` and the browser server
-([docs/harness-facts.md](docs/harness-facts.md) § 15). Not yet exercised live,
-though tested on stubbed input: `guard-message`, `guard-pr`, `guard-plan`,
-`context-handoff`, the memory link (off by default, its directory rule
-undocumented), and whether a judge's `skills: docrank:judge-protocol`
-preloads the skill.
+([docs/harness-facts.md](docs/harness-facts.md) § 15). The plan, pull-request and
+message guards, the context hand-off and the judges' preloaded protocol ran
+live too. Not yet exercised live, though tested on stubbed input: the closing
+line rule, and the memory link, which is experimental: off by default, its
+directory rule undocumented by Claude Code.
 
 ## License
 

@@ -291,5 +291,11 @@ Next.js repository on npm with only `main`, its remote a local bare copy.
 - The plugin's `browser` server connected; `new_page`, `evaluate_script`
   and `close_page` ran.
 
-Not exercised live: `format-on-edit`'s exit 2, `guard-message`, `guard-pr`,
-`guard-plan`, `context-handoff`, `link-memory`, the `principles.closingLine` rule.
+A second repository (Next.js, npm, `main` and a `develop` behind it, no tests):
+`init` chose `main` as the integration branch and said why; the guard refused
+a push to `main` as protected; lint and build passed and the push followed;
+`format-on-edit` ran Prettier on an edit and, on a file breaking an ESLint
+error rule, returned the lint output to Claude (exit 2).
+
+Not exercised live: `guard-message`, `guard-pr`, `guard-plan`,
+`context-handoff`, `link-memory`, the `principles.closingLine` rule.

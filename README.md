@@ -91,14 +91,15 @@ browser server of `surface-reviewer` needs `npx` and Chrome.
 
 ## What is proved live, and what is not
 
-A trial run of the installed plugin in a real repository proved the Bash
-guard, the gates and their record before a push, the session-start principles,
-a judge review and its re-check count, doc drift on `Stop`, `WorktreeCreate`
-and the browser server ([docs/harness-facts.md](docs/harness-facts.md) § 15).
-Not yet exercised live, though tested on stubbed input: `format-on-edit`,
-`guard-message`, `guard-pr`, `guard-plan`, `context-handoff`, the memory link
-(off by default, its directory rule undocumented), and whether a judge's
-`skills: docrank:judge-protocol` preloads the skill.
+Trial runs of the installed plugin in two real repositories proved the Bash
+guard, the gates and their record before a push, format and lint on edit, the
+session-start principles, a judge review and its re-check count, doc drift on
+`Stop`, `WorktreeCreate` and the browser server
+([docs/harness-facts.md](docs/harness-facts.md) § 15). Not yet exercised live,
+though tested on stubbed input: `guard-message`, `guard-pr`, `guard-plan`,
+`context-handoff`, the memory link (off by default, its directory rule
+undocumented), and whether a judge's `skills: docrank:judge-protocol`
+preloads the skill.
 
 ## License
 

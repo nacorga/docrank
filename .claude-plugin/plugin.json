@@ -1,0 +1,10 @@
+{
+  "name": "docrank",
+  "version": "0.0.1",
+  "description": "Guard hooks, read-only judges, gates before a push and docs that outrank code, configured by one file per repository.",
+  "author": { "name": "Ignacio Cortés" },
+  "homepage": "https://github.com/nacorga/docrank",
+  "repository": "https://github.com/nacorga/docrank",
+  "license": "MIT",
+  "keywords": ["hooks", "guardrails", "gates", "docs"]
+}

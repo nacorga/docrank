@@ -1,0 +1,11 @@
+{
+  "name": "docrank",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Claude Code plugin: guard hooks, judges, gates and docs that outrank code.",
+  "license": "MIT",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": { "test": "vitest run" },
+  "devDependencies": { "vitest": "^3.2.4" }
+}

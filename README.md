@@ -17,6 +17,12 @@ file by reading the repository.
 
 On Claude Code 2.1.275 or later, one step: `/plugin install docrank --marketplace nacorga/docrank`.
 
+The install asks for a scope. User scope turns the principles and the default
+guards on in every repository on the machine; local or project scope keeps
+them to the repository you configure. Auto-update is off for a third-party
+marketplace: update with `claude plugin update docrank@docrank`, or turn
+auto-update on in the `/plugin` Marketplaces tab.
+
 To try it from a checkout without installing: `claude --plugin-dir <path to this repository>`.
 
 ## Quick start

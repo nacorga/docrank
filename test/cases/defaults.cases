@@ -1,0 +1,47 @@
+# No .claude/docrank.json: the defaults. The integration branch is `main`, which
+# is also protected; a session merges no pull request.
+# The gh stub answers the bases: 1 main, 2 develop.
+
+# A protected branch is not pushed to, whatever the branch is called elsewhere.
+BLOCK|git push origin main
+BLOCK|git push origin master
+BLOCK|@main|git push
+BLOCK|@master|git merge feat/x
+ALLOW|git push origin develop
+ALLOW|@develop|git push
+ALLOW|@develop|git merge main
+
+# The default allowed base is the integration branch, which is protected here: a
+# merge into a protected branch is always the user's, and so is any other base.
+BLOCK|gh pr merge 1 --merge
+BLOCK|gh pr merge 2 --merge
+BLOCK|gh pr merge 1 --admin --merge
+ALLOW|gh pr create --base main --fill
+BLOCK|gh pr create --base develop --fill
+ALLOW|gh pr create --fill
+
+# The main checkout stays on `main`; a worktree is free.
+BLOCK|@main|git switch -c feat/x
+BLOCK|@main|git switch develop
+ALLOW|@main|git switch main
+ALLOW|@main|git checkout main
+ALLOW|@wt:feat/y|git switch -c feat/z
+
+# Nothing is a blocked tag until a pattern says so; publish is banned by default.
+ALLOW|git push --tags
+ALLOW|git push origin refs/tags/v1.0.0
+BLOCK|npm publish
+BLOCK|pnpm publish
+ALLOW|npm run build
+
+# No deny list, and no gates to hold a push to.
+ALLOW|docker volume prune -f
+ALLOW|git push origin feat/x
+ALLOW|git push -u origin feat/y:feat/y
+
+# What no configuration changes.
+BLOCK|git reset --hard
+BLOCK|git push -f origin feat/x
+BLOCK|git push --no-verify origin feat/x
+BLOCK|git branch -D feat/x
+BLOCK|rm -rf /

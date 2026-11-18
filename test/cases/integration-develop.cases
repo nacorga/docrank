@@ -1,0 +1,244 @@
+# The whole guard under a repository whose integration branch is `develop`:
+# `main` and `master` are protected, pull requests may merge into `develop` or a
+# `batch/*` base, and a tag of package `pkg-a` or `pkg-b` is the release process's.
+# The gh stub answers the bases: 1 main, 2 develop, 3 batch/demo-walk, 4 a
+# feature branch; any other number is a pull request GitHub cannot name.
+CONFIG|{"branches":{"protected":["main","master"],"integration":"develop","allowedPrBases":["develop","batch/*"]},"guard":{"blockedTagPatterns":["^(pkg-a|pkg-b)@"],"extraDeny":[{"pattern":"docker[ \\t]+volume[ \\t]+rm\\b[^|&;]*\\bapp_pgdata\\b","reason":"that volume holds the shared development database."},{"pattern":"\\bterraform[ \\t]+destroy\\b","reason":"terraform destroy removes infrastructure."}]}}
+
+# -- pushes that land on a protected branch --------------------------------------
+BLOCK|git push origin main
+BLOCK|git push origin master
+BLOCK|git push -u origin main
+BLOCK|git push origin main --no-verify
+BLOCK|git push origin HEAD:main
+BLOCK|git push origin +main
+BLOCK|git push --set-upstream origin master
+BLOCK|@main|git push
+BLOCK|@master|git push
+BLOCK|@main|git push --quiet
+BLOCK|@main|git push -u origin
+BLOCK|@main|git push origin 2>&1
+BLOCK|@main|git merge feat/15-conversation
+BLOCK|git -C ../elsewhere push origin main
+BLOCK|cd /tmp/x && git push origin main
+BLOCK|npm test && git push -u origin master
+BLOCK|npm run build; gh pr merge 1
+ALLOW|git push origin feat/main
+ALLOW|git push origin main-copy
+ALLOW|git push -u origin feat/15-conversation
+ALLOW|git push origin docs/align-setup
+ALLOW|@feat/15-conversation|git push
+ALLOW|@feat/15-conversation|git merge main
+ALLOW|@feat/15-conversation|git rebase main
+ALLOW|git push --force-with-lease origin feat/15-conversation
+ALLOW|git push -n origin feat/15-conversation
+
+# -- --no-verify -------------------------------------------------------------------
+BLOCK|git push --no-verify origin feat/15-conversation
+BLOCK|git push -u origin feat/15-conversation --no-verify
+BLOCK|git -C ../elsewhere push --no-verify
+BLOCK|@feat/15-conversation|git push --no-verify
+ALLOW|git commit -m "docs: never git push --no-verify" -- a.md
+
+# -- `git -C <path>` must not walk past any check ---------------------------------
+BLOCK|@main|git -C . merge feat/15-conversation
+BLOCK|@main|git -C . push origin main
+BLOCK|@main|git -C . push
+BLOCK|@main|git -C . reset --hard HEAD
+
+# -- merge --abort/--continue/--quit end a merge; merge-base and friends inspect one
+ALLOW|@main|git merge --abort
+ALLOW|@main|git merge --continue
+ALLOW|@main|git merge --quit
+ALLOW|@main|git merge-base origin/main HEAD
+ALLOW|@main|git merge-tree main feat/15-conversation
+ALLOW|@main|git merge-file a.txt base.txt b.txt
+# The branch comes from the repository the command targets; a `cd` that cannot be
+# resolved falls back to the hook's own directory and still checks.
+BLOCK|@main|cd "$SOME_UNEXPANDED_VAR" && git merge feat/15-conversation
+ALLOW|git commit -m "x" -- a.ts
+ALLOW|git checkout main
+ALLOW|git pull
+ALLOW|gh pr create --title "x" --body-file /tmp/b.md
+ALLOW|gh pr view 24
+ALLOW|git log --oneline origin/main -1
+ALLOW|git fetch origin main
+ALLOW|git worktree add ../wt-b feat/02-other
+ALLOW|git status --short
+
+# -- a pull request's merge: an allowed base only -------------------------------
+BLOCK|gh pr merge 1 --merge
+BLOCK|gh pr merge --squash --delete-branch
+BLOCK|gh pr merge --squash 2
+BLOCK|gh pr merge 4 --squash
+BLOCK|gh pr merge 9 --merge
+BLOCK|gh pr merge 2 --admin --merge
+BLOCK|gh pr merge 2 --merge && gh pr merge 1 --merge
+BLOCK|gh pr merge 2 --merge; gh pr merge --merge
+ALLOW|gh pr merge 2 --merge
+ALLOW|gh pr merge 3 --squash --delete-branch
+ALLOW|gh pr merge "2" --merge && gh pr merge 3 --merge
+# The API merges without a base the guard can read.
+BLOCK|gh api -X PUT repos/acme/app/pulls/2/merge
+BLOCK|gh api --method PUT /repos/acme/app/pulls/1/merge -f merge_method=squash
+BLOCK|gh api repos/acme/app/merges -f base=main -f head=develop
+BLOCK|gh api graphql -f query='mutation { mergePullRequest(input: {pullRequestId: "x"}) { clientMutationId } }'
+BLOCK|gh api graphql -f query='mutation { enablePullRequestAutoMerge(input: {pullRequestId: "x"}) { clientMutationId } }'
+ALLOW|gh api repos/acme/app/pulls/2 --jq .base.ref
+ALLOW|gh api repos/acme/app/rulesets
+
+# -- a pull request's base: protected, or allowed, never another's branch ------
+ALLOW|gh pr create --base develop --title "fix: x" --body "y"
+ALLOW|gh pr create --base batch/demo-walk --title "fix: x"
+ALLOW|gh pr create -B develop --fill
+ALLOW|gh pr create --base=batch/demo-walk --fill
+ALLOW|gh pr create --base main --head develop --fill
+ALLOW|gh pr create --fill
+ALLOW|gh pr edit 504 --base develop
+BLOCK|gh pr create --base docs/script-matches-screens --title "fix: x"
+BLOCK|gh pr create -B feat/77-other-branch --fill
+BLOCK|gh pr create --base=fix/other --fill
+BLOCK|gh pr edit 505 --base fix/alert-wording
+BLOCK|gh pr create --base batch/a/b --fill
+BLOCK|cd ../wt-x && gh pr create --base "feat/one" --fill
+ALLOW|git commit -m "docs: never gh pr create --base feat/x" -- a.md
+
+# -- prose is not a command -------------------------------------------------------
+ALLOW|git commit -m "the old rule required git push origin main with nothing after it" -- a.sh
+ALLOW|git commit -m "docs: explain gh pr merge" -- a.md
+ALLOW|echo "never run git push origin main by hand"
+ALLOW|grep -rn "git push origin main" docs/
+
+# -- force pushes -------------------------------------------------------------------
+BLOCK|git push --force origin feat/15-conversation
+BLOCK|git push -f origin feat/15-conversation
+ALLOW|git push --force-with-lease origin feat/15-conversation
+
+# -- destructive git --------------------------------------------------------------
+BLOCK|git reset --hard origin/main
+BLOCK|git clean -fd
+BLOCK|git clean -fdx
+BLOCK|git checkout .
+ALLOW|git reset HEAD~1
+ALLOW|git checkout -- a.ts
+ALLOW|git stash
+
+# -- tags that match guard.blockedTagPatterns --------------------------------------
+# `refs/tags/` and the bare name are tags only when they are one; --tags and
+# --follow-tags carry tags the command does not name.
+BLOCK|git push --tags
+BLOCK|git push --follow-tags origin feat/07-channels
+BLOCK|git push origin refs/tags/pkg-a@0.3.0
+BLOCK|git push origin +refs/tags/pkg-a@1.0.0
+ALLOW|git push origin refs/tags/other-1.0
+ALLOW|git push origin feat/pkg-a@x
+ALLOW|git tag pkg-a@0.3.0
+ALLOW|git tag -l "pkg-a@*"
+BLOCK|npm publish
+BLOCK|pnpm publish
+BLOCK|pnpm --filter @acme/pkg-a publish --access public
+ALLOW|pnpm --filter @acme/pkg-a build
+ALLOW|pnpm build
+ALLOW|npm run publish-docs
+
+# -- guard.extraDeny -----------------------------------------------------------------
+BLOCK|docker volume rm app_pgdata
+BLOCK|docker volume rm -f app_pgdata
+BLOCK|cd infra && terraform destroy -auto-approve
+ALLOW|docker volume rm other_data
+ALLOW|terraform plan
+
+# -- filesystem ---------------------------------------------------------------------
+BLOCK|rm -rf /
+BLOCK|rm -rf .
+BLOCK|rm -rf ~
+BLOCK|rm -fr ..
+ALLOW|rm -rf node_modules
+ALLOW|rm -rf dist .cache
+ALLOW|rm -f scratch.mjs
+
+# -- the main checkout stays on the integration branch ------------------------------
+# @develop runs from the sandbox repository itself, its main checkout.
+BLOCK|@develop|git switch -c feat/x
+BLOCK|@develop|git switch main
+BLOCK|@develop|git switch -q main
+BLOCK|@develop|git checkout -b feat/x origin/develop
+BLOCK|@develop|git checkout main
+BLOCK|@develop|gh pr checkout 12
+BLOCK|@develop|git -C . switch -c feat/x
+BLOCK|@develop|git fetch -q origin && git switch -c fix/y --no-track origin/develop
+BLOCK|@develop|git switch -
+BLOCK|@develop|git checkout -
+BLOCK|@develop|git checkout -t origin/feat/x
+BLOCK|@develop|git checkout --track origin/feat/x
+BLOCK|@develop|git checkout -f main
+BLOCK|@develop|git switch -c feat/x && git checkout -- seed.txt
+BLOCK|@develop|git checkout -- seed.txt && git checkout main
+ALLOW|@develop|git switch develop
+ALLOW|@develop|git checkout develop
+ALLOW|@develop|git checkout -- seed.txt
+ALLOW|@develop|git checkout main -- seed.txt
+ALLOW|@develop|git checkout seed.txt
+ALLOW|@develop|git checkout -p main
+ALLOW|@develop|git worktree add --no-track -b feat/x ../t origin/develop
+# The same commands from a worktree are that worktree's business.
+ALLOW|@wt:feat/wt|git switch -c feat/other
+ALLOW|@wt:feat/wt|git checkout -b feat/other2
+ALLOW|@wt:feat/wt|git checkout main
+ALLOW|@wt:feat/wt|gh pr checkout 12
+
+# -- deleting a branch: only once its pull request merged at its tip -----------------
+# The sandbox has no GitHub to answer, so every forced delete blocks here; what is
+# not a forced delete never asks. The merged case is in guard-bash.test.mjs.
+BLOCK|git branch -D feat/x
+BLOCK|git branch -Df feat/x
+BLOCK|git branch --delete --force feat/x
+BLOCK|git branch -d -f feat/x
+BLOCK|git -C . branch -D feat/x feat/y
+BLOCK|git fetch && git branch -D feat/x
+BLOCK|git push origin --delete feat/x
+BLOCK|git push origin -d feat/x
+BLOCK|git push origin :feat/x
+ALLOW|git branch -d feat/x
+ALLOW|git branch -vv
+ALLOW|git branch --show-current
+ALLOW|git branch feat/new
+ALLOW|git commit -m "never git branch -D feat/x before the merge"
+ALLOW|git push origin feat/x
+ALLOW|git push -u origin feat/x:feat/x
+# A redirection is no branch, and the file after a bare `>` is none either. One
+# that holds `&` or `|` is rewritten before the cut there, so the names after it
+# still ask; glued to a name it leaves that name blocking.
+ALLOW|git push origin --delete 2>&1
+ALLOW|git push origin --delete > /tmp/push.log
+ALLOW|git branch -D 2>/dev/null
+ALLOW|git branch -D >> /tmp/branch.log
+ALLOW|git branch -D 10>&2
+ALLOW|git branch -D &>/dev/null
+ALLOW|git branch -D >&/dev/null
+ALLOW|git branch -D >| /tmp/branch.log
+BLOCK|git push origin --delete feat/x 2>&1
+BLOCK|git push origin --delete 2>&1 feat/x
+BLOCK|git branch -D feat/x > /tmp/branch.log
+BLOCK|git branch -D 2>&1 feat/x
+BLOCK|git branch -D feat/a 2>&1 feat/b
+BLOCK|git branch -D &>/dev/null feat/x
+BLOCK|git branch -D >&/dev/null feat/x
+BLOCK|git branch -D >| /tmp/branch.log feat/x
+BLOCK|git branch -D feat/v2>&1
+# A skipped word that goes on past its line hides the names on the next one.
+BLOCK|git branch -D >\
+BLOCK|git branch -D > \
+BLOCK|git branch -D 2>"a feat/x
+BLOCK|git branch -D 2>$(echo x
+BLOCK|git push origin --delete >\
+ALLOW|git branch --list > "a
+# A skipped word is trusted only while it is plainly literal: anything that can
+# carry it past a `;`, `&` or `|` hides what follows.
+BLOCK|git branch -D >${x:-a;b} feat/x
+BLOCK|git branch -D <(true;true) feat/x
+BLOCK|git branch -D >'"'"a;b" feat/x
+BLOCK|git branch -D >$'a\';b' feat/x
+BLOCK|git branch -D >$(echo)/dev/null$(true;true) feat/x
+BLOCK|git push origin -d <(true;true) feat/x
+BLOCK|git push origin --delete >$'a\';b' feat/x

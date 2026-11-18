@@ -44,11 +44,11 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 
 | Key | Type | Default | Read by |
 |---|---|---|---|
-| `dispatch.defaultModel` | string | `"sonnet"` | dispatch guard: model of a `general-purpose` dispatch that names none |
-| `dispatch.defaultEffort` | `low`, `medium`, `high`, `xhigh`, `max` | `"medium"` | dispatch guard: effort set with the default model |
-| `dispatch.heavyMarker` | boolean | `true` | dispatch guard: a stronger model only with a `Heavy: <path>` line |
+| `dispatch.defaultModel` | string | `"sonnet"` | dispatch guard: model of a `general-purpose` or `Explore` dispatch that names none |
+| `dispatch.defaultEffort` | `low`, `medium`, `high`, `xhigh`, `max` | `"medium"` | dispatch guard: effort set with the default model, unless the dispatch names one |
+| `dispatch.heavyMarker` | boolean | `true` | dispatch guard: a `general-purpose` dispatch on Opus goes ahead only with a line `Heavy: <path>` whose file says "heavy" |
 | `dispatch.forkBan` | boolean | `true` | dispatch guard: refuses a fork dispatch |
-| `dispatch.guardrailsFile` | path | `null` | dispatch guard and `dispatch-guardrails`: repository text appended to the default block |
+| `dispatch.guardrailsFile` | path | `null` | dispatch guard and `dispatch-guardrails`: a repository file whose text the guard appends after the plugin's default block, to every dispatch of an agent that can edit; a file that cannot be read refuses the dispatch |
 
 ## `judges`
 

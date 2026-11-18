@@ -11,7 +11,8 @@ Pages: [hooks]=https://code.claude.com/docs/en/hooks.md,
 [marketplace]=https://code.claude.com/docs/en/plugins/marketplace-reference.md,
 [skills]=https://code.claude.com/docs/en/skills.md,
 [sub-agents]=https://code.claude.com/docs/en/sub-agents.md,
-[claude-dir]=https://code.claude.com/docs/en/claude-directory.md.
+[claude-dir]=https://code.claude.com/docs/en/claude-directory.md,
+[tools]=https://code.claude.com/docs/en/tools-reference.md.
 
 | # | Fact | Status |
 |---|---|---|
@@ -22,10 +23,12 @@ Pages: [hooks]=https://code.claude.com/docs/en/hooks.md,
 | 5 | The hook input carries `agent_type` | VERIFIED |
 | 6 | Plugin agents' `mcpServers` and `skills` frontmatter | `mcpServers` ignored; `skills` supported |
 | 7 | Skill `allowed-tools` with a plugin path | VERIFIED |
-| 8 | `subagents/agent-<id>.meta.json` | NOT DOCUMENTED |
+| 8 | `subagents/agent-<id>.meta.json` | Named, its fields NOT DOCUMENTED |
 | 9 | `~/.claude/projects/<slug>` naming | NOT DOCUMENTED as a rule |
 | 10 | Plugin skills carry `context: fork`, `model`, `allowed-tools` | VERIFIED |
 | 11 | Plugin manifest and marketplace shapes | VERIFIED |
+| 12 | The type of the agent a `SendMessage` reaches | VERIFIED, recorded at dispatch |
+| 13 | PreToolUse `updatedInput` and `additionalContext`; the Agent tool's `name` and `effort` | VERIFIED |
 
 ## 1. `${CLAUDE_PLUGIN_ROOT}` in hook commands: VERIFIED
 
@@ -112,19 +115,16 @@ rules in the `allowed-tools` frontmatter. In a plugin skill, Claude Code
 substitutes `${CLAUDE_PLUGIN_ROOT}` and `${CLAUDE_PLUGIN_DATA}` in the same two
 places." Example: `allowed-tools: Bash(${CLAUDE_SKILL_DIR}/scripts/render.sh *)`.
 
-## 8. `subagents/agent-<id>.meta.json`: NOT DOCUMENTED
+## 8. `subagents/agent-<id>.meta.json`: named, its fields NOT DOCUMENTED
 
-No page names a `.meta.json` file. Documented instead: [sub-agents] "Each
-transcript is stored as `agent-{agentId}.jsonl`" under
-`~/.claude/projects/{project}/{sessionId}/subagents/`, and [claude-dir]
-"`projects/<project>/<session>/subagents/` | Subagent transcripts in the same
-format as the session transcript".
-
-Slice 3 (re-check limit: which agent type a `SendMessage` target is) must not
-read the `.meta.json`. Without it the hook reads the `agent_type` field of the
-hook input (fact 5) where `SendMessage` fires inside a subagent, and otherwise
-holds nobody: an agent whose type it cannot find is not held, as TraceLog's
-hook already does.
+[sub-agents] § Message a subagent by name after a restart names the file and
+nothing in it: "To find the ID for a name, look for that name in the
+`agent-{agentId}.meta.json` files in `~/.claude/projects/{project}/{sessionId}/subagents/`". Documented
+beside it: "Each transcript is stored as `agent-{agentId}.jsonl`", and
+[claude-dir] "`projects/<project>/<session>/subagents/` | Subagent
+transcripts in the same format as the session transcript". No page states the
+file's fields, so an agent type read from it would rest on nothing
+documented. Slice 3 does not read the file; fact 12 is what it does.
 
 ## 9. `~/.claude/projects/<slug>` naming: NOT DOCUMENTED as a rule
 
@@ -170,3 +170,55 @@ the fields of `skills/<name>/SKILL.md`, which include `context`, `agent`,
   users until it changes ([manifest] § version).
 - `claude plugin validate <path>` is "the authoritative check for a manifest"
   ([manifest]); slice 1 runs it when the CLI is available.
+
+## 12. The type of the agent a `SendMessage` reaches: VERIFIED, recorded at dispatch
+
+The `agent_type` of a hook's input names the agent the hook fires in, the
+sender of a `SendMessage`, never its recipient. [hooks] § Common input
+fields: "`agent_id` and `agent_type` tell your script which agent a hook
+fired in". So it cannot tell whether the agent addressed is a judge.
+
+No input of a `SendMessage` hook names the recipient's type. What is
+documented is the address and where it comes from:
+
+- [sub-agents] § Resume subagents: "Claude uses the `SendMessage` tool with
+  the agent's ID or name as the `to` field to resume it", and "When a
+  subagent completes, Claude receives its agent ID".
+- [hooks] § Agent (PreToolUse input): `subagent_type` | "Type of specialized
+  agent to use"; and for PostToolUse, `tool_response.agentId` | "Identifier
+  for the subagent run", present on a foreground result and on a background
+  one ("It has `status: "async_launched"`, `agentId`, ...").
+- [sub-agents] § Subagent names: "Claude can give a subagent a name by passing
+  a `name` parameter on the Agent tool call ... The name makes the subagent
+  addressable".
+
+So `hooks/guard-recheck.mjs` also runs as PostToolUse on `Agent` and records,
+per session, `agentId` and `name` against `subagent_type`; as PreToolUse on
+`SendMessage` it looks `to` up in that record. Limits, each stated by the
+same pages: Explore and Plan "return no agent ID", so they are never held
+(they are no judges); an agent dispatched before the plugin loaded has no
+record and is not held; that the `agentId` of the response is the exact
+string `to` carries is read from "Claude receives its agent ID" and its use
+as `to`, not from a page that states both in one place, and the trial
+(slice 9) checks it. A `SubagentStart` hook also receives `agent_id` and
+`agent_type`, but its example `"agent_id": "agent-abc123"` is not the
+`agentId` form of the Agent response (`"a4d2c8f1e0b3a297"`), so it is not
+used.
+
+## 13. PreToolUse `updatedInput` and `additionalContext`; Agent `name` and `effort`: VERIFIED
+
+[hooks] § PreToolUse decision control: "`updatedInput` | Modifies the tool's
+input parameters before execution. Replaces the entire input object, so
+include unchanged fields alongside modified ones ... Combine with `"allow"`
+to auto-approve" and "With no `permissionDecision`, auto mode can deny the
+changed call", so the dispatch guard always pairs it with `"allow"`.
+"`additionalContext` | String added to Claude's context alongside the tool
+result". `"deny"` "prevents the tool call", with `permissionDecisionReason`.
+
+[hooks] § Agent lists `prompt`, `description`, `subagent_type`, `model`. Two
+more inputs are documented elsewhere: `name` (fact 12) and, [sub-agents] §
+Choose an effort level, "it can also pass an `effort` parameter for that
+invocation ... requires Claude Code v2.1.292 or later". The dispatch guard
+sets `model` and `effort` through `updatedInput`; before v2.1.292 the
+`effort` it sets has no effect.
+

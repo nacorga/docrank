@@ -36,9 +36,9 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 | Key | Type | Default | Read by |
 |---|---|---|---|
 | `gates.run` | `{name: string, command: string}[]` | `[]` | gates skill and runner: run in order, stop at the first failure; names are unique. Empty means no gates |
-| `gates.jobs` | map of name to command | `{}` | gates skill: run only when named |
+| `gates.jobs` | map of name to command | `{}` | gates runner: run only when named, after the gates; named alone they run without them |
 | `gates.requireBeforePush` | boolean | `true` | Bash guard: a push is refused unless the tip of each ref it pushes is listed in the record or is an ancestor of `origin/<integration>`; tags, deletions and dry runs are not checked; moot while `gates.run` is empty |
-| `gates.record` | string | `"docrank-gates-passed"` | gates runner and Bash guard: file name, in the git common directory, holding one commit sha per line, each a HEAD that passed |
+| `gates.record` | string | `"docrank-gates-passed"` | gates runner, Bash guard and the optional `templates/pre-push`: file name, in the git common directory, holding one commit sha per line, each a HEAD that passed; the runner writes it only when every gate passed on a clean tree whose HEAD did not move |
 
 ## `dispatch`
 

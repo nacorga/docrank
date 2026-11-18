@@ -84,7 +84,8 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 | Key | Type | Default | Read by |
 |---|---|---|---|
 | `docDrift.baseRef` | string | `origin/<integration>` | doc drift on stop: the work is compared against its merge-base with this ref |
-| `docDrift.entries` | `{code: path prefix[], docs: path prefix[]}[]` | `[]` | doc drift on stop: code a document states, and the documents; empty means off |
+| `docDrift.entries` | `{code: path prefix[], docs: path prefix[]}[]` | `[]` | doc drift on stop: code a document states, and the documents; empty means off. Drift-pairs check: each path must exist |
+| `docDrift.unpaired` | map of path prefix to reason | `{}` | drift-pairs check: code under `docs.unitRoots` that states nothing a document owns, with why; a prefix that excuses no unpaired unit is refused |
 
 ## `worktree`
 
@@ -105,22 +106,22 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 
 | Key | Type | Default | Read by |
 |---|---|---|---|
-| `docs.precedence` | path prefix[] | `[]` | spec arbiter: the ladder of governing documents, highest rank first |
+| `docs.precedence` | (path prefix \| path prefix[])[] | `[]` | spec arbiter: the ladder of governing documents, highest rank first, one rank per entry; an array is several prefixes of one rank, as `["docs/definition.md", ["docs/spec/", "docs/app/"], "DESIGN.md"]`. Documents of one rank that disagree are a doc defect the user settles. Empty, the arbiter has no ladder and says so instead of judging |
 | `docs.invariants` | path | `null` | spec arbiter: the document holding the invariants that span documents |
 | `docs.registry` | path | `null` | spec arbiter: the registry of facts a document repeats and code enumerates |
-| `docs.scanRoots` | path[] | `[]` | docs-as-spec checks: where section references are resolved |
-| `docs.historyRoots` | path[] | `[]` | docs-as-spec checks: documents that may name history (provenance) |
-| `docs.unitRoots` | path[] | `[]` | docs-as-spec checks: code directories each of which needs a drift pair |
-| `docs.groups` | `{name: string, paths: path prefix[]}[]` | `[]` | doc sweep: the groups of documents read together |
+| `docs.scanRoots` | path[] | `[]` | sections check: files and directories whose section references (a document's name, then `§` and a heading) must each name a heading of that document; `"."` is the whole tree; empty means off |
+| `docs.historyRoots` | path[] | `[]` | sections check: dated documents, neither scanned nor held as a target, so a reference to one, or to a name one holds, passes |
+| `docs.unitRoots` | path[] | `[]` | drift-pairs check: directories (a `*` segment is every directory there, as `packages/*/src`) whose each child directory and source file, tests and dotfiles aside, needs a `docDrift.entries` pair or a `docDrift.unpaired` reason; empty means off |
+| `docs.groups` | `{name: string, paths: path prefix[]}[]` | `[]` | `doc-lint` skill: the groups of documents read together, one reader each; empty, the skill has nothing to read and says so |
 
 ## `surface`
 
 | Key | Type | Default | Read by |
 |---|---|---|---|
 | `surface.paths` | path prefix[] | `[]` | surface reviewer and PR handover: code that draws a screen; a diff touching one gets the same refusal as `pr.productPaths`, with `surface.criterion` named first; empty means off |
-| `surface.widths` | integer >= 1 [] | `[320, 375, 1280, 1440]` | surface reviewer: viewport widths measured, in px |
-| `surface.locales` | string[] | `[]` | surface reviewer: locales each page is read in |
-| `surface.criterion` | string | `null` | surface reviewer and PR handover: the delivery criterion a screen is judged against |
+| `surface.widths` | integer >= 1 [] | `[320, 375, 1280, 1440]` | surface reviewer: viewport widths each page is measured at, in px |
+| `surface.locales` | string[] | `[]` | surface reviewer: locales each page is read in; empty, the one the page serves |
+| `surface.criterion` | string | `null` | surface reviewer and PR handover: the delivery criterion every screen is judged against, a failure a `surface defect`; null, the reviewer judges without one and says so |
 
 ## `ship`
 

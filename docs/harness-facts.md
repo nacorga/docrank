@@ -21,7 +21,7 @@ Pages: [hooks]=https://code.claude.com/docs/en/hooks.md,
 | 3 | A plugin can wire `Stop` and `SessionEnd` | NOT DOCUMENTED per event |
 | 4 | A plugin's `SessionStart` hook can return `additionalContext` | VERIFIED |
 | 5 | The hook input carries `agent_type` | VERIFIED |
-| 6 | Plugin agents' `mcpServers` and `skills` frontmatter | `mcpServers` ignored; `skills` supported |
+| 6 | Plugin agents' `mcpServers` and `skills` frontmatter | `mcpServers` ignored, the plugin's `.mcp.json` instead; `skills` supported, a plugin skill's name there NOT DOCUMENTED |
 | 7 | Skill `allowed-tools` with a plugin path | VERIFIED |
 | 8 | `subagents/agent-<id>.meta.json` | Named, its fields NOT DOCUMENTED |
 | 9 | `~/.claude/projects/<slug>` naming | NOT DOCUMENTED as a rule |
@@ -104,9 +104,25 @@ are "`name`, `description`, `model`, `effort`, `maxTurns`, `autoCompactWindow`,
 `isolation`, `color`" and ignored are "`permissionMode`, `hooks`, `mcpServers`,
 and `initialPrompt`".
 
-So the surface reviewer (slice 7) cannot pin its browser MCP through its own
-frontmatter. It names the tool in `tools:` and the repository wires the server
-(`.mcp.json`); `skills:` preloading works.
+So the surface reviewer cannot pin its browser MCP through its own
+frontmatter. [components] § MCP servers: "Declare it in `.mcp.json` at the
+plugin root", and § Server names, tool names, and reloads: "Tool names:
+`mcp__plugin_<plugin>_<server>__<tool>`". The plugin's `.mcp.json` declares
+`browser`, and the reviewer's `tools:` names `mcp__plugin_docrank_browser__*`
+tools one by one. [sub-agents]: "Subagents inherit the ... MCP tools available
+in the main conversation", so the main session and every agent without a
+`tools:` list reach that browser too; an agent whose `tools:` list does not
+name them does not.
+
+`skills:` preloading works; how it names a plugin's own skill is NOT
+DOCUMENTED. [skills] names a plugin skill `plugin-name:skill-name` (the bare
+name also invokes it "unless another command already uses that name"), so the
+judges list `docrank:judge-protocol`, which `lib/agent-types.mjs` accepts as
+well as the bare name. The trial (slice 9) checks the skill is preloaded.
+
+[components] § Reference plugin paths: `${CLAUDE_PLUGIN_ROOT}` is "substituted
+in skill, command, and agent content", which is how a judge finds the
+plugin's `docs/config.md`.
 
 ## 7. Skill `allowed-tools` with a plugin path: VERIFIED
 

@@ -130,9 +130,9 @@ closed".
 DOCUMENTED. [skills] names a plugin skill `plugin-name:skill-name` (the bare
 name also invokes it "unless another command already uses that name"), so the
 judges list `docrank:judge-protocol`, which `lib/agent-types.mjs` accepts as
-well as the bare name. Live (§ 15) the judge closed its review at the third
-re-check as the protocol says; that is consistent with the preload, not a
-proof of it.
+well as the bare name. PROVED LIVE (§ 15): a judge told to use no tool
+quoted the skill's first sentence verbatim with zero tool uses, so
+`docrank:judge-protocol` is preloaded under that name.
 
 [components] § Reference plugin paths: `${CLAUDE_PLUGIN_ROOT}` is "substituted
 in skill, command, and agent content", which is how a judge finds the
@@ -291,5 +291,27 @@ Next.js repository on npm with only `main`, its remote a local bare copy.
 - The plugin's `browser` server connected; `new_page`, `evaluate_script`
   and `close_page` ran.
 
-Not exercised live: `format-on-edit`'s exit 2, `guard-message`, `guard-pr`,
-`guard-plan`, `context-handoff`, `link-memory`, the `principles.closingLine` rule.
+A second repository (Next.js, npm, `main` and a `develop` behind it, no tests):
+`init` chose `main` as the integration branch and said why; the guard refused
+a push to `main` as protected; lint and build passed and the push followed;
+`format-on-edit` ran Prettier on an edit and, on a file breaking an ESLint
+error rule, returned the lint output to Claude (exit 2).
+
+The rest, in the second repository's clone, each by the hook's own message:
+
+- `guard-pr`: with `pr.productPaths: ["src/"]` and a commit under `src/`, the
+  first `gh pr create` was refused with `pr.checklist`; the second passed the
+  hook and failed in `gh` (the remote is local).
+- `guard-message`: with `messages.tools` naming the browser's `new_page`, the
+  first call was refused with `messages.checklist`; the second opened the page.
+- `guard-plan`: with `plan.requiredHeadings: ["Verification"]`, in an
+  interactive plan-mode session (headless `-p` offers no `ExitPlanMode`), the
+  plan without the heading was refused and the one with it approved.
+- `context-handoff`: with `handoff.tokenThreshold: 1` and `location:
+  "HANDOFF.md"`, `Stop` asked once for the hand-off in `HANDOFF.md`.
+- The judge preload: as above.
+
+Not exercised live: `link-memory` (experimental: off by default, and the
+directory it links follows a naming Claude Code does not document) and the
+`principles.closingLine` rule, which a user's own CLAUDE.md overrode in every
+trial session.

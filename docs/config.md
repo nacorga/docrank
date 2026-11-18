@@ -149,7 +149,7 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 
 | Key | Type | Default | Read by |
 |---|---|---|---|
-| `memory.link` | boolean | `false` | memory link: links Claude Code's memory directory to the repository's tracked `.claude/memory`; set it only when the repository tracks that directory |
+| `memory.link` | boolean | `false` | memory link: links the Claude projects directory holding the session's transcript (`transcript_path`; the directory's naming is not documented, so it is not computed) to the repository's tracked `.claude/memory`, and refuses a transcript outside `<...>/.claude/projects/`; set it only when the repository tracks that directory |
 
 ## `messages`
 

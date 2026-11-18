@@ -114,6 +114,15 @@ in the main conversation", so the main session and every agent without a
 `tools:` list reach that browser too; an agent whose `tools:` list does not
 name them does not.
 
+Cost: every session that loads the plugin starts the server (an `npx`
+process), but not Chrome. The pinned version's README
+(https://unpkg.com/chrome-devtools-mcp@1.7.0/README.md): "The MCP server will
+start the browser automatically once the MCP client uses a tool that requires
+a running browser instance" and "Connecting to the Chrome DevTools MCP server
+on its own will not automatically start the browser". `--isolated` "creates a
+temporary user-data-dir that is automatically cleaned up after the browser is
+closed".
+
 `skills:` preloading works; how it names a plugin's own skill is NOT
 DOCUMENTED. [skills] names a plugin skill `plugin-name:skill-name` (the bare
 name also invokes it "unless another command already uses that name"), so the

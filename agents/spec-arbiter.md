@@ -19,8 +19,8 @@ Before anything else, Read `.claude/docrank.json` at the repository root
 `${CLAUDE_PLUGIN_ROOT}/docs/config.md` states; no file means every default.
 You read:
 
-- `docs.precedence`: the ladder, highest rank first, one rank per entry,
-  each a path prefix. Empty: there is no ladder to judge by. Return one
+- `docs.precedence`: the ladder, highest rank first, one rank per entry:
+  a path prefix, or an array of prefixes that share the rank. Empty: there is no ladder to judge by. Return one
   finding, `unproven — no precedence configured (docs.precedence)`, and stop.
 - `docs.invariants`: the document holding the rules that span documents.
 - `docs.registry`: where the facts that code enumerates and a document
@@ -32,8 +32,10 @@ You read:
 ## The rule you apply
 
 Conflicts are resolved by rank, not by judgement: a document under an
-earlier prefix of `docs.precedence` wins over one under a later prefix.
-What no prefix covers is not governing.
+earlier entry of `docs.precedence` wins over one under a later entry. What
+no prefix covers is not governing. Two documents of one rank that disagree
+are a `doc defect` the user settles: name both passages and never pick a
+side, since no rank decides between them.
 
 **Code never wins.** When code and a document disagree, the code is the
 defect — unless the document is itself wrong, in which case the document is
@@ -64,7 +66,8 @@ the other and never a workaround.
    code defect, and so is a test that copies a document's list by hand
    instead of reading it.
 7. Where two documents disagree with each other, name the winner by rank;
-   the loser is a doc defect.
+   the loser is a doc defect. Of one rank, there is no winner: the finding is
+   a doc defect whose **Do** is `settled by the user`.
 8. **A changed fact is a class.** For every fact the diff changes — a count,
    a name, an order, a place a thing lives, a status — grep the whole tree
    but `docs.historyRoots` for the other passages that state it, by its old
@@ -113,7 +116,7 @@ Judged: <`git rev-parse --short HEAD`, then " +dirty" if the working tree differ
    Where: <file:line or doc § section>
    Binding text: "<quoted line from the winning document>"
    Found: <what the code or the losing doc does>
-   Do: <fix the code | fix the test | fix the code and the test | fix <doc> and state it in the commit | build nothing: out of scope | settled by <a render | a plan | a run>>
+   Do: <fix the code | fix the test | fix the code and the test | fix <doc> and state it in the commit | settled by the user | build nothing: out of scope | settled by <a render | a plan | a run>>
 
 ## Invariants checked
 <one line per invariant the diff touches: holds / violated (→ finding N) / not touched; "none configured" when docs.invariants is unset>

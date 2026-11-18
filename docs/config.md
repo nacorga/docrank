@@ -106,7 +106,7 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 
 | Key | Type | Default | Read by |
 |---|---|---|---|
-| `docs.precedence` | path prefix[] | `[]` | spec arbiter: the ladder of governing documents, highest rank first, one rank per entry; empty, the arbiter has no ladder and says so instead of judging |
+| `docs.precedence` | (path prefix \| path prefix[])[] | `[]` | spec arbiter: the ladder of governing documents, highest rank first, one rank per entry; an array is several prefixes of one rank, as `["docs/definition.md", ["docs/spec/", "docs/app/"], "DESIGN.md"]`. Documents of one rank that disagree are a doc defect the user settles. Empty, the arbiter has no ladder and says so instead of judging |
 | `docs.invariants` | path | `null` | spec arbiter: the document holding the invariants that span documents |
 | `docs.registry` | path | `null` | spec arbiter: the registry of facts a document repeats and code enumerates |
 | `docs.scanRoots` | path[] | `[]` | sections check: files and directories whose section references (a document's name, then `§` and a heading) must each name a heading of that document; `"."` is the whole tree; empty means off |

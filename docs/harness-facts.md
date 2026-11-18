@@ -29,6 +29,7 @@ Pages: [hooks]=https://code.claude.com/docs/en/hooks.md,
 | 11 | Plugin manifest and marketplace shapes | VERIFIED |
 | 12 | The type of the agent a `SendMessage` reaches | VERIFIED, recorded at dispatch |
 | 13 | PreToolUse `updatedInput` and `additionalContext`; the Agent tool's `name` and `effort` | VERIFIED |
+| 14 | Hook matcher syntax, plugin hooks included | VERIFIED |
 
 ## 1. `${CLAUDE_PLUGIN_ROOT}` in hook commands: VERIFIED
 
@@ -222,3 +223,21 @@ invocation ... requires Claude Code v2.1.292 or later". The dispatch guard
 sets `model` and `effort` through `updatedInput`; before v2.1.292 the
 `effort` it sets has no effect.
 
+## 14. Hook matcher syntax, plugin hooks included: VERIFIED
+
+[hooks] § Matchers, table "Matcher value | Evaluated as": `"*"`, `""` or
+omitted match all; "Only letters, digits, `_`, `-`, spaces, `,`, and `|`" is an
+exact string or a list of exact strings; "Contains any other character" is a
+"JavaScript regular expression, unanchored" (`RegExp.prototype.test`, so
+`^`/`$` are needed for a whole-string match). § MCP tool names: tools are
+`mcp__<server>__<tool>`; "The `.*` is required: a matcher like `mcp__memory`
+... is compared as an exact string and matches no tool", and `mcp__.*__write.*`
+is the page's own example. § Plugin hooks: a plugin's hooks "merge with your
+user and project hooks"; the one difference stated is that a plugin-bundled
+MCP server's tools are named `mcp__plugin_<plugin>_<server>__<tool>`, which
+`mcp__.*` also matches. Plugin hooks use the same matchers.
+
+A matcher in `hooks/hooks.json` is static, so `messages.tools` (config) cannot
+be it. Slice 5's `guard-message.mjs` registers on `mcp__.*` and filters by
+`messages.tools` inside the hook; a tool that is not an MCP tool never reaches
+it, which `docs/config.md` states.

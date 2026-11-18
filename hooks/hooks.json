@@ -15,12 +15,33 @@
       {
         "matcher": "SendMessage",
         "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/guard-recheck.mjs\"" }]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/guard-paths.mjs\"" }]
+      },
+      {
+        "matcher": "ExitPlanMode",
+        "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/guard-plan.mjs\"" }]
+      },
+      {
+        "matcher": "mcp__.*",
+        "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/guard-message.mjs\"" }]
       }
     ],
     "PostToolUse": [
       {
         "matcher": "Agent",
         "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/guard-recheck.mjs\"" }]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/format-on-edit.mjs\"", "timeout": 60 }]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/doc-drift.mjs\"" }]
       }
     ]
   }

@@ -89,20 +89,16 @@ Node 20 or later, git, and `gh` for the pull request features. macOS and Linux;
 Windows is not supported. The plugin has no run-time npm dependency, and the
 browser server of `surface-reviewer` needs `npx` and Chrome.
 
-## What is not proved live yet
+## What is proved live, and what is not
 
-Every hook has run against stubbed input, and `claude plugin validate .` passes.
-A run from the installed plugin has not yet confirmed the following, which
-[docs/harness-facts.md](docs/harness-facts.md) records with the fallback each takes:
-
-- that a plugin's `Stop` hooks (doc drift, hand-off) fire; if they do not,
-  `init` can write them into `.claude/settings.local.json`;
-- the input of `WorktreeCreate`, and that it runs with `--worktree` alone;
-- that a judge's `skills: docrank:judge-protocol` preloads the skill;
-- that the `agentId` an agent dispatch returns is the string `SendMessage` takes
-  in `to`, which the re-check limit depends on;
-- that the browser server starts from the plugin's `.mcp.json`;
-- the memory link's directory rule, which is why `memory.link` is off by default.
+A trial run of the installed plugin in a real repository proved the Bash
+guard, the gates and their record before a push, the session-start principles,
+a judge review and its re-check count, doc drift on `Stop`, `WorktreeCreate`
+and the browser server ([docs/harness-facts.md](docs/harness-facts.md) § 15).
+Not yet exercised live, though tested on stubbed input: `format-on-edit`,
+`guard-message`, `guard-pr`, `guard-plan`, `context-handoff`, the memory link
+(off by default, its directory rule undocumented), and whether a judge's
+`skills: docrank:judge-protocol` preloads the skill.
 
 ## License
 

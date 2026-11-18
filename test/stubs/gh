@@ -2,16 +2,36 @@
 # GitHub as the case suites see it. `pr view <n> --json baseRefName` answers the
 # base of four pull requests, one per kind the guard tells apart, and fails for
 # any other, as gh does offline. `pr list` prints $GH_STUB_MERGED_HEADS, the head
-# commits of merged pull requests, and nothing when it is unset.
+# commits of merged pull requests, and nothing when it is unset. For the PR
+# watch: `pr view` asking for `state` prints $GH_STUB_VIEW (a JSON object);
+# `pr checks` prints $GH_STUB_CHECKS and exits $GH_STUB_CHECKS_STATUS (default
+# 0), except that with $GH_STUB_FIRST_EMPTY naming a file, its first call
+# answers "no checks reported" (every call does when the file cannot be created); `pr checks --json` prints $GH_STUB_FAILED.
 case "$1 $2" in
   "pr view")
-    case "$3" in
-      1) echo main ;;
-      2) echo develop ;;
-      3) echo batch/demo-walk ;;
-      4) echo feat/77-other-branch ;;
-      *) exit 1 ;;
+    case "$*" in
+      *state*) printf '%s\n' "$GH_STUB_VIEW" ;;
+      *)
+        case "$3" in
+          1) echo main ;;
+          2) echo develop ;;
+          3) echo batch/demo-walk ;;
+          4) echo feat/77-other-branch ;;
+          *) exit 1 ;;
+        esac ;;
     esac ;;
   "pr list") [ -z "$GH_STUB_MERGED_HEADS" ] || printf '%s\n' $GH_STUB_MERGED_HEADS ;;
+  "pr checks")
+    case "$*" in
+      *--json*) printf '%s\n' "$GH_STUB_FAILED" ;;
+      *)
+        if [ -n "$GH_STUB_FIRST_EMPTY" ] && [ ! -e "$GH_STUB_FIRST_EMPTY" ]; then
+          touch "$GH_STUB_FIRST_EMPTY" 2>/dev/null
+          echo "no checks reported on the 'x' branch" >&2
+          exit 1
+        fi
+        printf '%s\n' "$GH_STUB_CHECKS"
+        exit "${GH_STUB_CHECKS_STATUS:-0}" ;;
+    esac ;;
   *) exit 1 ;;
 esac

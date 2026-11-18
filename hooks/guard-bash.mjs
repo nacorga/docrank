@@ -12,11 +12,11 @@
  *
  * Exit 0 allows; exit 2 refuses, with the reason on stderr for the model.
  */
-import { execFileSync } from "node:child_process";
 import { appendFileSync, existsSync, mkdirSync, readFileSync, realpathSync, statSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { loadConfig } from "../lib/config.mjs";
+import { esc, git, glob, mergedTip, run } from "../lib/git.mjs";
 
 let command;
 try {
@@ -51,9 +51,6 @@ const POS = String.raw`(?:^|&&|\|\||[;&|(])${S}*`; // a command position
 const GIT = String.raw`${POS}git${S}+(?:-C${S}+\S+${S}+)?`;
 const GH = String.raw`${POS}gh${S}+`;
 
-const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-const glob = (g) =>
-  new RegExp(`^${g.split("**").map((p) => p.split("*").map(esc).join("[^/]*")).join(".*")}$`);
 const has = (src) => new RegExp(src, "m").test(command);
 const all = (src) => [...command.matchAll(new RegExp(src, "gm"))];
 const words = (s) => s.split(/\s+/).filter(Boolean);
@@ -62,14 +59,6 @@ const positional = (ws) => ws.filter((w) => !w.startsWith("-") && !/^[0-9]*[<>&]
 const unquote = (s) => s.replace(/["']/g, "");
 const names = (list) => (list.length ? list.join(", ") : "none");
 
-const run = (cmd, args, cwd = ".") => {
-  try {
-    return execFileSync(cmd, args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
-  } catch {
-    return null;
-  }
-};
-const git = (dir, ...args) => run("git", ["-C", dir, ...args]);
 const succeeds = (dir, ...args) => git(dir, ...args) !== null;
 const isDir = (d) => existsSync(d) && statSync(d).isDirectory();
 
@@ -246,12 +235,6 @@ if (has(String.raw`${GIT}(?:switch|checkout)\b|${GH}pr${S}+checkout\b`)) {
 // exists nowhere else, and a commit pushed after the merge reaches nothing;
 // both pass `git branch -D` silently. GitHub is the proof, and without an
 // answer the check refuses.
-function mergedTip(dir, branch, ref) {
-  const tip = git(dir, "rev-parse", "-q", "--verify", `${ref}^{commit}`);
-  if (!tip) return false;
-  const heads = run("gh", ["pr", "list", "--head", branch, "--state", "merged", "--json", "headRefOid", "-q", ".[].headRefOid"], dir);
-  return !!heads && heads.split("\n").includes(tip);
-}
 const NOT_MERGED = "its pull request is not merged with this branch's tip as the merged head (gh pr list --head <branch> --state merged). Deleting it loses what exists nowhere else, or a commit pushed after the merge. Keep it and say what is pending, or ask the user to run it themselves.";
 const HIDDEN = "BLOCKED: a redirection hides what follows it from this guard, which cannot then tell which branch is deleted. Put the redirection after the branch names, or ask the user to run it themselves.";
 

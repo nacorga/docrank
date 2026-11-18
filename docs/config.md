@@ -20,7 +20,7 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 | Key | Type | Default | Read by |
 |---|---|---|---|
 | `branches.protected` | string[] | `["main", "master"]` | Bash guard: refuses a push naming one, a bare push or a `git merge` while on one, any `gh pr merge` or `gh api` merge into one, whatever `allowedPrBases` says, and is a base `gh pr create` may name. Exact names, no globs |
-| `branches.integration` | string | `"main"` | Bash guard (the main checkout stays on it; a push of a commit `origin/<integration>` holds needs no gates record), worktrees (cut from it), doc drift and `pr` defaults |
+| `branches.integration` | string | `"main"` | Bash guard (the main checkout stays on it; a push of a commit `origin/<integration>` holds needs no gates record), worktrees (cut from the fetched `origin/<integration>`), `docrank judges` (the fork point), the PR handover guard, doc drift and `pr` defaults |
 | `branches.allowedPrBases` | glob[] | `[<integration>]` | Bash guard: `gh pr merge` is allowed only for a pull request whose base matches and is not protected (GitHub is asked; `--admin` never), and `gh pr create` or `edit` may name a protected branch or one of these as base. `[]` leaves every merge to the user |
 
 ## `guard`
@@ -56,7 +56,7 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 |---|---|---|---|
 | `judges.skill` | string | `"judge-protocol"` | read-only enforcement: the skill whose agents are judges |
 | `judges.maxRechecks` | integer >= 1 | `3` | re-check guard and the judge protocol: the one value both read |
-| `judges.routes` | `{agent: string, ground: glob[]}[]` | `[]` | judges routing: which judge a diff needs, by the paths it touches |
+| `judges.routes` | `{agent: string, ground: glob[]}[]` | `[]` | `docrank judges [<range>]` and the ship skill: a judge is launched when a changed path matches one of its `ground` globs, `["**"]` being every change. Empty means no judge is named |
 
 ## `paths`
 
@@ -91,16 +91,16 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 
 | Key | Type | Default | Read by |
 |---|---|---|---|
-| `worktree.copy` | string[] | `[".env", ".mcp.json"]` | worktree creation: files copied from the main checkout when present |
-| `worktree.install` | string | `null` | worktree creation: command run in the new worktree; null means none |
+| `worktree.copy` | string[] | `[".env", ".mcp.json"]` | worktree creation: paths relative to the main checkout, copied into the new worktree when present. A plugin's `WorktreeCreate` hook replaces Claude Code's default, so `.worktreeinclude` is not read |
+| `worktree.install` | string | `null` | worktree creation: shell command run in the new worktree, its output sent to stderr; a failure is reported and does not fail the creation. null means none |
 
 ## `pr`
 
 | Key | Type | Default | Read by |
 |---|---|---|---|
-| `pr.productPaths` | path prefix[] | `[]` | PR handover guard: a diff touching one is refused once with `checklist`; empty means off |
-| `pr.checklist` | string | a generic handover line | PR handover guard: the text of that refusal |
-| `pr.ciBases` | glob[] | `[<integration>]` | PR watch: bases whose pull requests run CI; others report `NO CI` |
+| `pr.productPaths` | path prefix[] | `[]` | PR handover guard: the first `gh pr create` of a branch in a session, into `branches.integration`, whose diff against `origin/<integration>` touches one is refused once with `checklist`. Empty here and in `surface.paths` means off |
+| `pr.checklist` | string | a generic handover line | PR handover guard: the text of that refusal. The default ends by telling the session to run the command again; a replacement should too |
+| `pr.ciBases` | glob[] | `[<integration>]` | `scripts/watch-pr.mjs`: bases whose pull requests run CI; the watcher of any other reports `NO CI` and exits 0 |
 
 ## `docs`
 
@@ -118,17 +118,17 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 
 | Key | Type | Default | Read by |
 |---|---|---|---|
-| `surface.paths` | path prefix[] | `[]` | surface reviewer and PR handover: code that draws a screen; empty means off |
+| `surface.paths` | path prefix[] | `[]` | surface reviewer and PR handover: code that draws a screen; a diff touching one gets the same refusal as `pr.productPaths`, with `surface.criterion` named first; empty means off |
 | `surface.widths` | integer >= 1 [] | `[320, 375, 1280, 1440]` | surface reviewer: viewport widths each page is measured at, in px |
 | `surface.locales` | string[] | `[]` | surface reviewer: locales each page is read in; empty, the one the page serves |
-| `surface.criterion` | string | `null` | surface reviewer: the delivery criterion every screen is judged against, a failure a `surface defect`; null, the reviewer judges without one and says so |
+| `surface.criterion` | string | `null` | surface reviewer and PR handover: the delivery criterion every screen is judged against, a failure a `surface defect`; null, the reviewer judges without one and says so |
 
 ## `ship`
 
 | Key | Type | Default | Read by |
 |---|---|---|---|
 | `ship.plansDir` | path | `"docs/plans"` | ship skill: where the plan of the work is written |
-| `ship.pathJobs` | `{paths: path prefix[], jobs: string[]}[]` | `[]` | ship skill: jobs to run for a diff touching those paths; each job is a key of `gates.jobs` |
+| `ship.pathJobs` | `{paths: path prefix[], jobs: string[]}[]` | `[]` | ship skill: jobs to run, through the gates skill, for a diff touching one of the entry's paths; each job is a key of `gates.jobs` (the loader refuses any other) |
 
 ## `principles`
 

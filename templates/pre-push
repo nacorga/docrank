@@ -1,0 +1,38 @@
+#!/bin/sh
+# docrank: the gates, checked before a push leaves, for pushes made outside
+# Claude Code (inside it, the Bash guard makes the same check).
+#
+# A pushed commit goes through when the gates runner recorded it (all gates
+# passed on its clean tree) or when origin/<integration> already holds it. A
+# deleted branch and a pushed tag are not commits to gate. `git push
+# --no-verify` is the user's way past it.
+#
+# The settings are read from .claude/docrank.json with node, which Claude Code
+# needs anyway; without it the defaults apply and gates.requireBeforePush is
+# not seen. Git runs a hook from the top of the work tree, where that file is.
+set -u
+settings=$(node -e '
+  let c = {};
+  try { c = JSON.parse(require("fs").readFileSync(".claude/docrank.json", "utf8")); } catch {}
+  const g = c.gates ?? {};
+  const on = g.requireBeforePush !== false && (g.run ?? []).length > 0;
+  console.log([g.record ?? "docrank-gates-passed", c.branches?.integration ?? "main", on ? "on" : "off"].join(" "));
+' 2>/dev/null) || settings="docrank-gates-passed main on"
+# shellcheck disable=SC2086
+set -- $settings
+[ "$3" = off ] && exit 0
+passed="$(git rev-parse --path-format=absolute --git-common-dir)/$1"
+zero=0000000000000000000000000000000000000000
+status=0
+while read -r local_ref local_sha remote_ref remote_sha; do
+  case "$local_ref" in refs/tags/*) continue ;; esac
+  [ "$local_sha" = "$zero" ] && continue
+  grep -qx "$local_sha" "$passed" 2>/dev/null && continue
+  git merge-base --is-ancestor "$local_sha" "origin/$2" 2>/dev/null && continue
+  printf 'docrank pre-push: the gates have not passed on %s (%s).\n' "$(git rev-parse --short "$local_sha")" "$local_ref" >&2
+  status=1
+done
+if [ $status -ne 0 ]; then
+  printf 'Run the gates on the clean tree of that commit (the gates skill, or node <plugin>/scripts/run-gates.mjs), then push again.\n' >&2
+fi
+exit $status

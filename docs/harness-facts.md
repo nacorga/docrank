@@ -17,17 +17,17 @@ Pages: [hooks]=https://code.claude.com/docs/en/hooks.md,
 | # | Fact | Status |
 |---|---|---|
 | 1 | `${CLAUDE_PLUGIN_ROOT}` works in hook commands | VERIFIED |
-| 2 | A plugin can wire `WorktreeCreate` | VERIFIED, with two limits |
-| 3 | A plugin can wire `Stop` and `SessionEnd` | NOT DOCUMENTED per event |
+| 2 | A plugin can wire `WorktreeCreate` | VERIFIED, with two limits; PROVED LIVE |
+| 3 | A plugin can wire `Stop` and `SessionEnd` | NOT DOCUMENTED per event; `Stop` PROVED LIVE |
 | 4 | A plugin's `SessionStart` hook can return `additionalContext` | VERIFIED |
 | 5 | The hook input carries `agent_type` | VERIFIED |
-| 6 | Plugin agents' `mcpServers` and `skills` frontmatter | `mcpServers` ignored, the plugin's `.mcp.json` instead; `skills` supported, a plugin skill's name there NOT DOCUMENTED |
+| 6 | Plugin agents' `mcpServers` and `skills` frontmatter | `mcpServers` ignored, the plugin's `.mcp.json` instead; `skills` supported, a plugin skill's name there NOT DOCUMENTED; browser server PROVED LIVE |
 | 7 | Skill `allowed-tools` with a plugin path | VERIFIED |
 | 8 | `subagents/agent-<id>.meta.json` | Named, its fields NOT DOCUMENTED |
 | 9 | `~/.claude/projects/<slug>` naming | NOT DOCUMENTED as a rule |
 | 10 | Plugin skills carry `context: fork`, `model`, `allowed-tools` | VERIFIED |
 | 11 | Plugin manifest and marketplace shapes | VERIFIED |
-| 12 | The type of the agent a `SendMessage` reaches | VERIFIED, recorded at dispatch |
+| 12 | The type of the agent a `SendMessage` reaches | VERIFIED, recorded at dispatch; PROVED LIVE |
 | 13 | PreToolUse `updatedInput` and `additionalContext`; the Agent tool's `name` and `effort` | VERIFIED |
 | 14 | Hook matcher syntax, plugin hooks included | VERIFIED |
 
@@ -55,8 +55,8 @@ directory" (command hooks print it "as the last non-empty line of stdout"), and
 not processed".
 
 The hook's input fields are NOT DOCUMENTED on the page read: `hooks/worktree-create.mjs`
-reads `name` and `cwd` from it, as TraceLog's own hook, which runs live, does;
-slice 9's trial proves them from the installed plugin. No matcher is supported;
+reads `name` and `cwd` from it. Proved live (§ 15): `claude -w wt-probe`
+created `<repo>-wt-probe` on branch `wt-probe` cut from `origin/main`. No matcher is supported;
 the hook fires on every creation.
 
 Slice 6 without it (older Claude Code, `--tmux`): the repository's own
@@ -70,10 +70,8 @@ when a session loads the plugin, and they fire on their events from then on".
 No page lists which events a plugin may register, and none excludes `Stop` or
 `SessionEnd`; [hooks] describes both events without tying them to plugins.
 
-Slice 5 (doc drift on `Stop`) and slice 8 wire them in the plugin's
-`hooks/hooks.json` and prove it in the trial (slice 9); if the trial shows the
-hook does not fire, `init` writes the entry into the repository's
-`.claude/settings.json` instead.
+`Stop` from the plugin's `hooks/hooks.json` is proved live (§ 15): doc drift
+blocked a session's end with its message. `SessionEnd` is not wired by docrank.
 
 ## 4. `SessionStart` `additionalContext` from a plugin: VERIFIED
 
@@ -132,7 +130,9 @@ closed".
 DOCUMENTED. [skills] names a plugin skill `plugin-name:skill-name` (the bare
 name also invokes it "unless another command already uses that name"), so the
 judges list `docrank:judge-protocol`, which `lib/agent-types.mjs` accepts as
-well as the bare name. The trial (slice 9) checks the skill is preloaded.
+well as the bare name. Live (§ 15) the judge closed its review at the third
+re-check as the protocol says; that is consistent with the preload, not a
+proof of it.
 
 [components] § Reference plugin paths: `${CLAUDE_PLUGIN_ROOT}` is "substituted
 in skill, command, and agent content", which is how a judge finds the
@@ -230,8 +230,7 @@ same pages: Explore and Plan "return no agent ID", so they are never held
 (they are no judges); an agent dispatched before the plugin loaded has no
 record and is not held; that the `agentId` of the response is the exact
 string `to` carries is read from "Claude receives its agent ID" and its use
-as `to`, not from a page that states both in one place, and the trial
-(slice 9) checks it. A `SubagentStart` hook also receives `agent_id` and
+as `to`, not from a page that states both in one place; proved live (§ 15). A `SubagentStart` hook also receives `agent_id` and
 `agent_type`, but its example `"agent_id": "agent-abc123"` is not the
 `agentId` form of the Agent response (`"a4d2c8f1e0b3a297"`), so it is not
 used.
@@ -271,3 +270,26 @@ A matcher in `hooks/hooks.json` is static, so `messages.tools` (config) cannot
 be it. Slice 5's `guard-message.mjs` registers on `mcp__.*` and filters by
 `messages.tools` inside the hook; a tool that is not an MCP tool never reaches
 it, which `docs/config.md` states.
+
+## 15. The live trial
+
+Claude Code 2.1.327, the plugin loaded with `--plugin-dir`, in a clone of a
+Next.js repository on npm with only `main`, its remote a local bare copy.
+
+- `init` proposed and wrote `.claude/docrank.json`; `docrank config` resolved it.
+- SessionStart injected `# Working principles`.
+- `guard-bash` refused `git reset --hard`, `git push --force`, an unrecorded
+  push and `git branch -D main`, each with its message.
+- The `gates` skill (forked, `allowed-tools` through `${CLAUDE_PLUGIN_ROOT}`)
+  ran lint, typecheck and build, recorded HEAD, and the same push then passed.
+- `docrank judges` named `docrank:spec-arbiter`; it ran read-only (its guard
+  refused `git hash-object`) and labelled added tracking a `code defect`
+  against the repository's CLAUDE.md. The re-check state recorded the
+  dispatch's `agentId` and three sends to that same string as `to`.
+- `Stop`: doc drift blocked the end of the session once, with its message.
+- `WorktreeCreate`: as § 2.
+- The plugin's `browser` server connected; `new_page`, `evaluate_script`
+  and `close_page` ran.
+
+Not exercised live: `format-on-edit`'s exit 2, `guard-message`, `guard-pr`,
+`guard-plan`, `context-handoff`, `link-memory`, the `principles.closingLine` rule.

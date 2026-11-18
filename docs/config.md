@@ -65,6 +65,12 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 | `paths.builtIns` | boolean | `true` | path guard: the built-in rules, `.env*` but `.env.example`, and lockfiles |
 | `paths.rules` | `{pattern: regex, onlyIfTracked: boolean = false, reason: string}[]` | `[]` | path guard: an edit to a matching path is refused with `reason`; `onlyIfTracked` limits it to files git already tracks |
 
+## `plan`
+
+| Key | Type | Default | Read by |
+|---|---|---|---|
+| `plan.requiredHeadings` | string[] | `[]` | plan guard: a plan reaches the user only with a section whose heading (any level, case-insensitive) is one of these; empty means off. Several entries are alternatives, such as a second language |
+
 ## `format`
 
 | Key | Type | Default | Read by |
@@ -149,7 +155,7 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 
 | Key | Type | Default | Read by |
 |---|---|---|---|
-| `messages.tools` | regex[] | `[]` | external-message guard: tool names whose first call is refused with `checklist`; empty means off |
+| `messages.tools` | regex[] | `[]` | external-message guard: tool names whose first call is refused with `checklist`, each tested unanchored against the name; only MCP tools (`mcp__*`) reach the hook, because a plugin's hook matcher is static; empty means off |
 | `messages.checklist` | string | a generic claims check | external-message guard: the text of that refusal |
 
 ## Example: guarding a local database

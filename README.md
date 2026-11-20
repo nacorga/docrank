@@ -50,6 +50,8 @@ tracking that passes its test and breaks both rules. It prints the command
 that opens a session in that branch's worktree with `--plugin-dir`, so the
 demo runs whatever scope docrank is installed at, and the three steps to type
 there: the gates, the spec arbiter on the branch, and its re-check of the fix.
+Each step is a line of its own, to paste as it is; what each should show is
+printed apart, after them, so the judge is not told what to find.
 
 ## What each guard refuses
 

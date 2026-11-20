@@ -57,11 +57,30 @@ describe("demo.mjs", () => {
     }
   });
 
-  it("prints the paths, the session command with this plugin's root and the three steps", () => {
+  it("prints the paths, the session command with this plugin's root and how to remove the demo", () => {
     expect(built.stdout).toContain(`docrank demo in ${dir}\n`);
     expect(built.stdout).toContain(`  cd ${worktree} && claude --plugin-dir ${ROOT}\n`);
-    expect(built.stdout).toMatch(/1\. \/docrank:gates\n[\s\S]*2\. Review this branch with docrank:spec-arbiter\.\n[\s\S]*3\. Switch this worktree to demo\/fixed/u);
     expect(built.stdout).toContain(`rm -rf ${dir}\n`);
+  });
+
+  it("prints each step to type alone on its line, and what to expect apart, after the steps", () => {
+    const lines = built.stdout.split("\n");
+    const typeAt = lines.findIndex((l) => l.startsWith("Then type"));
+    const expectAt = lines.findIndex((l) => l.startsWith("What to expect"));
+    expect(typeAt).toBeGreaterThan(-1);
+    expect(expectAt).toBeGreaterThan(typeAt);
+    const typed = lines.slice(typeAt + 1, expectAt).filter(Boolean);
+    expect(typed).toEqual([
+      "  1. /docrank:gates",
+      "  2. Review this branch with docrank:spec-arbiter.",
+      "  3. Switch this worktree to demo/fixed, then have the same arbiter re-check demo/tracking..HEAD.",
+    ]);
+    // A pasted step must not tell the judge what to find.
+    for (const line of typed) expect(line).not.toMatch(/passes|recorded|defect|§|Analytics|consent|email|resolved/u);
+    const expected = lines.slice(expectAt + 1).join("\n");
+    expect(expected).toContain("  1. The test passes and the commit is recorded.\n");
+    expect(expected).toMatch(/ {2}2\. A code defect citing docs\/spec\.md § Analytics: the event is sent before\s+consent and carries the email\./u);
+    expect(expected).toContain("  3. That finding resolved.\n");
   });
 
   it("resolves the example's configuration in the worktree", () => {

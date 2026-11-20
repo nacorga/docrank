@@ -105,6 +105,7 @@ describe("demo.mjs", () => {
     };
     expect(await events(worktree, {})).toEqual([{ user: "u1", email: "ada@example.com", total: 100 }]);
     expect(await events(fixed, {})).toEqual([]);
+    expect(await events(fixed, { analytics: "yes" })).toEqual([]);
     expect(await events(fixed, { analytics: true })).toEqual([{ user: "u1", total: 100 }]);
   });
 

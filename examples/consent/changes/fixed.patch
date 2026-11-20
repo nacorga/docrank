@@ -12,10 +12,10 @@ index d243fb8..3ef4e7a 100644
    return { user: user.id, total };
  }
 diff --git a/test/checkout.test.mjs b/test/checkout.test.mjs
-index 594b228..2da0b2f 100644
+index 594b228..2f5651c 100644
 --- a/test/checkout.test.mjs
 +++ b/test/checkout.test.mjs
-@@ -13,8 +13,17 @@ test("an empty cart totals 0", () => {
+@@ -13,8 +13,18 @@ test("an empty cart totals 0", () => {
    assert.equal(checkout([], user).total, 0);
  });
  
@@ -34,5 +34,6 @@ index 594b228..2da0b2f 100644
 -  assert.deepEqual(events, [{ name: "checkout", data: { user: "u1", email: "ada@example.com", total: 500 } }]);
 +  checkout([{ price: 500, qty: 1 }], user, { track: track(events) });
 +  checkout([{ price: 500, qty: 1 }], user, { consent: { analytics: false }, track: track(events) });
++  checkout([{ price: 500, qty: 1 }], user, { consent: { analytics: "yes" }, track: track(events) });
 +  assert.deepEqual(events, []);
  });

@@ -92,11 +92,22 @@ answer, leaves the repository as step 3 left it.
   `git config core.hooksPath .githooks`, or into `.git/hooks/pre-push` when the
   repository has no hooks directory of its own; never over an existing hook
   without showing it. Say that `git push --no-verify` is the way past it.
-- **Fallback hooks.** Claude Code runs a plugin's `Stop` hook and `WorktreeCreate`
-  hook, but that they fire from a plugin is not proved
-  (`${CLAUDE_PLUGIN_ROOT}/docs/harness-facts.md`, facts 2 and 3). Offer this
-  only when the user says doc drift, the hand-off or worktree creation does not
-  act. It writes the entries of `${CLAUDE_PLUGIN_ROOT}/hooks/hooks.json` for
-  those events into `.claude/settings.local.json`, uncommitted, with this
-  plugin's absolute path, `${CLAUDE_PLUGIN_ROOT}`, in place of the variable,
-  which a settings file does not expand.
+- **Fallback hooks.** For an event whose plugin hook does not act, and only
+  that event: never one whose plugin hook acts, since the plugin's hook and
+  the copy could both fire, and that Claude Code runs such a pair once is not
+  documented. Facts 2 and 3 of `${CLAUDE_PLUGIN_ROOT}/docs/harness-facts.md`
+  hold what is known of each:
+  - `WorktreeCreate` (fact 2: VERIFIED, with two limits; PROVED LIVE): a
+    plugin's hook does not run for the worktree of a session launched with
+    `--worktree --tmux`, nor, before Claude Code 2.1.300, with `--worktree`
+    alone. Offer it only when the user's Claude Code is older than 2.1.300
+    (`claude --version`) or they launch with `--worktree --tmux`.
+  - `Stop` (fact 3: NOT DOCUMENTED per event; `Stop` PROVED LIVE): no page
+    lists the events a plugin may register, and a plugin's `Stop` hook was
+    seen to act live. Offer it only when the user says doc drift or the
+    hand-off does not act.
+
+  It writes the entries of `${CLAUDE_PLUGIN_ROOT}/hooks/hooks.json` for that
+  event into `.claude/settings.local.json`, uncommitted, with this plugin's
+  absolute path, `${CLAUDE_PLUGIN_ROOT}`, in place of the variable, which a
+  settings file does not expand.

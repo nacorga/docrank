@@ -60,7 +60,10 @@ neither settles a key, it stays out and the proposal says so; never guess.
 
   With a document settled, ask next what code it governs: `["**"]`, every
   change, unless the document names the code it covers, whose globs
-  (`src/**`) then lead. Propose the two keys together:
+  (`src/**`) then lead. A named file puts the glob of its directory
+  (`src/**` for `src/checkout.mjs`) among the options ahead of the file
+  itself, so a file added beside it is not left unjudged; the user still
+  chooses. Propose the two keys together:
   `docs.precedence`, `["<doc>"]` for a chosen document, and
   `judges.routes: [{ "agent": "docrank:spec-arbiter", "ground": [<globs>] }]`,
   the ground `["**"]` when the user narrows nothing. Neither is inferred: a

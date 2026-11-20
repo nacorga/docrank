@@ -129,9 +129,12 @@ session-start principles, a judge review and its re-check count, doc drift on
 message guards, the context hand-off and the judges' preloaded protocol ran
 live too. A third trial, with Claude Code 2.1.329, walked the demo from
 `/docrank:demo` to the arbiter's `code defect` and its re-check on the fix in
-9 min 07 s, and saw `init` propose the arbiter and install the pre-push. What
-was changed after it, in the demo's example and in `init`'s wording, is not
-yet proved live. Not yet exercised live, though tested on stubbed input: the
+9 min 07 s, and saw `init` propose the arbiter and install the pre-push. A
+fourth installed 0.2.0 from the marketplace at project scope, on a machine
+without docrank and with no other configuration, and walked the demo to the
+same finding and its re-check in 5 min 14 s, proving the example's changes
+made after the third. `init`'s wording changed after the third, and the demo's
+step output after the fourth, are not yet proved live. Not yet exercised live, though tested on stubbed input: the
 closing line rule, and the memory link, which is experimental: off by default,
 its directory rule undocumented by Claude Code.
 

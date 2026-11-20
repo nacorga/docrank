@@ -387,8 +387,54 @@ Found in the trial, and changed after it:
   `checkout(cart, user, { consent, track })` and the event, `"checkout"` with
   `{ user, total }`, and `fixed.patch` tests `{ analytics: "yes" }`.
 
-These four changes were made after the trial and are not proved live yet; the
-marketplace install of 0.2.0 is to run them.
+These four changes were made after the trial. The marketplace install below
+ran the example's two; `init`'s two are not proved live yet.
+
+### The marketplace install, 2026-11-20
+
+Claude Code 2.1.329, on a machine where docrank had never been installed and
+no docrank marketplace added, in `~/docrank-trial`, an empty repository made
+with `git init`.
+
+- `/plugin marketplace add nacorga/docrank` (13:56:24Z): "Added marketplace:
+  docrank".
+- `/plugin install docrank@docrank` at Project scope (13:56:49Z): "✓ Installed
+  docrank. Plugin is now active." The repository's `.claude/settings.json`
+  became `{"enabledPlugins": {"docrank@docrank": true}}`.
+- The minimum configuration is that and nothing else: the trial repository has
+  no `.claude/docrank.json`, the demo carrying its own.
+
+The demo, from `/docrank:demo` to the re-check:
+
+- `/docrank:demo` (13:57:00Z) printed what `scripts/demo.mjs` printed at
+  0.2.0. Its session command named the installed copy, version 0.2.0:
+  `--plugin-dir ~/.claude/plugins/cache/docrank/docrank/0.2.0`.
+- In the session opened in `repo-tracking` with that command, `/docrank:gates`
+  passed `test` and recorded `42317e307`. Doc drift on `Stop` did not fire:
+  the example sets no `docDrift.entries`.
+- The prompt asking for the arbiter also held the demo's 0.2.0 hint for step
+  2, to look for a `code defect` citing the spec's § Analytics. The session
+  passed it to the arbiter as what to check, not as a conclusion.
+- `docrank:spec-arbiter` reported four `code defect`s, each citing
+  `examples/consent/docs/spec.md` § Analytics by line: the event sent without
+  consent, the event carrying the email, the signature leaving out `consent`,
+  and the test copying the defect with no case without consent. No spec gap.
+- Told to review `demo/fixed`, the session ran `git checkout demo/fixed` and
+  sent the re-check by `SendMessage` to the same arbiter. Verdict: the four
+  resolved, the `{ analytics: "yes" }` case among them; "No findings",
+  `Judged: ca4d9d1`. `npm test` 4/4.
+- 5 min 14 s wall clock from `/docrank:demo` (13:57:00Z) to the verdict on
+  `demo/fixed` (14:02:14Z), and 5 min 50 s from `marketplace add`, read from
+  the sessions' transcripts.
+
+This install proved live the example's two changes made after the previous
+trial: no `docDrift.entries`, and the spec stating the call and the event with
+`fixed.patch` testing `{ analytics: "yes" }`. `init`'s two, reading with Read
+and Glob and offering a named file's directory glob first, were not exercised.
+
+Changed after it: each step the demo prints is now only what to type, alone on
+its line, and what to expect is a block after the steps, since a pasted step
+carried its hint to the judge. That output is not proved live yet.
 
 ## 16. Install scopes, `--plugin-dir`, a session in a worktree: VERIFIED
 

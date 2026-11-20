@@ -43,7 +43,9 @@ neither settles a key, it stays out and the proposal says so; never guess.
   `docs/adr/`, `docs/decisions/`), a root `DESIGN.md`, `ARCHITECTURE.md`,
   `CLAUDE.md`: these are the candidate documents. Suggest `docDrift.entries`
   only for a pairing the repository states (a doc that names the directory it
-  describes); `docs.scanRoots` as `["docs"]` when documents cite each other by
+  describes; a doc that names a file pairs that file's directory, `src/` for
+  `src/checkout.mjs`, so a file added beside it is paired too);
+  `docs.scanRoots` as `["docs"]` when documents cite each other by
   `§` headings. Empty when unsure: an empty key is an off feature, a wrong one
   is noise on every stop.
 - **Spec arbiter.** `docrank:spec-arbiter` judges a diff against the

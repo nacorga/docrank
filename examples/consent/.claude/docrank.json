@@ -7,8 +7,5 @@
   },
   "docs": {
     "precedence": ["docs/spec.md"]
-  },
-  "docDrift": {
-    "entries": [{ "code": ["src/"], "docs": ["docs/spec.md"] }]
   }
 }

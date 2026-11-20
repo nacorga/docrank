@@ -8,16 +8,65 @@
 # --no-verify` is the user's way past it.
 #
 # The settings are read from .claude/docrank.json with node, which Claude Code
-# needs anyway; without it the defaults apply and gates.requireBeforePush is
-# not seen. Git runs a hook from the top of the work tree, where that file is.
+# needs anyway. Git runs a hook from the top of the work tree, where that file
+# is. A missing file is every default: with no gates.run the check is off. A
+# file that cannot be read, is not JSON, or gives a key read here the wrong
+# type refuses the push, as an invalid config refuses every guarded call inside
+# Claude Code. Only the keys read here are checked: this file is copied into
+# the repository and cannot load the plugin's validation, so the rest of the
+# schema is left to `docrank config`.
 set -u
-settings=$(node -e '
-  let c = {};
-  try { c = JSON.parse(require("fs").readFileSync(".claude/docrank.json", "utf8")); } catch {}
-  const g = c.gates ?? {};
-  const on = g.requireBeforePush !== false && (g.run ?? []).length > 0;
-  console.log([g.record ?? "docrank-gates-passed", c.branches?.integration ?? "main", on ? "on" : "off"].join(" "));
-' 2>/dev/null) || settings="docrank-gates-passed main on"
+if command -v node >/dev/null 2>&1; then
+  # shellcheck disable=SC2016
+  settings=$(node -e '
+    const file = ".claude/docrank.json";
+    const fs = require("fs");
+    const kind = (v) => (v === null ? "null" : Array.isArray(v) ? "an array" : typeof v === "object" ? "an object" : JSON.stringify(v));
+    const isObject = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+    const refuse = (problems) => {
+      process.stderr.write(
+        [
+          `docrank pre-push: ${file} is not valid, so the push is refused:`,
+          ...problems.map((p) => `  ${p}`),
+          "Run node <plugin>/bin/docrank.mjs config to see every problem and fix the file; git push --no-verify pushes without this check.",
+        ].join("\n") + "\n",
+      );
+      process.exit(1);
+    };
+    let text = "{}";
+    try {
+      text = fs.readFileSync(file, "utf8");
+    } catch (e) {
+      if (e.code !== "ENOENT") refuse([`cannot be read (${e.code ?? e.message})`]);
+    }
+    let c;
+    try {
+      c = JSON.parse(text);
+    } catch (e) {
+      refuse([`expected valid JSON (${e.message})`]);
+    }
+    if (!isObject(c)) refuse([`(top level): expected an object, got ${kind(c)}`]);
+    const problems = [];
+    const want = (at, value, ok, what) => value === undefined || ok(value) || problems.push(`${at}: expected ${what}, got ${kind(value)}`);
+    const str = (v) => typeof v === "string" && v !== "";
+    const g = isObject(c.gates) ? c.gates : {};
+    const b = isObject(c.branches) ? c.branches : {};
+    want("gates", c.gates, isObject, "an object");
+    want("gates.run", g.run, Array.isArray, "an array");
+    want("gates.requireBeforePush", g.requireBeforePush, (v) => typeof v === "boolean", "true or false");
+    want("gates.record", g.record, str, "a string");
+    want("branches", c.branches, isObject, "an object");
+    want("branches.integration", b.integration, str, "a string");
+    if (problems.length > 0) refuse(problems);
+    const on = g.requireBeforePush !== false && (g.run ?? []).length > 0;
+    console.log([g.record ?? "docrank-gates-passed", b.integration ?? "main", on ? "on" : "off"].join(" "));
+  ') || exit 1
+else
+  # Without node the file is not read at all, so the check is on with the
+  # defaults whatever the file says: record docrank-gates-passed, integration
+  # branch main, gates.run and gates.requireBeforePush unseen.
+  settings="docrank-gates-passed main on"
+fi
 # shellcheck disable=SC2086
 set -- $settings
 [ "$3" = off ] && exit 0

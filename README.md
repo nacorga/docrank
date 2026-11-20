@@ -74,8 +74,10 @@ Claude Code's memory and the repository's tracked `.claude/memory` (`memory.link
 experimental).
 
 An invalid `.claude/docrank.json` refuses every guarded call and names each
-problem. A guard stops accidents, not a determined attempt: every Bash
-refusal is also logged to `~/.claude/blocked-commands.log`.
+problem; the optional pre-push hook refuses a push on a file it cannot read or
+parse, or whose keys it reads have the wrong type. A guard stops accidents, not
+a determined attempt: every Bash refusal is also logged to
+`~/.claude/blocked-commands.log`.
 
 ## Skills, agents and the CLI
 

@@ -311,4 +311,60 @@ describe("templates/pre-push", () => {
     expect(run([], dir).status).toBe(0);
     expect(attempt().status).toBe(0);
   });
+
+  const configure = (dir, text) => writeFileSync(path.join(dir, ".claude", "docrank.json"), text);
+  const refusal = /^docrank pre-push: \.claude\/docrank\.json is not valid, so the push is refused:\n/mu;
+
+  it("refuses a push when the config is not JSON, naming the file, the problem and the ways out", () => {
+    const dir = repo({ run: [gate("lint")] });
+    configure(dir, '{ "gates": ');
+    const r = push(dir, line(head(dir)));
+    expect(r.status).toBe(1);
+    expect(r.stderr).toMatch(refusal);
+    expect(r.stderr).toContain("expected valid JSON");
+    expect(r.stderr).toContain("bin/docrank.mjs config");
+    expect(r.stderr).toContain("git push --no-verify");
+  });
+
+  it("refuses a push when a key it reads has the wrong type, one line per key", () => {
+    const dir = repo({ run: "npm test" });
+    const r = push(dir, line(head(dir)));
+    expect(r.status).toBe(1);
+    expect(r.stderr).toMatch(refusal);
+    expect(r.stderr).toContain('  gates.run: expected an array, got "npm test"\n');
+
+    configure(dir, JSON.stringify({ gates: { requireBeforePush: "no", record: 1 }, branches: { integration: "" } }));
+    expect(push(dir, line(head(dir))).stderr.split("\n").filter((l) => l.startsWith("  "))).toEqual([
+      '  gates.requireBeforePush: expected true or false, got "no"',
+      "  gates.record: expected a string, got 1",
+      '  branches.integration: expected a string, got ""',
+    ]);
+    for (const text of ["[]", JSON.stringify({ gates: [] }), JSON.stringify({ branches: "main" })]) {
+      configure(dir, text);
+      expect(push(dir, line(head(dir))).status).toBe(1);
+    }
+  });
+
+  it("applies the defaults when the config file is missing: no gates.run, no check", () => {
+    const dir = repo({ run: [gate("lint")] });
+    rmSync(path.join(dir, ".claude", "docrank.json"));
+    expect(push(dir, line(commit(dir, "more"))).status).toBe(0);
+  });
+
+  it("refuses a real git push to a local bare remote when the config is broken", () => {
+    const dir = repo({ run: [gate("lint")] });
+    const remote = path.join(dir, "..", `${path.basename(dir)}-remote.git`);
+    gitIn(dir, "init", "-q", "--bare", remote);
+    dirs.push(remote);
+    gitIn(dir, "remote", "add", "origin", remote);
+    const hook = path.join(dir, ".git", "hooks", "pre-push");
+    writeFileSync(hook, readFileSync(PRE_PUSH));
+    chmodSync(hook, 0o755);
+    expect(run([], dir).status).toBe(0);
+    configure(dir, "{ not json");
+    const r = spawnSync("git", ["-C", dir, "push", "-q", "origin", "main"], { encoding: "utf8" });
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toMatch(refusal);
+    expect(spawnSync("git", ["-C", remote, "rev-parse", "--verify", "-q", "refs/heads/main"]).status).not.toBe(0);
+  });
 });

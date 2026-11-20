@@ -1,0 +1,38 @@
+diff --git a/src/checkout.mjs b/src/checkout.mjs
+index d243fb8..3ef4e7a 100644
+--- a/src/checkout.mjs
++++ b/src/checkout.mjs
+@@ -1,6 +1,6 @@
+ /** The checkout: a cart becomes an order. docs/spec.md states what it does. */
+-export function checkout(cart, user, { track = () => {} } = {}) {
++export function checkout(cart, user, { consent = {}, track = () => {} } = {}) {
+   const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+-  track("checkout", { user: user.id, email: user.email, total });
++  if (consent.analytics === true) track("checkout", { user: user.id, total });
+   return { user: user.id, total };
+ }
+diff --git a/test/checkout.test.mjs b/test/checkout.test.mjs
+index 594b228..2da0b2f 100644
+--- a/test/checkout.test.mjs
++++ b/test/checkout.test.mjs
+@@ -13,8 +13,17 @@ test("an empty cart totals 0", () => {
+   assert.equal(checkout([], user).total, 0);
+ });
+ 
+-test("reports the checkout to analytics", () => {
++const track = (events) => (name, data) => events.push({ name, data });
++
++test("reports the checkout to analytics once the user consented, without the email", () => {
++  const events = [];
++  checkout([{ price: 500, qty: 1 }], user, { consent: { analytics: true }, track: track(events) });
++  assert.deepEqual(events, [{ name: "checkout", data: { user: "u1", total: 500 } }]);
++});
++
++test("reports nothing before consent", () => {
+   const events = [];
+-  checkout([{ price: 500, qty: 1 }], user, { track: (name, data) => events.push({ name, data }) });
+-  assert.deepEqual(events, [{ name: "checkout", data: { user: "u1", email: "ada@example.com", total: 500 } }]);
++  checkout([{ price: 500, qty: 1 }], user, { track: track(events) });
++  checkout([{ price: 500, qty: 1 }], user, { consent: { analytics: false }, track: track(events) });
++  assert.deepEqual(events, []);
+ });

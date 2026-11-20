@@ -1,0 +1,26 @@
+diff --git a/src/checkout.mjs b/src/checkout.mjs
+index c0a6d5b..d243fb8 100644
+--- a/src/checkout.mjs
++++ b/src/checkout.mjs
+@@ -1,5 +1,6 @@
+ /** The checkout: a cart becomes an order. docs/spec.md states what it does. */
+-export function checkout(cart, user) {
++export function checkout(cart, user, { track = () => {} } = {}) {
+   const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
++  track("checkout", { user: user.id, email: user.email, total });
+   return { user: user.id, total };
+ }
+diff --git a/test/checkout.test.mjs b/test/checkout.test.mjs
+index e85fc0d..594b228 100644
+--- a/test/checkout.test.mjs
++++ b/test/checkout.test.mjs
+@@ -12,3 +12,9 @@ test("totals each item's price times its quantity", () => {
+ test("an empty cart totals 0", () => {
+   assert.equal(checkout([], user).total, 0);
+ });
++
++test("reports the checkout to analytics", () => {
++  const events = [];
++  checkout([{ price: 500, qty: 1 }], user, { track: (name, data) => events.push({ name, data }) });
++  assert.deepEqual(events, [{ name: "checkout", data: { user: "u1", email: "ada@example.com", total: 500 } }]);
++});

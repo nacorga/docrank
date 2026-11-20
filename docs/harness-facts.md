@@ -13,6 +13,13 @@ Pages: [hooks]=https://code.claude.com/docs/en/hooks.md,
 [sub-agents]=https://code.claude.com/docs/en/sub-agents.md,
 [claude-dir]=https://code.claude.com/docs/en/claude-directory.md,
 [tools]=https://code.claude.com/docs/en/tools-reference.md.
+Fact 16 was read on 2026-11-20 from
+[plugins]=https://code.claude.com/docs/en/plugins.md,
+[loading]=https://code.claude.com/docs/en/plugins/loading.md,
+[plugin-cli]=https://code.claude.com/docs/en/plugins/cli-reference.md,
+[settings]=https://code.claude.com/docs/en/settings.md,
+[permissions]=https://code.claude.com/docs/en/permissions.md,
+[worktrees]=https://code.claude.com/docs/en/worktrees.md and [hooks].
 
 | # | Fact | Status |
 |---|---|---|
@@ -30,6 +37,7 @@ Pages: [hooks]=https://code.claude.com/docs/en/hooks.md,
 | 12 | The type of the agent a `SendMessage` reaches | VERIFIED, recorded at dispatch; PROVED LIVE |
 | 13 | PreToolUse `updatedInput` and `additionalContext`; the Agent tool's `name` and `effort` | VERIFIED |
 | 14 | Hook matcher syntax, plugin hooks included | VERIFIED |
+| 16 | Where an installed plugin is on; `--plugin-dir` beside an install; a session started in a worktree | VERIFIED; that a hook's `cwd` is the launch directory, inferred |
 
 ## 1. `${CLAUDE_PLUGIN_ROOT}` in hook commands: VERIFIED
 
@@ -315,3 +323,50 @@ Not exercised live: `link-memory` (experimental: off by default, and the
 directory it links follows a naming Claude Code does not document) and the
 `principles.closingLine` rule, which a user's own CLAUDE.md overrode in every
 trial session.
+
+## 16. Install scopes, `--plugin-dir`, a session in a worktree: VERIFIED
+
+**Scopes.** [plugins] § Understand install scopes: "**User scope**: enabled
+for you in every project on this computer", "**Project scope**: enabled for
+everyone who works in this repository, through the committed
+`.claude/settings.json`", "**Local scope**: enabled for you in this repository
+only". [loading] § Find where a plugin is enabled gives the file each scope
+writes and whom it reaches: `user` | `~/.claude/settings.json` | "You, in
+every project"; `project` | `.claude/settings.json` | "Everyone who clones the
+repository"; `local` | `.claude/settings.local.json` | "You, in this
+repository only". So a plugin installed at project or local scope in one
+repository is not enabled in a session started in a new directory outside it,
+which has neither file; one installed at user scope is.
+
+**`--plugin-dir` beside an install.** [plugin-cli] § Flags that load a plugin
+for one session: "Two `claude` flags load a plugin for one session only,
+without installing it." [loading] § Name conflicts ranks "An enabled
+`--plugin-dir`, `--plugin-url`, or `CLAUDE_CODE_PLUGIN_DIRS` plugin" above "An
+installed marketplace plugin", which it replaces: "**An installed marketplace
+plugin**: replaced silently. `claude plugin list` still shows the marketplace
+row as enabled". The order "compares manifest names", and only one source
+ranks higher: "A plugin whose id appears in managed settings `enabledPlugins`
+... A `--plugin-dir` copy whose manifest name matches the id's name part isn't
+loaded". So `claude --plugin-dir <plugin root>` loads that copy of docrank
+whatever scope it is installed at, or whether it is installed at all, unless
+an organization's managed settings name docrank.
+
+**A session started in a worktree.** [permissions] § Working directories:
+"Claude has access to files in the directory where you launched it. That
+directory is the session's primary working directory". [settings]: "Claude
+Code reads the shared `.claude/settings.json` from the session's primary
+working directory"; the local file is the exception: "In a worktree, it uses
+the file at the main checkout's root". [worktrees] § What worktrees share with
+the main checkout: "In a worktree with its own `.claude/skills` directory,
+only that copy loads. The same read-through covers `.claude/agents` and
+`.claude/commands`", and "All of these apply whether you create the worktree
+with `--worktree` or with `git worktree add`".
+
+`.claude/docrank.json` is not read by Claude Code but by docrank, at the git
+top level of the hook input's `cwd` (`lib/hook.mjs` `configFor`). [hooks]
+§ Common input fields: "`cwd` | Current working directory when the hook is
+invoked"; that it is the launch directory in a session started there is read
+from the primary working directory above, not from a page that states both.
+The demo (`scripts/demo.mjs`) does not depend on it: its patches never touch
+`.claude/docrank.json`, so the worktree and the main checkout hold the same
+file. Not proved live yet.

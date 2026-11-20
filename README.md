@@ -33,6 +33,16 @@ proposes a complete `.claude/docrank.json` with a reason for each key it sets,
 and writes nothing until you confirm. Without that file every guard runs on its
 defaults and the features that need a setting stay off.
 
+### Try it
+
+`/docrank:demo [<dir>]` builds a throwaway repository, in a new temporary
+directory unless you name one that does not exist: a checkout module whose
+spec forbids analytics before consent and with the email, and a branch adding
+tracking that passes its test and breaks both rules. It prints the command
+that opens a session in that branch's worktree with `--plugin-dir`, so the
+demo runs whatever scope docrank is installed at, and the three steps to type
+there: the gates, the spec arbiter on the branch, and its re-check of the fix.
+
 ## What each guard refuses
 
 Every key is documented once, with its default, in [docs/config.md](docs/config.md).
@@ -72,7 +82,8 @@ refusal is also logged to `~/.claude/blocked-commands.log`.
 Skills: `init` (propose the configuration), `gates` (run `gates.run` in order,
 PASS or FAIL each, and record the commit that passed), `ship` (one piece of
 work from worktree to a green pull request; the merge stays yours),
-`doc-lint` (sweep the documents for what no test catches),
+`doc-lint` (sweep the documents for what no test catches), `demo` (build the
+throwaway repository of Try it),
 `judge-protocol` and `dispatch-guardrails` (loaded by agents and dispatches).
 
 Agents, both read-only: `spec-arbiter` (a diff against the documents by

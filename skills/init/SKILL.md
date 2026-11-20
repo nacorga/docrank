@@ -9,7 +9,9 @@ Propose `.claude/docrank.json` for this repository. Every key and default is in
 `${CLAUDE_PLUGIN_ROOT}/docs/config.md`; read it first. The file is the only
 thing docrank asks of a repository, and a key left out keeps its default, so
 write a key only where the repository differs from the default or the key turns
-a feature on. Read; write nothing until step 3.
+a feature on. Read; write nothing until step 3. Files are read with Read and
+found with Glob; Bash runs only the git and docrank commands of
+`allowed-tools`, one per call, never chained.
 
 ## 1. Read the repository
 

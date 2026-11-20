@@ -324,6 +324,72 @@ directory it links follows a naming Claude Code does not document) and the
 `principles.closingLine` rule, which a user's own CLAUDE.md overrode in every
 trial session.
 
+### The demo and `init`, 2026-11-20
+
+Claude Code 2.1.329, the plugin loaded with `--plugin-dir` from a checkout at
+`9c10859`.
+
+`/docrank:init`, in a copy of `examples/consent` with no `.claude/` and no
+sentence stating a rank:
+
+- It asked which document binds, `None` among the options and `docs/spec.md`
+  recommended, then the ground, for which the user typed `src/**` and
+  `docs/spec.md`.
+- It proposed `docs.precedence` and `judges.routes` together; `docrank config`
+  exited 0, and `docrank judges` showed the arbiter as `skip`, only
+  `.claude/docrank.json` having changed. It said the arbiter was on.
+- It offered no fallback hook: 2.1.329 is not older than 2.1.300.
+- It installed the pre-push as `.githooks/pre-push`, identical to the
+  template, with `core.hooksPath=.githooks`, and tried it: it exited 0 on the
+  commit at `origin/main` and 1 on a commit whose gates had not passed, "the
+  gates have not passed on fadfb0b".
+
+The demo, from `/docrank:demo` to the re-check:
+
+- `/docrank:demo`, run from `~`, built a new directory under the system's temp
+  directory and printed what `scripts/demo.mjs` prints.
+- In a session opened in `repo-tracking` with the printed command,
+  `/docrank:gates` passed `test` and recorded `4a00491`.
+- Asked for the arbiter, the session launched `docrank:spec-arbiter` in the
+  background. It reported by message a `code defect` citing
+  `examples/consent/docs/spec.md` § Analytics, its lines 16 and 17 as they
+  were: the event is sent without consent and carries the email. It also
+  named the test that takes the defect for correct, the tests missing, and two
+  gaps in the spec: where `consent` comes from, and the event's shape.
+- Told to review `demo/fixed`, the session ran `git switch demo/fixed` and sent
+  the re-check to the same arbiter's `agentId` ("Resuming agent af99085").
+  Verdict: the email, the consent (`src/checkout.mjs:4`) and the test that
+  required the email resolved; the consent test nearly, with no case for
+  `{ analytics: "yes" }`, which `if (consent.analytics)` would pass; the two
+  spec gaps open, the commit not touching `docs/spec.md`. `npm test` 4/4.
+- 9 min 07 s wall clock, from `/docrank:demo` (09:18:15Z) to the verdict on
+  `demo/fixed` (09:27:22Z), read from the two sessions' transcripts. It
+  includes about 2 min of an unrelated question.
+
+A plugin loaded by `--plugin-dir` is named `docrank@inline` in hook messages:
+"This hook comes from the docrank@inline plugin."
+
+Found in the trial, and changed after it:
+
+- Doc drift on `Stop` fired after `/docrank:gates`, since the example paired
+  `src/` with `docs/spec.md`, and the session found the violations before the
+  arbiter was asked. The example no longer sets `docDrift.entries`.
+- `init`'s first two Bash calls chained `cat`, `sed` and `ls`, ending on an
+  `ls` of an absent `.claude`, `.env*` and `.mcp.json`, and each showed "Exit
+  code 1". The skill now reads with Read and Glob and runs one unchained
+  command per Bash call.
+- `init` offered the literal `src/checkout.mjs`, with the spec, as the ground,
+  which leaves a new file beside it unjudged, and the same file for
+  `docDrift.entries`. A named file now puts its directory's glob (`src/**`)
+  ahead of it among the ground's options; the drift proposal is unchanged.
+- The spec gaps the arbiter named on both branches.
+  `examples/consent/docs/spec.md` § Analytics now states
+  `checkout(cart, user, { consent, track })` and the event, `"checkout"` with
+  `{ user, total }`, and `fixed.patch` tests `{ analytics: "yes" }`.
+
+These four changes were made after the trial and are not proved live yet; the
+marketplace install of 0.2.0 is to run them.
+
 ## 16. Install scopes, `--plugin-dir`, a session in a worktree: VERIFIED
 
 **Scopes.** [plugins] § Understand install scopes: "**User scope**: enabled

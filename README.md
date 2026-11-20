@@ -125,9 +125,13 @@ session-start principles, a judge review and its re-check count, doc drift on
 `Stop`, `WorktreeCreate` and the browser server
 ([docs/harness-facts.md](docs/harness-facts.md) § 15). The plan, pull-request and
 message guards, the context hand-off and the judges' preloaded protocol ran
-live too. Not yet exercised live, though tested on stubbed input: the closing
-line rule, and the memory link, which is experimental: off by default, its
-directory rule undocumented by Claude Code.
+live too. A third trial, with Claude Code 2.1.329, walked the demo from
+`/docrank:demo` to the arbiter's `code defect` and its re-check on the fix in
+9 min 07 s, and saw `init` propose the arbiter and install the pre-push. What
+was changed after it, in the demo's example and in `init`'s wording, is not
+yet proved live. Not yet exercised live, though tested on stubbed input: the
+closing line rule, and the memory link, which is experimental: off by default,
+its directory rule undocumented by Claude Code.
 
 ## License
 

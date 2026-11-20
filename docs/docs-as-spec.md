@@ -17,8 +17,10 @@ A check whose key is empty prints that it is off and exits 0.
   the tree as it was.
 - `node lib/check-drift-pairs.mjs` — every directory and source file directly
   under a root of `docs.unitRoots` is started by a code prefix of
-  `docDrift.entries`, or by a key of `docDrift.unpaired`. It also refuses an
-  entry path the tree does not hold and an exception that excuses nothing.
+  `docDrift.entries`, or by a key of `docDrift.unpaired`, once a `/` is added
+  to its path: `src/payments/` and `src/pay` cover the unit `src/payments`,
+  `src/payments/stripe/` does not. It also refuses an entry path the tree does
+  not hold and an exception that excuses nothing.
 
 Both export their function (`checkSections(config)`,
 `checkDriftPairs(config)`), which takes what `loadConfig()` returns and gives

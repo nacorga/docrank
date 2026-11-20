@@ -70,7 +70,8 @@ describe("demo.mjs", () => {
     expect(config.docs.precedence).toEqual(["docs/spec.md"]);
     expect(config.judges.routes).toEqual([{ agent: "docrank:spec-arbiter", ground: ["src/**"] }]);
     expect(config.gates.run).toEqual([{ name: "test", command: "node --test test/checkout.test.mjs" }]);
-    expect(config.docDrift.entries).toEqual([{ code: ["src/"], docs: ["docs/spec.md"] }]);
+    // No drift pairing: its Stop hook would point the session at the spec before the arbiter is asked.
+    expect(config.docDrift.entries).toEqual([]);
     const cli = node([path.join(ROOT, "bin", "docrank.mjs"), "config"], worktree);
     expect(cli.status).toBe(0);
     expect(JSON.parse(cli.stdout).root).toBe(worktree);
@@ -104,6 +105,7 @@ describe("demo.mjs", () => {
     };
     expect(await events(worktree, {})).toEqual([{ user: "u1", email: "ada@example.com", total: 100 }]);
     expect(await events(fixed, {})).toEqual([]);
+    expect(await events(fixed, { analytics: "yes" })).toEqual([]);
     expect(await events(fixed, { analytics: true })).toEqual([{ user: "u1", total: 100 }]);
   });
 

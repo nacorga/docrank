@@ -9,7 +9,9 @@ Propose `.claude/docrank.json` for this repository. Every key and default is in
 `${CLAUDE_PLUGIN_ROOT}/docs/config.md`; read it first. The file is the only
 thing docrank asks of a repository, and a key left out keeps its default, so
 write a key only where the repository differs from the default or the key turns
-a feature on. Read; write nothing until step 3.
+a feature on. Read; write nothing until step 3. Files are read with Read and
+found with Glob; Bash runs only the git and docrank commands of
+`allowed-tools`, one per call, never chained.
 
 ## 1. Read the repository
 
@@ -58,7 +60,10 @@ neither settles a key, it stays out and the proposal says so; never guess.
 
   With a document settled, ask next what code it governs: `["**"]`, every
   change, unless the document names the code it covers, whose globs
-  (`src/**`) then lead. Propose the two keys together:
+  (`src/**`) then lead. A named file puts the glob of its directory
+  (`src/**` for `src/checkout.mjs`) among the options ahead of the file
+  itself, so a file added beside it is not left unjudged; the user still
+  chooses. Propose the two keys together:
   `docs.precedence`, `["<doc>"]` for a chosen document, and
   `judges.routes: [{ "agent": "docrank:spec-arbiter", "ground": [<globs>] }]`,
   the ground `["**"]` when the user narrows nothing. Neither is inferred: a

@@ -33,6 +33,14 @@ proposes a complete `.claude/docrank.json` with a reason for each key it sets,
 and writes nothing until you confirm. Without that file every guard runs on its
 defaults and the features that need a setting stay off.
 
+The spec arbiter needs two keys: `docs.precedence`, the document that binds,
+and `judges.routes`, the code it governs. `init` takes a document that says it
+binds, or asks which one does (none is an answer), then asks what code it
+governs, `**` by default, and proposes both; without them the arbiter is off and a change gets the gates and guards
+only. To see what is on, run `/docrank:init` again: on a configured repository
+it keeps your keys and lists what stays at its default and what is off.
+`node <plugin>/bin/docrank.mjs config` prints the resolved configuration.
+
 ### Try it
 
 `/docrank:demo [<dir>]` builds a throwaway repository, in a new temporary

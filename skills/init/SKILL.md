@@ -13,8 +13,8 @@ a feature on. Read; write nothing until step 3.
 
 ## 1. Read the repository
 
-Each finding is something the repository shows. Where it shows nothing, the
-key stays out and the proposal says so; never guess.
+Each finding is something the repository shows or the user answers. Where
+neither settles a key, it stays out and the proposal says so; never guess.
 
 - **Branches.** `git branch --all`, `git remote -v`,
   `git symbolic-ref refs/remotes/origin/HEAD`. The integration branch is the
@@ -37,13 +37,32 @@ key stays out and the proposal says so; never guess.
   (a Prettier, Biome, `ruff format`, `gofmt` config), as a command that takes
   the file path appended; `format.lintCommand` and `format.lintExtensions` from
   its linter the same way. None configured: leave them out.
-- **Docs.** `Glob` for `docs/`, `doc/`, a root `DESIGN.md`, `ARCHITECTURE.md`,
-  `CLAUDE.md`. Suggest `docs.precedence` only when a document states its own
-  rank over others; otherwise leave it empty and say so. Suggest
-  `docDrift.entries` only for a pairing the repository states (a doc that
-  names the directory it describes); `docs.scanRoots` as `["docs"]` when
-  documents cite each other by `§` headings. Empty when unsure: an empty key is
-  an off feature, a wrong one is noise on every stop.
+- **Docs.** `Glob` for `docs/`, `doc/`, ADR directories (`adr/`,
+  `docs/adr/`, `docs/decisions/`), a root `DESIGN.md`, `ARCHITECTURE.md`,
+  `CLAUDE.md`: these are the candidate documents. Suggest `docDrift.entries`
+  only for a pairing the repository states (a doc that names the directory it
+  describes); `docs.scanRoots` as `["docs"]` when documents cite each other by
+  `§` headings. Empty when unsure: an empty key is an off feature, a wrong one
+  is noise on every stop.
+- **Spec arbiter.** `docrank:spec-arbiter` judges a diff against the
+  documents of `docs.precedence`, and `docrank judges`, which the ship skill
+  follows, names it for a diff only through `judges.routes`; either empty, it
+  is off. Settle the document first:
+  - A candidate that states a rank, its own or another's ("this document
+    binds", one document outranking another), gives `docs.precedence` in the
+    order stated, the quoted line its reason.
+  - Otherwise ask which candidate binds, by the rules of step 2: the likeliest
+    three as options, a spec before a readme, and `None` always one of them.
+  - No candidate, or `None`: both keys stay out, and the proposal says the
+    repository keeps gates and guards only.
+
+  With a document settled, ask next what code it governs: `["**"]`, every
+  change, unless the document names the code it covers, whose globs
+  (`src/**`) then lead. Propose the two keys together:
+  `docs.precedence`, `["<doc>"]` for a chosen document, and
+  `judges.routes: [{ "agent": "docrank:spec-arbiter", "ground": [<globs>] }]`,
+  the ground `["**"]` when the user narrows nothing. Neither is inferred: a
+  stated rank is proposed for the user's yes, and anything else is asked.
 - **Worktree files.** `.env*` (and `.mcp.json`) that exist but are git-ignored
   (`git check-ignore`), because a worktree does not carry them: `worktree.copy`.
   The default is `[".env", ".mcp.json"]`, so write the key only for a different
@@ -58,10 +77,13 @@ key stays out and the proposal says so; never guess.
 Show the whole file as JSON with, beside each key that is not a default, one
 line of reason ("lockfile is pnpm-lock.yaml", "only `main` exists"). Then list
 the keys that stay at their default and the features that stay off because the
-repository showed nothing, so the user sees what is not guarded.
+repository showed nothing, so the user sees what is not guarded. Say whether
+the spec arbiter is on, with its document and ground, or off and why: no
+candidate document, or the user chose none.
 
 Where a choice is the user's (which scripts are gates, which branch is
-integration when two fit, whether `format.command` runs on every edit), ask with
+integration when two fit, whether `format.command` runs on every edit, which
+document binds and what code it governs), ask with
 `AskUserQuestion`: one question at a time, 2 to 4 concrete options, the one you
 judge best first and marked "(Recommended)" with its reason, "Other" taking the
 user's words. Decide what the repository settles; ask only what it does not.
@@ -77,8 +99,19 @@ Nothing is written before the user confirms the proposal.
    resolved config, or one error per problem naming the key and exits 1; fix
    and run again until it prints. Where `docs.scanRoots` or `docs.unitRoots` is
    set, also run `docrank check sections` or `docrank check drift-pairs` and
-   report what they find, without editing the documents.
-4. Say what is now guarded and what is not, from `docs/config.md`.
+   report what they find, without editing the documents. Where
+   `judges.routes` is set, also run
+   `node ${CLAUDE_PLUGIN_ROOT}/bin/docrank.mjs judges` and report the judge it
+   names. It reads the working tree too, so the file just written is a change:
+   a ground that covers `.claude/docrank.json` shows the judge as `launch`,
+   one that does not as `skip`, and both prove the route, as does
+   `Nothing changed` on a tree with no change since the fork. It exits 1 when
+   neither `origin/<integration>` nor `<integration>` is a commit here, as in a
+   repository with no commit yet: say so, `config` has already proved the
+   route, and `judges` names the judge once that branch has a commit.
+4. Say what is now guarded and what is not, from `docs/config.md`, and whether
+   the spec arbiter is on: the judge `judges` named and its ground, or off and
+   why.
 
 ## 4. Optional, each on its own yes
 

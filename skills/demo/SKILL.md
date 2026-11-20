@@ -11,7 +11,8 @@ Build the demo and hand its instructions over.
 1. Run `node ${CLAUDE_PLUGIN_ROOT}/scripts/demo.mjs $ARGUMENTS`. It builds a
    bare remote, a main checkout on `main` and a worktree on `demo/tracking`
    from the plugin's `examples/consent`, and prints the paths, the command
-   that opens a session in the worktree and the three steps to type there.
+   that opens a session in the worktree, the three steps to type there and,
+   apart from them, what each should show.
    A directory that exists is refused untouched: report the script's message
    and stop.
 2. Reply with the script's output verbatim, in a code block, and nothing

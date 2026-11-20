@@ -111,16 +111,18 @@ installed at, and replaces an installed one; a project- or local-scope
 install in another repository is not enabled in this new directory
 (docs/harness-facts.md, fact 16).
 
-Then type, one at a time:
+Then type, one at a time, each line as it is:
 
   1. /docrank:gates
-     The test passes and the commit is recorded.
   2. Review this branch with docrank:spec-arbiter.
-     Look for a code defect citing docs/spec.md § Analytics: the event is sent
-     before consent and carries the email.
-  3. Switch this worktree to demo/fixed, then have the same arbiter re-check
-     demo/tracking..HEAD.
-     Look for that finding resolved.
+  3. Switch this worktree to demo/fixed, then have the same arbiter re-check demo/tracking..HEAD.
+
+What to expect, kept apart so a pasted step carries no hint to the judge:
+
+  1. The test passes and the commit is recorded.
+  2. A code defect citing docs/spec.md § Analytics: the event is sent before
+     consent and carries the email.
+  3. That finding resolved.
 
 To remove the demo: rm -rf ${sh(dir)}
 `);

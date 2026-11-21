@@ -133,8 +133,15 @@ live too. A third trial, with Claude Code 2.1.329, walked the demo from
 fourth installed 0.2.0 from the marketplace at project scope, on a machine
 without docrank and with no other configuration, and walked the demo to the
 same finding and its re-check in 5 min 14 s, proving the example's changes
-made after the third. `init`'s wording changed after the third, and the demo's
-step output after the fourth, are not yet proved live. Not yet exercised live, though tested on stubbed input: the
+made after the third. A fifth, with Claude Code 2.1.330 and every session
+driven by Claude rather than read by a person, updated that install to 0.2.1
+and walked the demo, each printed step typed alone, to the finding and its
+clean re-check in 3 min 56 s, proving the demo's step output; proved that a
+hook reads the `.claude/docrank.json` of the worktree a session is started
+in; and saw `init` read with Read and one command per Bash call, offer
+`src/**` ahead of the named file for the ground and pair `src/` for doc drift,
+proving its wording changed after the third, then, on the 0.2.2 branch, run
+with no error. Not yet exercised live, though tested on stubbed input: the
 closing line rule, and the memory link, which is experimental: off by default,
 its directory rule undocumented by Claude Code.
 

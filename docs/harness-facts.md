@@ -37,7 +37,7 @@ Fact 16 was read on 2026-11-20 from
 | 12 | The type of the agent a `SendMessage` reaches | VERIFIED, recorded at dispatch; PROVED LIVE |
 | 13 | PreToolUse `updatedInput` and `additionalContext`; the Agent tool's `name` and `effort` | VERIFIED |
 | 14 | Hook matcher syntax, plugin hooks included | VERIFIED |
-| 16 | Where an installed plugin is on; `--plugin-dir` beside an install; a session started in a worktree | VERIFIED; that a hook's `cwd` is the launch directory, inferred |
+| 16 | Where an installed plugin is on; `--plugin-dir` beside an install; a session started in a worktree | VERIFIED; that a hook's `cwd` is the launch directory, NOT DOCUMENTED; PROVED LIVE |
 
 ## 1. `${CLAUDE_PLUGIN_ROOT}` in hook commands: VERIFIED
 
@@ -388,7 +388,7 @@ Found in the trial, and changed after it:
   `{ user, total }`, and `fixed.patch` tests `{ analytics: "yes" }`.
 
 These four changes were made after the trial. The marketplace install below
-ran the example's two; `init`'s two are not proved live yet.
+ran the example's two; `init`'s two were proved on 2026-11-21, below.
 
 ### The marketplace install, 2026-11-20
 
@@ -430,11 +430,98 @@ The demo, from `/docrank:demo` to the re-check:
 This install proved live the example's two changes made after the previous
 trial: no `docDrift.entries`, and the spec stating the call and the event with
 `fixed.patch` testing `{ analytics: "yes" }`. `init`'s two, reading with Read
-and Glob and offering a named file's directory glob first, were not exercised.
+and Glob and offering a named file's directory glob first, were not exercised
+here; they were proved on 2026-11-21, below.
 
 Changed after it: each step the demo prints is now only what to type, alone on
 its line, and what to expect is a block after the steps, since a pasted step
-carried its hint to the judge. That output is not proved live yet.
+carried its hint to the judge. That output was proved on 2026-11-21, below.
+
+### 0.2.1 and 0.2.2, 2026-11-21
+
+Claude Code 2.1.330. Claude, the orchestrating session, drove every session
+through tmux, typing into real interactive sessions; no human read or
+answered, so the times below hold no reading time.
+
+- `claude plugin update docrank@docrank`, in `~/docrank-trial` as the
+  marketplace install above left it: "Plugin "docrank" updated from 0.2.0 to
+  0.2.1 for scope project (~/docrank-trial)".
+
+The demo, from `/docrank:demo` to the re-check:
+
+- `/docrank:demo` in `~/docrank-trial` (10:36:51Z) printed the steps as a
+  block, "Then type, one at a time, each line as it is:", of three bare lines,
+  and what to expect as a separate block, "What to expect…". Its session
+  command named `~/.claude/plugins/cache/docrank/docrank/0.2.1`.
+- In the session opened in `repo-tracking` with that command, each step typed
+  alone: `/docrank:gates` passed `test` and recorded `bf2c3d2`. Doc drift on
+  `Stop` did not fire.
+- With no hint in the prompt, `docrank:spec-arbiter` reported three `code
+  defect`s, each citing `examples/consent/docs/spec.md` § Analytics by line:
+  the event carries the email; there is no consent check, the signature taking
+  no `consent`; the test asserts the forbidden behaviour. Beside them, a note:
+  the spec does not say what happens when `track` is passed without `consent`.
+- The re-check on `demo/fixed`, sent to the same arbiter, resumed: the three
+  resolved and nothing new. Two `Late` notes, not findings: `consent: null`
+  throws a TypeError, and two defaults, the no-op `track` and an absent
+  `consent` meaning no consent, are not written in the spec.
+- 3 min 56 s from `/docrank:demo` (10:36:51Z) to the verdict on `demo/fixed`
+  (10:40:47Z).
+
+This proved live the demo's step output changed after the marketplace install.
+
+Fact 16's unproved half, a hook in a session started in a worktree:
+
+- With that session still open in `repo-tracking`, on `demo/fixed`, a `!`
+  command added `docDrift.entries`, `src/` paired with `docs/spec.md`, to
+  `repo-tracking/.claude/docrank.json` only; the main checkout's
+  `repo/.claude/docrank.json` had none, which was checked.
+- The turn that followed (2.1.330 answers the output of a `!` command) ended
+  with the `Stop` hook: "Code a document states changed, and the document did
+  not: - src/ changed; docs/spec.md did not", "This hook comes from the
+  docrank@inline plugin."
+
+So the hook read the configuration of the worktree the session was started
+in (§ 16).
+
+`/docrank:init` with 0.2.1, `--plugin-dir` the installed 0.2.1, in a copy of
+`examples/consent` with no `.claude/`, no sentence stating a rank in
+`docs/spec.md` nor in `CLAUDE.md`, and a bare remote with no `origin/HEAD`:
+
+- It read files with Read and ran one git command per Bash call.
+- It asked which document binds, `docs/spec.md` recommended, `CLAUDE.md` and
+  `None`: `docs/spec.md`. For the ground it offered `src/**`, recommended as
+  the named file's directory, ahead of `src/checkout.mjs` and `**`: `src/**`.
+- It proposed `docDrift.entries` `[{ "code": ["src/"], "docs":
+  ["docs/spec.md"] }]` with `docs.precedence` and `judges.routes`; `docrank
+  config` loaded it, and `docrank judges` showed the arbiter as `skip`.
+- It installed the pre-push in `.git/hooks` and tried it: 0, then 1.
+
+This proved live the three changes to `init`'s wording of 0.2.0 and 0.2.1:
+Read and one unchained command per Bash call, a named file's directory glob
+ahead of it for the ground, and its directory for doc drift.
+
+Four errors remained, each a probe of something absent: `git symbolic-ref
+refs/remotes/origin/HEAD` (exit 128, which the skill prescribed), a Read of
+the absent `.claude/docrank.json` and of the absent `.git/hooks/pre-push`, and
+`git config --get core.hooksPath`, unset (exit 1). Changed in 0.2.2: absence
+is read from a Glob or a listing, `git branch --all` for the remote's default,
+Glob before a Read, `git status --short --ignored` for ignored env files and
+`git rev-parse --git-path hooks` for the hooks directory.
+
+`/docrank:init` with 0.2.2, the same driver, in a fresh copy that also holds a
+git-ignored `.env`. The plugin was loaded with `--plugin-dir` from the
+`fix/0.2.2` branch at `2d887aa`, not from the released 0.2.2, whose content is
+that commit's tree.
+
+- No error in the session. Its calls: Read for `docs/config.md` and six files,
+  `git branch --all`, `git remote -v`, `git ls-files`, `git status --short
+  --ignored` (it showed `!! .env`), `git rev-parse --git-path hooks`, `git
+  ls-files --others --exclude-standard`, `ls .git/hooks`.
+- The same questions, answers and proposal. It installed the pre-push,
+  identical to the template, and tried it.
+- The install step chained `cp && chmod && ls && cmp` in one Bash call, once:
+  no error, but a chain.
 
 ## 16. Install scopes, `--plugin-dir`, a session in a worktree: VERIFIED
 
@@ -481,4 +568,7 @@ invoked"; that it is the launch directory in a session started there is read
 from the primary working directory above, not from a page that states both.
 The demo (`scripts/demo.mjs`) does not depend on it: its patches never touch
 `.claude/docrank.json`, so the worktree and the main checkout hold the same
-file. Not proved live yet.
+file. PROVED LIVE on 2026-11-21 (§ 15), still not documented: with
+`docDrift.entries` in the worktree's `.claude/docrank.json` only, doc drift
+fired on `Stop` in a session started in the worktree, so the hook read the
+configuration of the worktree the session was started in.

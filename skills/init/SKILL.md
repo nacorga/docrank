@@ -2,7 +2,7 @@
 name: init
 description: Read this repository (branches, package manager, scripts, formatter, docs tree, ignored env files) and propose a complete `.claude/docrank.json` for the user to confirm, then write it, prove it loads, and offer the optional git pre-push hook. Use when adopting docrank in a repository, or to revisit its configuration.
 disable-model-invocation: true
-allowed-tools: Bash(node ${CLAUDE_PLUGIN_ROOT}/bin/docrank.mjs *) Bash(git branch *) Bash(git remote *) Bash(git symbolic-ref *) Bash(git ls-files *) Bash(git check-ignore *) Bash(git rev-parse *) Read Grep Glob
+allowed-tools: Bash(node ${CLAUDE_PLUGIN_ROOT}/bin/docrank.mjs *) Bash(git branch *) Bash(git remote *) Bash(git ls-files *) Bash(git status *) Bash(git rev-parse *) Read Grep Glob
 ---
 
 Propose `.claude/docrank.json` for this repository. Every key and default is in
@@ -11,15 +11,19 @@ thing docrank asks of a repository, and a key left out keeps its default, so
 write a key only where the repository differs from the default or the key turns
 a feature on. Read; write nothing until step 3. Files are read with Read and
 found with Glob; Bash runs only the git and docrank commands of
-`allowed-tools`, one per call, never chained.
+`allowed-tools`, one per call, never chained. Absence is read from a Glob or
+a listing, never from an error: a file that may be missing is found with Glob
+before it is read, and no command is run that fails when what it asks about is
+not there.
 
 ## 1. Read the repository
 
 Each finding is something the repository shows or the user answers. Where
 neither settles a key, it stays out and the proposal says so; never guess.
 
-- **Branches.** `git branch --all`, `git remote -v`,
-  `git symbolic-ref refs/remotes/origin/HEAD`. The integration branch is the
+- **Branches.** `git branch --all`, whose `remotes/origin/HEAD -> origin/<name>`
+  line, when there is one, names the remote's default, and `git remote -v`.
+  The integration branch is the
   one work branches from and merges back into: `develop` or `trunk` beside
   `main` means that one; a repository with only `main` has integration `main`
   and protected `main`. `branches.protected` holds the released line, plus the
@@ -71,7 +75,8 @@ neither settles a key, it stays out and the proposal says so; never guess.
   the ground `["**"]` when the user narrows nothing. Neither is inferred: a
   stated rank is proposed for the user's yes, and anything else is asked.
 - **Worktree files.** `.env*` (and `.mcp.json`) that exist but are git-ignored
-  (`git check-ignore`), because a worktree does not carry them: `worktree.copy`.
+  (`git status --short --ignored -- <paths>` marks them `!!`), because a
+  worktree does not carry them: `worktree.copy`.
   The default is `[".env", ".mcp.json"]`, so write the key only for a different
   set. `worktree.install` from the package manager's install command, when the
   repository has dependencies.
@@ -130,8 +135,10 @@ answer, leaves the repository as step 3 left it.
   passed the gates; the hook gives a push from a terminal the same check. Only
   when `gates.run` is set. Install it as `.githooks/pre-push` (executable) with
   `git config core.hooksPath .githooks`, or into `.git/hooks/pre-push` when the
-  repository has no hooks directory of its own; never over an existing hook
-  without showing it. Say that `git push --no-verify` is the way past it.
+  repository has no hooks directory of its own; `git rev-parse --git-path
+  hooks` names the directory git runs hooks from, `core.hooksPath` honoured.
+  Never over an existing hook without showing it. Say that
+  `git push --no-verify` is the way past it.
 - **Fallback hooks.** For an event whose plugin hook does not act, and only
   that event: never one whose plugin hook acts, since the plugin's hook and
   the copy could both fire, and that Claude Code runs such a pair once is not

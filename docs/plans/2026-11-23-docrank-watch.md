@@ -156,7 +156,7 @@ first written from:
   - A test builds the bundle in a temporary directory and fails when it
     differs from the committed one, so CI catches a stale bundle.
   - Checked in a real browser with a screenshot of a live session.
-- [ ] **1i · CLI.** `lib/cli/watch.mjs`: `docrank watch` starts the server if
+- [x] **1i · CLI.** `lib/cli/watch.mjs`: `docrank watch` starts the server if
   needed and prints (and opens) the URL.
 - [ ] **1j · Documents.** `docs/config.md` (1c); README: what watch shows,
   how to switch it on, how to get a task list on newer models, what is

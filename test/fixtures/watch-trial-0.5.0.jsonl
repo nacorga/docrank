@@ -1,0 +1,20 @@
+{"time":1795450899826,"event":"SessionStart","source":"startup","repo":"repo-tracking"}
+{"time":1795450901946,"event":"UserPromptSubmit"}
+{"time":1795450903605,"event":"PreToolUse","toolUseId":"toolu_01YY5boSxSRdQdAfbe3nBeCd","tool":"Bash","input":{"command":"node --test test/no-existe.mjs; echo \"exit=$?\"","description":"Run the nonexistent test file"}}
+{"time":1795450904473,"event":"PostToolUse","toolUseId":"toolu_01YY5boSxSRdQdAfbe3nBeCd","tool":"Bash","input":{"command":"node --test test/no-existe.mjs; echo \"exit=$?\"","description":"Run the nonexistent test file"},"ok":true}
+{"time":1795450906945,"event":"Stop"}
+{"time":1795450907253,"event":"SessionEnd","reason":"other"}
+{"time":1795450913490,"event":"SessionStart","source":"resume","repo":"repo-tracking"}
+{"time":1795450915608,"event":"UserPromptSubmit"}
+{"time":1795450915838,"event":"SubagentStart","agentId":"a3ce22baa578f9600","agentType":"general-purpose"}
+{"time":1795450917507,"event":"PreToolUse","agentId":"a3ce22baa578f9600","agentType":"general-purpose","toolUseId":"toolu_01AgJVbmKGa3n4NQPsyGEcHD","tool":"Bash","input":{"command":"node /path/to/docrank/scripts/run-gates.mjs -C /tmp/demo/repo-tracking 2>&1 | tail -60"},"gate":"*"}
+{"time":1795450919138,"event":"PostToolUse","agentId":"a3ce22baa578f9600","agentType":"general-purpose","toolUseId":"toolu_01AgJVbmKGa3n4NQPsyGEcHD","tool":"Bash","input":{"command":"node /path/to/docrank/scripts/run-gates.mjs -C /tmp/demo/repo-tracking 2>&1 | tail -60"},"gate":"*","ok":true}
+{"time":1795450921093,"event":"SubagentStop","agentId":"a3ce22baa578f9600","agentType":"general-purpose"}
+{"time":1795450921098,"event":"Stop"}
+{"time":1795450921413,"event":"SessionEnd","reason":"other"}
+{"time":1795450975733,"event":"SessionStart","source":"resume","repo":"repo-tracking"}
+{"time":1795450977848,"event":"UserPromptSubmit"}
+{"time":1795450979407,"event":"PreToolUse","toolUseId":"toolu_011nPj6TfT1RbDqYtdUUUAvJ","tool":"Bash","input":{"command":"node -e 'process.exit(3)'","description":"Run node that exits with code 3"}}
+{"time":1795450980086,"event":"PostToolUseFailure","toolUseId":"toolu_011nPj6TfT1RbDqYtdUUUAvJ","tool":"Bash","input":{"command":"node -e 'process.exit(3)'","description":"Run node that exits with code 3"},"ok":false,"exitCode":3}
+{"time":1795450981488,"event":"Stop"}
+{"time":1795450981790,"event":"SessionEnd","reason":"other"}

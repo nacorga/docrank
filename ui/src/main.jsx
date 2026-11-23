@@ -9,7 +9,7 @@ import { Background, ReactFlow, useReactFlow } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { closingRows, errand, helperChips, phrase, span, words } from "../../lib/watch/phrases.mjs";
+import { closingRows, errand, helperChips, phrase, repoLabel, span, words } from "../../lib/watch/phrases.mjs";
 import { FREE, closing, helperNode, reduce, taskNode, turnNode } from "../../lib/watch/reduce.mjs";
 import "./watch.css";
 
@@ -129,7 +129,6 @@ function useNow(ms) {
 }
 
 const time = (t) => (t ? new Date(t).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "");
-const repoName = (key) => key.replace(/-[0-9a-f]{8}$/u, "");
 const sameDay = (a, b) => new Date(a).toDateString() === new Date(b).toDateString();
 /** A start as the list shows it: the time today, the day and time before. */
 const when = (t) =>
@@ -154,28 +153,34 @@ function Sessions({ sessions, chosen, pick }) {
   return (
     <nav className="sessions">
       <h2>{w.sessions}</h2>
-      {groups(sessions).map((g) => (
-        <section key={g.repo}>
-          <h3>{repoName(g.repo)}</h3>
-          <ul>
-            {g.list.map((x) => (
-              <li key={key(x)}>
-                <button type="button" className={chosen && key(chosen) === key(x) ? "chosen" : ""} onClick={() => pick(x)}>
-                  <span className="top">
-                    <span className="start">{when(x.startedAt ?? x.updatedAt)}</span>
-                    {x.name && x.name !== repoName(g.repo) ? <span className="checkout">{x.name}</span> : null}
-                  </span>
-                  <span className={`state ${x.state}`}>
-                    <span className="dot" />
-                    {w.state[x.state]}
-                  </span>
-                  <span className="tasks">{x.tasks ? w.tasks(x.tasks) : w.noTasks}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ))}
+      {groups(sessions).map((g, _, all) => {
+        const label = repoLabel(g.repo, all.map((x) => x.repo));
+        return (
+          <section key={g.repo}>
+            <h3>
+              {label.name}
+              {label.tag ? <span className="tag">{label.tag}</span> : null}
+            </h3>
+            <ul>
+              {g.list.map((x) => (
+                <li key={key(x)}>
+                  <button type="button" className={chosen && key(chosen) === key(x) ? "chosen" : ""} onClick={() => pick(x)}>
+                    <span className="top">
+                      <span className="start">{when(x.startedAt ?? x.updatedAt)}</span>
+                      {x.name && x.name !== label.name ? <span className="checkout">{x.name}</span> : null}
+                    </span>
+                    <span className={`state ${x.state}`}>
+                      <span className="dot" />
+                      {w.state[x.state]}
+                    </span>
+                    <span className="tasks">{x.tasks ? w.tasks(x.tasks) : w.noTasks}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        );
+      })}
     </nav>
   );
 }

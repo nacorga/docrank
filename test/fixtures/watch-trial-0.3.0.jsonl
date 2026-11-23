@@ -1,0 +1,52 @@
+{"time":1795443753488,"event":"SessionStart","source":"startup","repo":"repo-tracking"}
+{"time":1795443784045,"event":"UserPromptSubmit"}
+{"time":1795443787953,"event":"PreToolUse","toolUseId":"toolu_01A5rHeoDorjc8dTzh3rSz9c","tool":"ToolSearch","input":{}}
+{"time":1795443787960,"event":"PostToolUse","toolUseId":"toolu_01A5rHeoDorjc8dTzh3rSz9c","tool":"ToolSearch","input":{},"ok":true}
+{"time":1795443792415,"event":"PreToolUse","toolUseId":"toolu_01S7TuJJuWimeMyjMPWvh4yd","tool":"TaskCreate","input":{"subject":"Resumir docs/spec.md en tres líneas con un subagente Explore","activeForm":"Resumiendo docs/spec.md"}}
+{"time":1795443792418,"event":"TaskCreated","taskId":"1","subject":"Resumir docs/spec.md en tres líneas con un subagente Explore"}
+{"time":1795443792420,"event":"PostToolUse","toolUseId":"toolu_01S7TuJJuWimeMyjMPWvh4yd","tool":"TaskCreate","input":{"subject":"Resumir docs/spec.md en tres líneas con un subagente Explore","activeForm":"Resumiendo docs/spec.md"},"ok":true,"taskId":"1"}
+{"time":1795443793006,"event":"PreToolUse","toolUseId":"toolu_01C3vkkjPwsvsbjbS9b14aJS","tool":"TaskCreate","input":{"subject":"Ejecutar los gates con /docrank:gates","activeForm":"Ejecutando los gates"}}
+{"time":1795443793014,"event":"TaskCreated","taskId":"2","subject":"Ejecutar los gates con /docrank:gates"}
+{"time":1795443793017,"event":"PostToolUse","toolUseId":"toolu_01C3vkkjPwsvsbjbS9b14aJS","tool":"TaskCreate","input":{"subject":"Ejecutar los gates con /docrank:gates","activeForm":"Ejecutando los gates"},"ok":true,"taskId":"2"}
+{"time":1795443794163,"event":"PreToolUse","toolUseId":"toolu_01GevbaNmozAGqa6NDshPous","tool":"TaskCreate","input":{"subject":"Ejecutar `git push origin HEAD:main` una vez y reportar si fue permitido","activeForm":"Ejecutando git push"}}
+{"time":1795443794171,"event":"TaskCreated","taskId":"3","subject":"Ejecutar `git push origin HEAD:main` una vez y reportar si fue permitido"}
+{"time":1795443794172,"event":"PostToolUse","toolUseId":"toolu_01GevbaNmozAGqa6NDshPous","tool":"TaskCreate","input":{"subject":"Ejecutar `git push origin HEAD:main` una vez y reportar si fue permitido","activeForm":"Ejecutando git push"},"ok":true,"taskId":"3"}
+{"time":1795443798301,"event":"PreToolUse","toolUseId":"toolu_012gn7mcsD66VRNUNwyTsDre","tool":"TaskUpdate","input":{"taskId":"1","status":"in_progress"}}
+{"time":1795443798309,"event":"PostToolUse","toolUseId":"toolu_012gn7mcsD66VRNUNwyTsDre","tool":"TaskUpdate","input":{"taskId":"1","status":"in_progress"},"ok":true}
+{"time":1795443800544,"event":"PreToolUse","toolUseId":"toolu_015bFeZQhJpJ3v5f41TYKVgY","tool":"Agent","input":{"description":"Resumir docs/spec.md","subagentType":"Explore"}}
+{"time":1795443800601,"event":"SubagentStart","agentId":"a0f04a9c1893a4301","agentType":"Explore"}
+{"time":1795443800610,"event":"PostToolUse","toolUseId":"toolu_015bFeZQhJpJ3v5f41TYKVgY","tool":"Agent","input":{"description":"Resumir docs/spec.md","subagentType":"Explore"},"ok":true}
+{"time":1795443802218,"event":"PreToolUse","agentId":"a0f04a9c1893a4301","agentType":"Explore","toolUseId":"toolu_01JMsS1WvgHV6GuteEGMkuBm","tool":"Read","input":{"path":"docs/spec.md"}}
+{"time":1795443802233,"event":"PostToolUse","agentId":"a0f04a9c1893a4301","agentType":"Explore","toolUseId":"toolu_01JMsS1WvgHV6GuteEGMkuBm","tool":"Read","input":{"path":"docs/spec.md"},"ok":true}
+{"time":1795443806499,"event":"Stop"}
+{"time":1795443806604,"event":"SubagentStop","agentId":"a0f04a9c1893a4301","agentType":"Explore"}
+{"time":1795443806640,"event":"UserPromptSubmit"}
+{"time":1795443810009,"event":"SubagentStop","agentId":"ab375382911556cff"}
+{"time":1795443810579,"event":"PreToolUse","toolUseId":"toolu_01V1YxkmLwFDgp8nF4CZPVjP","tool":"TaskUpdate","input":{"taskId":"1","status":"completed"}}
+{"time":1795443810581,"event":"PreToolUse","toolUseId":"toolu_01S8H3Zu8ry4WGa93qXMNL9N","tool":"TaskUpdate","input":{"taskId":"2","status":"in_progress"}}
+{"time":1795443810592,"event":"PostToolUse","toolUseId":"toolu_01V1YxkmLwFDgp8nF4CZPVjP","tool":"TaskUpdate","input":{"taskId":"1","status":"completed"},"ok":true}
+{"time":1795443810592,"event":"PostToolUse","toolUseId":"toolu_01S8H3Zu8ry4WGa93qXMNL9N","tool":"TaskUpdate","input":{"taskId":"2","status":"in_progress"},"ok":true}
+{"time":1795443810679,"event":"PreToolUse","toolUseId":"toolu_01Qo1bUV3qRpSCPGENo3Phgb","tool":"Skill","input":{"skill":"docrank:gates"}}
+{"time":1795443810689,"event":"PermissionRequest","tool":"Skill","input":{"skill":"docrank:gates"}}
+{"time":1795443816688,"event":"Notification","kind":"permission_prompt"}
+{"time":1795443979958,"event":"SubagentStart","agentId":"a255db62190c708c7","agentType":"general-purpose"}
+{"time":1795443979971,"event":"PostToolUse","toolUseId":"toolu_01Qo1bUV3qRpSCPGENo3Phgb","tool":"Skill","input":{"skill":"docrank:gates"},"ok":true}
+{"time":1795443983606,"event":"Stop"}
+{"time":1795443984273,"event":"PreToolUse","agentId":"a255db62190c708c7","agentType":"general-purpose","toolUseId":"toolu_01GN8k2dD5e3YZdT3YYXUKsd","tool":"Bash","input":{"command":"node ${CLAUDE_PLUGIN_ROOT}/scripts/run-gates.mjs -C /tmp/demo/repo-tracking 2>&1 | tail -80"},"gate":"*"}
+{"time":1795443984650,"event":"PostToolUse","agentId":"a255db62190c708c7","agentType":"general-purpose","toolUseId":"toolu_01GN8k2dD5e3YZdT3YYXUKsd","tool":"Bash","input":{"command":"node ${CLAUDE_PLUGIN_ROOT}/scripts/run-gates.mjs -C /tmp/demo/repo-tracking 2>&1 | tail -80"},"gate":"*","ok":true}
+{"time":1795443986598,"event":"PreToolUse","agentId":"a255db62190c708c7","agentType":"general-purpose","toolUseId":"toolu_01BevKu9tEvEeP7d1n6Z7MCp","tool":"Bash","input":{"command":"git status --short | head"}}
+{"time":1795443986691,"event":"PostToolUse","agentId":"a255db62190c708c7","agentType":"general-purpose","toolUseId":"toolu_01BevKu9tEvEeP7d1n6Z7MCp","tool":"Bash","input":{"command":"git status --short | head"},"ok":true}
+{"time":1795443987168,"event":"SubagentStop","agentId":"ab7e3a6bdfa3f0b63"}
+{"time":1795443988531,"event":"SubagentStop","agentId":"a255db62190c708c7","agentType":"general-purpose"}
+{"time":1795443988567,"event":"UserPromptSubmit"}
+{"time":1795443992678,"event":"PreToolUse","toolUseId":"toolu_01Xke9JwdGzvqG8JfNSyuM3h","tool":"TaskUpdate","input":{"taskId":"2","status":"completed"}}
+{"time":1795443992688,"event":"PostToolUse","toolUseId":"toolu_01Xke9JwdGzvqG8JfNSyuM3h","tool":"TaskUpdate","input":{"taskId":"2","status":"completed"},"ok":true}
+{"time":1795443993617,"event":"PreToolUse","toolUseId":"toolu_01H7bXQx6p9tUiSqfeByEdwX","tool":"TaskUpdate","input":{"taskId":"3","status":"in_progress"}}
+{"time":1795443993627,"event":"PostToolUse","toolUseId":"toolu_01H7bXQx6p9tUiSqfeByEdwX","tool":"TaskUpdate","input":{"taskId":"3","status":"in_progress"},"ok":true}
+{"time":1795443993841,"event":"PreToolUse","toolUseId":"toolu_01EVDFYz6jmtnmKNr2uD1R9Z","tool":"Bash","input":{"command":"git push origin HEAD:main 2>&1; echo \"exit=$?\"","description":"Push current commit to main on origin, once"}}
+{"time":1795443993846,"event":"Refused","toolUseId":"toolu_01EVDFYz6jmtnmKNr2uD1R9Z","tool":"Bash","input":{"command":"git push origin HEAD:main 2>&1; echo \"exit=$?\"","description":"Push current commit to main on origin, once"},"guard":"guard-bash","reason":"BLOCKED: this push targets a protected branch. Protected branches (main, master) are changed only through pull requests: open one, or ask the user to run it themselves."}
+{"time":1795443997261,"event":"PreToolUse","toolUseId":"toolu_01MNnRgEDCUb8uQ7t9Y2rHVB","tool":"TaskUpdate","input":{"taskId":"3","status":"completed"}}
+{"time":1795443997270,"event":"PostToolUse","toolUseId":"toolu_01MNnRgEDCUb8uQ7t9Y2rHVB","tool":"TaskUpdate","input":{"taskId":"3","status":"completed"},"ok":true}
+{"time":1795444004091,"event":"Stop"}
+{"time":1795444006576,"event":"SubagentStop","agentId":"a81c634c3958824a6"}
+{"time":1795444049746,"event":"SessionEnd","reason":"prompt_input_exit"}

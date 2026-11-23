@@ -5,9 +5,9 @@
  */
 import { Background, ReactFlow, useReactFlow } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { phrase, words } from "../../lib/watch/phrases.mjs";
+import { errand, phrase, words } from "../../lib/watch/phrases.mjs";
 import { FREE, helperNode, reduce, taskNode } from "../../lib/watch/reduce.mjs";
 import "./watch.css";
 
@@ -94,7 +94,7 @@ function layout(s, selected) {
       nodes.push({
         id,
         position: { x: x + 16, y: 250 + j * 110 },
-        data: { label: <Card kind="helper" title={h.type ? w.helperNamed(h.type) : w.helperAnon} sub={h.errand ?? w.noErrand} state={w.helper[h.status]} count={h.actions.length} /> },
+        data: { label: <Card kind="helper" title={h.type ? w.helperNamed(h.type) : w.helperAnon} sub={errand(h, lang) ?? w.noErrand} state={w.helper[h.status]} count={h.actions.length} /> },
         className: `n helper ${h.status} ${selected === id ? "selected" : ""}`,
         style: { width: W - 32 },
       });
@@ -104,14 +104,39 @@ function layout(s, selected) {
   return { nodes, edges };
 }
 
-/** Fits the graph again when a node comes or goes: the first fit sees none. */
-function Fit({ count }) {
+const FIT = { padding: 0.2, maxZoom: 1 };
+
+/**
+ * Fits the graph again when a node comes or goes, unless the observer has
+ * moved the view by hand. React Flow holds the fit until every node is
+ * measured, and fits only measured nodes: `useSizes` keeps them measured.
+ */
+function Fit({ ids, manual }) {
   const { fitView } = useReactFlow();
   useEffect(() => {
-    const t = setTimeout(() => fitView({ padding: 0.2, maxZoom: 1 }), 50);
-    return () => clearTimeout(t);
-  }, [count, fitView]);
+    if (!manual) fitView(FIT);
+  }, [ids, manual, fitView]);
   return null;
+}
+
+/**
+ * The size React Flow measured for each node, given back with every render.
+ * The nodes are rebuilt from the reducer on each event; a node handed over
+ * without `measured` is a new, unmeasured node to React Flow, hidden until
+ * measured again and left out of a fit, which framed only part of the graph.
+ */
+function useSizes() {
+  const [sizes, setSizes] = useState(() => new Map());
+  const onNodesChange = useCallback((changes) => {
+    const dims = changes.filter((c) => c.type === "dimensions" && c.dimensions);
+    if (dims.length === 0) return;
+    setSizes((old) => {
+      const next = new Map(old);
+      for (const c of dims) next.set(c.id, c.dimensions);
+      return next;
+    });
+  }, []);
+  return [sizes, onNodesChange];
 }
 
 function Card({ kind, title, sub, state, count }) {
@@ -136,7 +161,7 @@ function feedOf(s, id) {
     return t && { title: t.subject ?? "…", actions: t.actions };
   }
   const h = s.helpers.find((x) => helperNode(x.id) === id);
-  return h && { title: h.errand ?? (h.type ? w.helperNamed(h.type) : w.helperAnon), actions: h.actions };
+  return h && { title: errand(h, lang) ?? (h.type ? w.helperNamed(h.type) : w.helperAnon), actions: h.actions };
 }
 
 function Feed({ s, id }) {
@@ -180,7 +205,13 @@ function App() {
   const s = useMemo(() => reduce(events, { now }), [events, now]);
   const [selected, setSelected] = useState(null);
   const shown = selected ?? s.active;
-  const { nodes, edges } = useMemo(() => layout(s, shown), [s, shown]);
+  const laid = useMemo(() => layout(s, shown), [s, shown]);
+  const [sizes, onNodesChange] = useSizes();
+  const nodes = useMemo(() => laid.nodes.map((n) => (sizes.has(n.id) ? { ...n, measured: sizes.get(n.id) } : n)), [laid, sizes]);
+  const edges = laid.edges;
+  const ids = nodes.map((n) => n.id).join(" ");
+  // Panned or zoomed by hand: the view stays put until the observer follows again.
+  const [manual, setManual] = useState(false);
   const key = (x) => `${x.repo}/${x.session}`;
 
   return (
@@ -193,8 +224,14 @@ function App() {
         {s.repo ? <span className="repo">{s.repo}</span> : null}
         {lost ? <span className="lost">{w.lost}</span> : null}
         <span className="spacer" />
-        {selected ? (
-          <button type="button" onClick={() => setSelected(null)}>
+        {selected || manual ? (
+          <button
+            type="button"
+            onClick={() => {
+              setSelected(null);
+              setManual(false);
+            }}
+          >
             {w.follow}
           </button>
         ) : null}
@@ -204,7 +241,7 @@ function App() {
             <select value={chosen ? key(chosen) : ""} onChange={(e) => setPicked(sessions.find((x) => key(x) === e.target.value) ?? null)}>
               {sessions.map((x) => (
                 <option key={key(x)} value={key(x)}>
-                  {repoName(x.repo)} · {time(x.updatedAt)} · {x.session.slice(0, 8)}
+                  {x.name ?? repoName(x.repo)} · {time(x.updatedAt)} · {x.session.slice(0, 8)}
                 </option>
               ))}
             </select>
@@ -217,14 +254,16 @@ function App() {
             nodes={nodes}
             edges={edges}
             fitView
-            fitViewOptions={{ padding: 0.2, maxZoom: 1 }}
+            fitViewOptions={FIT}
+            onNodesChange={onNodesChange}
+            onMove={(e) => e && setManual(true)}
             nodesDraggable={false}
             nodesConnectable={false}
             onNodeClick={(_, n) => n.id !== "claude" && setSelected(n.id)}
             proOptions={{ hideAttribution: true }}
           >
             <Background gap={24} />
-            <Fit count={nodes.length} />
+            <Fit ids={ids} manual={manual} />
           </ReactFlow>
         </div>
         <Feed s={s} id={shown} />

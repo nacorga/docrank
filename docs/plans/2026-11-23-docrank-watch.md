@@ -96,7 +96,7 @@ first written from:
   and timeout, the match-all matcher, the two task tool sets and their
   shapes. Whatever turns out NOT DOCUMENTED gets a fallback in this plan
   before 1d starts.
-- [ ] **1c · Config.** A `watch` section in `lib/config.mjs` and
+- [x] **1c · Config.** A `watch` section in `lib/config.mjs` and
   `docs/config.md`, together: `watch.enabled` (bool, `false`),
   `watch.port` (int, a fixed default above 1024), `watch.language`
   (`"en" | "es"`, `"en"`), `watch.retentionDays` (int, used by slice 2).

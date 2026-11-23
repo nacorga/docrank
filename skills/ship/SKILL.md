@@ -59,9 +59,12 @@ plugin lists each key with its default. Read the file once before stage 1.
 5. **Pull request.** `git fetch origin <integration>`, rebase on it, and if the
    rebase brought anything, stage 4 again. Gates on that head (they record it
    for the push check), push the branch and
-   `gh pr create --base <integration>`. The handover guard may refuse the
-   first attempt with the repository's checklist (`pr.checklist`): answer it,
-   then run the same command again.
+   `gh pr create --base <integration>`. The handover guard may refuse it with
+   the repository's checklist (`pr.checklist`). With `pr.requiredLines` set, a
+   body that carries a line for each entry passes at the first attempt and
+   one that lacks an entry is refused every time, naming it: write the line,
+   then run the command again. Without it, answering the checklist and
+   running the same command again passes.
 6. **CI.** `node "${CLAUDE_PLUGIN_ROOT}/scripts/watch-pr.mjs" <n>` in the
    background: it prints `GREEN`, `NO CI`, `RED` with the failed checks,
    `CONFLICTING`, `MERGED` or `CLOSED`, and its exit wakes the session. Red:

@@ -71,8 +71,8 @@ Every key is documented once, with its default, in [docs/config.md](docs/config.
 | SendMessage | a message to a judge past its re-check limit, once | `judges.maxRechecks` |
 | Edit, Write | `.env*` except `.env.example`, lockfiles, and the repository's own rules | `paths.builtIns`, `paths.rules` |
 | ExitPlanMode | a plan without a required heading | `plan.requiredHeadings` |
-| `gh pr create` | the first one of a branch whose diff touches product or surface paths, once, with the handover checklist | `pr.*`, `surface.paths` |
-| MCP tools | the first send of a message through a configured tool, once, with a claims checklist | `messages.*` |
+| `gh pr create` | one whose diff touches product or surface paths, with the handover checklist: once per branch, or, with `pr.requiredLines`, every time its body lacks one of the lines | `pr.*`, `surface.paths` |
+| MCP tools | a message through a configured tool, with a claims checklist: once per input, or, with `messages.evidenceHeader`, every time the turn wrote no claims table | `messages.*` |
 
 Around them, not refusing: the formatter and linter run on each edited file
 (`format.*`), a question at the end of a session whose code changes a document

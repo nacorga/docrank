@@ -38,7 +38,7 @@ changes on 2026-11-23, to ship together in one release (0.5.0):
   `CLAUDE_CODE_ENABLE_TODO_TOOLS` set there enables the task tools; record it
   in `docs/harness-facts.md` (VERIFIED with quote, or NOT DOCUMENTED). If NOT
   DOCUMENTED, `init` still offers it but says it is unproved.
-- [ ] **1c · `init` offers the variable** when it proposes `watch.enabled`,
+- [x] **1c · `init` offers the variable** when it proposes `watch.enabled`,
   writing nothing without confirmation, merging into an existing
   `.claude/settings.json`; README says so.
 - [ ] **1d · Turns when there is no list.** The reducer groups actions by

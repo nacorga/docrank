@@ -153,7 +153,10 @@ itself after 30 minutes without activity.
 Tasks come from Claude Code's task tools, which are off by default on models
 newer than Opus 4.7, Sonnet 4.6 and Haiku 4.5 ([harness fact 22](docs/harness-facts.md)).
 Without them every action lands in *work without a list*; to get the list,
-start Claude Code with `CLAUDE_CODE_ENABLE_TODO_TOOLS=1`.
+start Claude Code with `CLAUDE_CODE_ENABLE_TODO_TOOLS=1`. `init`, when it turns
+watch on, offers to write that variable into the `env` of the repository's
+`.claude/settings.json`, and writes nothing without a yes; that the task tools
+follow it from there is not documented nor proved yet ([harness fact 25](docs/harness-facts.md)).
 
 What is stored: one JSON line per hook event in
 `~/.claude/docrank/watch/<repository>-<hash>/<session id>.jsonl` (directory

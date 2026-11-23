@@ -74,3 +74,7 @@ main { flex: 1; display: flex; min-height: 0; }
 .card.claude .sub { color: #cfcfca; }
 .card .meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-top: 4px; }
 .card .count { background: var(--bg); border-radius: 8px; padding: 0 6px; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 3px 0 1px; }
+.chip { font: 11px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip.guard { color: var(--warn); }
+.react-flow__node.helper .chip { background: var(--card); }

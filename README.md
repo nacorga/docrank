@@ -125,10 +125,14 @@ pushes made outside Claude Code; `init` offers it.
 For someone who does not read a terminal: a browser tab that shows what a
 session is doing, and what past sessions did. At the top, its state: *working*, *waiting for your
 permission*, *waiting for your answer* or *done*. Below, a graph of Claude,
-the tasks it is working on (the current one highlighted) and the helpers it
-dispatched, each under the task it was sent from. Clicking a node shows its
+the tasks it is working on (the current one highlighted) and the subagents it
+dispatched, each under the task it was sent from, with its type
+(`Explore`, `general-purpose`) and the skill it was forked for
+(`docrank:gates`) as small chips. Clicking a node shows its
 actions as sentences ("Run the tests — it failed", "Tried to send the work to
-the shared repository (push); a safety rule stopped it"), the exact command or
+the shared repository (push); a safety rule stopped it"), each with chips
+naming its tool (`Bash`, `Read`, `mcp__browser__browser_snapshot`), the gate
+it ran and the guard that refused it (`guard-bash`), the exact command or
 path folded behind *detail*. English or Spanish.
 
 On the left, the sessions on record, grouped by repository, live ones first,
@@ -155,7 +159,7 @@ What is stored: one JSON line per hook event in
 `~/.claude/docrank/watch/<repository>-<hash>/<session id>.jsonl` (directory
 0700, file 0600), outside every repository. A line keeps the tool's name and
 only the fields its sentence names: a command and its description, a path, a
-search pattern, a URL, a task's subject, a helper's errand. Secrets in them
+search pattern, a URL, a task's subject, a subagent's errand. Secrets in them
 (tokens, passwords, `Authorization` headers, credentials in URLs, values
 written to an env file) are replaced with `[redacted]`. No tool output, no
 prompt and no file content is kept. The page is served to `127.0.0.1` only,

@@ -1,7 +1,7 @@
 /**
  * The watch page: the sessions on record, grouped by repository; the chosen
  * session's state in plain words, a graph of Claude, its tasks and its
- * helpers, and the feed of the selected node. Every view comes from `reduce`
+ * subagents, and the feed of the selected node. Every view comes from `reduce`
  * over the session's lines, as the server streams them; the timeline moves
  * through a session by reducing only the lines up to a point.
  */
@@ -9,7 +9,7 @@ import { Background, ReactFlow, useReactFlow } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { errand, phrase, words } from "../../lib/watch/phrases.mjs";
+import { errand, helperChips, phrase, words } from "../../lib/watch/phrases.mjs";
 import { FREE, helperNode, reduce, taskNode } from "../../lib/watch/reduce.mjs";
 import "./watch.css";
 
@@ -180,7 +180,7 @@ function Sessions({ sessions, chosen, pick }) {
   );
 }
 
-/** Claude on top, tasks in a row under it, each task's helpers stacked under it. */
+/** Claude on top, tasks in a row under it, each task's subagents stacked under it. */
 function layout(s, selected) {
   const W = 240;
   const GAP = 30;
@@ -208,8 +208,8 @@ function layout(s, selected) {
       const id = helperNode(h.id);
       nodes.push({
         id,
-        position: { x: x + 16, y: 250 + j * 110 },
-        data: { label: <Card kind="helper" title={h.type ? w.helperNamed(h.type) : w.helperAnon} sub={errand(h, lang) ?? w.noErrand} state={w.helper[h.status]} count={h.actions.length} /> },
+        position: { x: x + 16, y: 250 + j * 130 },
+        data: { label: <Card kind="helper" title={w.helperAnon} chips={helperChips(h)} sub={errand(h, lang) ?? w.noErrand} state={w.helper[h.status]} count={h.actions.length} /> },
         className: `n helper ${h.status} ${selected === id ? "selected" : ""}`,
         style: { width: W - 32 },
       });
@@ -254,10 +254,25 @@ function useSizes() {
   return [sizes, onNodesChange];
 }
 
-function Card({ kind, title, sub, state, count }) {
+/** Technical names (tool, gate, guard, subagent type, skill), small and quiet. */
+function Chips({ chips }) {
+  if (!chips?.length) return null;
+  return (
+    <span className="chips">
+      {chips.map((c) => (
+        <code key={`${c.kind}:${c.text}`} className={`chip ${c.kind}`} title={c.title}>
+          {c.text}
+        </code>
+      ))}
+    </span>
+  );
+}
+
+function Card({ kind, title, chips, sub, state, count }) {
   return (
     <div className={`card ${kind}`}>
       <div className="title">{title}</div>
+      <Chips chips={chips} />
       {sub ? <div className="sub">{sub}</div> : null}
       {state || count ? (
         <div className="meta">
@@ -293,6 +308,7 @@ function Feed({ s, id }) {
               <span className="dot" />
               <div>
                 <div className="text">{p.text}</div>
+                <Chips chips={p.chips} />
                 <div className="when">{time(a.time)}</div>
                 {p.detail ? (
                   <details>

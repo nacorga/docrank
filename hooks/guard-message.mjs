@@ -75,7 +75,7 @@ function tableWritten(transcript, header) {
       const content = entry?.message?.content;
       const blocks = typeof content === "string" ? [{ type: "text", text: content }] : Array.isArray(content) ? content : [];
       if (entry?.type === "user") {
-        if (blocks.some((block) => block?.type === "text")) return texts.some((text) => hasHeader(text, pattern));
+        if (isPrompt(entry, blocks)) return texts.some((text) => hasHeader(text, pattern));
       } else if (entry?.type === "assistant") {
         for (const block of blocks) if (block?.type === "text") texts.push(block.text);
       }
@@ -104,6 +104,17 @@ function readLines(file, limit) {
   } finally {
     if (fd !== undefined) closeSync(fd);
   }
+}
+
+/**
+ * A user entry that is the person's prompt: it holds text, is not `isMeta`
+ * (peer messages, subagent hand-backs) and, when it names an `origin`, that is
+ * `human` (a background task's notification is not). An entry with no
+ * `origin` still counts, the safe side: it asks for the table again.
+ */
+function isPrompt(entry, blocks) {
+  if (!blocks.some((block) => block?.type === "text") || entry.isMeta) return false;
+  return !entry.origin || entry.origin.kind === "human";
 }
 
 /** A line of `text` that is a table header matching `pattern`: a `|` row, then the `---` row under it. */

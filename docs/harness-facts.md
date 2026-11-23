@@ -769,9 +769,17 @@ transcript", each stored as `.jsonl`.
 What a line holds is NOT DOCUMENTED. `hooks/guard-message.mjs` reads one JSON
 object per line with a `type` of `user` or `assistant`, a `message.content`
 that is a string or an array of blocks (`text`, `tool_use`, `tool_result`),
-and an optional `isSidechain`. A real prompt is a `user` entry whose content
-is a string or holds a `text` block; a tool's answer is a `user` entry whose
-blocks are all `tool_result`. A local transcript read on 2026-11-23 had that
+and optional `isSidechain`, `isMeta`, `isCompactSummary` and
+`origin.kind`. A real prompt is a `user` entry whose content is a string or
+holds a `text` block, that is not `isMeta` and whose `origin.kind`, when
+`origin` is present, is `human`; a tool's answer is a `user` entry whose
+blocks are all `tool_result`. Observed in Claude Code 2.1.x transcripts, also
+as `user` entries with string content: a background task's notification
+(`origin.kind` `task-notification`), a subagent's hand-back or a peer message
+(`isMeta: true`, `origin.kind` `peer`) and the compaction summary
+(`isCompactSummary: true`, no `origin`). An entry with no `origin`, as in older
+versions and the summary, still counts as a prompt: the guard errs toward
+asking for the table again. A local transcript read on 2026-11-23 had that
 shape (`user` with a string content, `user` with `tool_result` blocks,
 `assistant` one entry per `text` block), which is an observation of one
 version, not a contract. So the guard decides on evidence only when it can

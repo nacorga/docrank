@@ -93,6 +93,20 @@ describe("guard-message.mjs", () => {
       expect(await send(fresh(), file)).toBeNull();
     });
 
+    it("takes a task notification or a meta peer message for no prompt, a human prompt or an entry with no origin for one", async () => {
+      const entry = (extra) => ({ ...prompt("text"), ...extra });
+      const base = [prompt("write to them"), said(TABLE)];
+      const notification = entry({ origin: { kind: "task-notification" } });
+      const peer = entry({ isMeta: true, origin: { kind: "peer" } });
+      const handBack = entry({ isMeta: true });
+      expect(await send(fresh(), transcript([...base, notification, said("Done.")]))).toBeNull();
+      expect(await send(fresh(), transcript([...base, peer]))).toBeNull();
+      expect(await send(fresh(), transcript([...base, handBack]))).toBeNull();
+      expect(await send(fresh(), transcript([...base, entry({ origin: { kind: "human" } })]))).toContain("Missing");
+      expect(await send(fresh(), transcript([...base, entry({ isCompactSummary: true })]))).toContain("Missing");
+      expect(await send(fresh(), transcript([...base, prompt("older version, no origin")]))).toContain("Missing");
+    });
+
     it("needs a header matching the key and a table, not a line that starts the same", async () => {
       const wrong = transcript([prompt("go"), said("| Notes | x |\n|---|---|")]);
       expect(await send(fresh(), wrong)).toContain("Missing");

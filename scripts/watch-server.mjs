@@ -38,6 +38,38 @@ const started = Date.now();
 const home = watchHome();
 const streams = new Set(); // the page's session-list streams: one per open tab
 
+const names = new Map(); // a log's path → its checkout's name, once its first line is complete
+
+/**
+ * The name of the checkout a session ran in, from the `SessionStart` line the
+ * log opens with: the name the page's header shows, where the directory's
+ * key carries the main checkout's. Null until that line is there.
+ */
+function nameOf(file) {
+  if (names.has(file)) return names.get(file);
+  let head = "";
+  try {
+    const fd = openSync(file, "r");
+    try {
+      const buf = Buffer.alloc(4096);
+      head = buf.toString("utf8", 0, readSync(fd, buf, 0, buf.length, 0));
+    } finally {
+      closeSync(fd);
+    }
+  } catch {
+    return null;
+  }
+  const end = head.indexOf("\n");
+  if (end === -1) return null;
+  let name = null;
+  try {
+    const first = JSON.parse(head.slice(0, end));
+    if (first?.event === "SessionStart" && typeof first.repo === "string") name = first.repo;
+  } catch {}
+  names.set(file, name);
+  return name;
+}
+
 /** Every session log, newest first. */
 function sessions() {
   const out = [];
@@ -52,8 +84,9 @@ function sessions() {
     } catch {}
     for (const f of files) {
       try {
-        const st = statSync(path.join(home, r.name, f));
-        out.push({ repo: r.name, session: f.slice(0, -6), updatedAt: st.mtimeMs, size: st.size });
+        const file = path.join(home, r.name, f);
+        const st = statSync(file);
+        out.push({ repo: r.name, session: f.slice(0, -6), name: nameOf(file), updatedAt: st.mtimeMs, size: st.size });
       } catch {}
     }
   }

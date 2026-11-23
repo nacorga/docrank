@@ -131,10 +131,17 @@ describe("watch-server.mjs", () => {
   it("lists the sessions, and counts each open list as a tab", async () => {
     mkdirSync(path.join(watch(), "shop-1234abcd"), { recursive: true });
     writeFileSync(path.join(watch(), "shop-1234abcd", "s1.jsonl"), "{}\n");
+    writeFileSync(path.join(watch(), "shop-1234abcd", "s2.jsonl"), `${JSON.stringify({ time: 1, event: "SessionStart", repo: "shop-tracking" })}\n`);
     const s = await start();
     const out = stream(s, "/api/sessions");
     expect(await until(() => out.events.length === 1)).toBe(true);
-    expect(out.events[0]).toEqual(["sessions", [expect.objectContaining({ repo: "shop-1234abcd", session: "s1" })]]);
+    const listed = out.events[0][1].sort((a, b) => a.session.localeCompare(b.session));
+    expect(out.events[0][0]).toBe("sessions");
+    // The name the page's header shows: the checkout the session ran in, from its first line.
+    expect(listed).toEqual([
+      expect.objectContaining({ repo: "shop-1234abcd", session: "s1", name: null }),
+      expect.objectContaining({ repo: "shop-1234abcd", session: "s2", name: "shop-tracking" }),
+    ]);
     expect(await until(async () => (await version(s))?.tabs === 1)).toBe(true);
     out.req.destroy();
     expect(await until(async () => (await version(s))?.tabs === 0)).toBe(true);

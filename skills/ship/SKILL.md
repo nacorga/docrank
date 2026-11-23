@@ -34,19 +34,20 @@ plugin lists each key with its default. Read the file once before stage 1.
    close it. When `plan.requiredHeadings` is set, the plan also carries a
    section headed by one of them (a Markdown heading of any level, the text
    case-insensitive and followed by anything but a letter, digit or
-   underscore), or the plan guard refuses `ExitPlanMode`. The scope is the whole ask; leaving part out is a recommendation
-   to the user with its reason, never a silent cut. Show the plan and go on,
-   unless it holds a decision that is the user's (scope, product, anything
-   outside the repository), and then ask that one question. Tick items as they
-   close: the plan is what survives a compaction.
+   underscore), or the plan guard refuses `ExitPlanMode`. The scope is the
+   whole ask; leaving part out is a recommendation to the user with its
+   reason, never a silent cut. Show the plan and go on, unless it holds a
+   decision that is the user's (scope, product, anything outside the
+   repository), and then ask that one question. Tick items as they close: the
+   plan is what survives a compaction.
 3. **Build.** Every subagent that can edit carries the block of the
    `dispatch-guardrails` skill, and its report answers the block's hand-over
    checks, each with its search and count; a report without them goes back
    before any judge reads the work. A slice the plan marks heavy is
    dispatched with `model: "opus"` and a line of its own `Heavy: <path>`
-   naming that plan, whose text says "heavy"; with
-   `dispatch.heavyMarker` on, the dispatch guard refuses an Opus dispatch
-   without it, and one that names no model runs on `dispatch.defaultModel`.
+   naming that plan, whose text says "heavy"; with `dispatch.heavyMarker` on,
+   the dispatch guard refuses a `general-purpose` Opus dispatch without it,
+   and one that names no model runs on `dispatch.defaultModel`.
 4. **Verify.** The gates (the `gates` skill, `-C <worktree>`), then the jobs
    `ship.pathJobs` maps to the paths the diff touches: for each entry whose
    `paths` a changed file starts with, run its `jobs` by name through the same
@@ -86,6 +87,7 @@ plugin lists each key with its default. Read the file once before stage 1.
    `origin/<integration>`, stage 4 again, `git push --force-with-lease`, stages
    6 and 7 again. `RED` with the failed checks: one failed while the pull
    request waited for its merge; read the failed log, fix on this branch,
-   stages 4 to 7 again. `ORPHANED`: a commit reached the branch after the merge; it
-   is in no release, so open a pull request for it before deleting anything.
+   stages 4 to 7 again. `ORPHANED`: a commit reached the branch after the
+   merge; it is in no release, so open a pull request for it before deleting
+   anything.
    `CLOSED`, or the commit missing, stops here with what it showed.

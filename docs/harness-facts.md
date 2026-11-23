@@ -24,6 +24,10 @@ Facts 17 to 23 (docrank watch) and 24 were read on 2026-11-23 from [hooks], [too
 [components],
 [sdk-todo]=https://code.claude.com/docs/en/agent-sdk/todo-tracking.md and
 [sdk-ts]=https://code.claude.com/docs/en/agent-sdk/typescript.md.
+Fact 25 was read on 2026-11-23 from [settings], [tools],
+[env-vars]=https://code.claude.com/docs/en/env-vars.md and
+[settings-ref]=https://code.claude.com/docs/en/settings-reference.md.
+Fact 26 was read on 2026-11-23 from [hooks].
 
 | # | Fact | Status |
 |---|---|---|
@@ -50,6 +54,8 @@ Facts 17 to 23 (docrank watch) and 24 were read on 2026-11-23 from [hooks], [too
 | 22 | The task tool sets and their shapes | VERIFIED; off by default on newer models |
 | 23 | A helper's errand; a non-interactive session in the hook input | errand by order; an id match and the `-p` signal NOT DOCUMENTED |
 | 24 | `transcript_path` in the hook input, and the shape of a transcript line | path VERIFIED; the line shape NOT DOCUMENTED, so a fallback |
+| 25 | `CLAUDE_CODE_ENABLE_TODO_TOOLS` in the `env` of a repository's `.claude/settings.json` | the `env` reaching the session VERIFIED, after workspace trust; that the task tools follow it from that file NOT DOCUMENTED; PROVED LIVE in `-p` mode, an interactive session after trust not proved |
+| 26 | A failed tool call and a shell command's exit code in the hook input | VERIFIED; that every non-zero exit fires `PostToolUseFailure` NOT DOCUMENTED as a rule |
 
 ## 1. `${CLAUDE_PLUGIN_ROOT}` in hook commands: VERIFIED
 
@@ -836,7 +842,7 @@ execution, mapping `id` or `task_id` to `taskId` and `active_form` to
 `task_id` and `task_subject` as well.
 
 So on the models without the tools, the default today, a session has no task
-list and watch shows its work under "work without a list".
+list and watch groups its work by turn, one per prompt.
 
 ## 23. A helper's errand; a non-interactive session: errand by order, the rest NOT DOCUMENTED
 
@@ -895,3 +901,84 @@ version, not a contract. So the guard decides on evidence only when it can
 read the file and finds a line it understands, and a transcript that is
 absent, unreadable, holds a line that is not JSON, or holds no user prompt
 makes it fall back to refusing once per input, as without the key.
+
+## 25. `CLAUDE_CODE_ENABLE_TODO_TOOLS` in a repository's `env`: the `env` VERIFIED; the task tools from it NOT DOCUMENTED, PROVED LIVE in `-p` mode
+
+`init` offers to turn the task tools (fact 22) on for a repository by writing
+the variable into the `env` of its `.claude/settings.json`.
+
+[env-vars] § Set variables in settings files: "Add variables under the `env`
+key in a `settings.json` file, creating the file if it doesn't exist. Claude
+Code reads them directly from the file, so they take effect no matter how
+`claude` was launched", its table naming "`.claude/settings.json` | Everyone
+working in the project, checked into source control"; and "a feature that
+reads its variables once at startup, such as OpenTelemetry monitoring, keeps
+its startup values until you relaunch". The variable's row: "Set to `1` to
+get the task-tracking tools on every model. ... Requires Claude Code
+v2.1.233 or later".
+
+[settings-ref] § When Claude Code applies `env` values: "From project and
+local settings: after you trust the workspace, or at startup in `-p` mode,
+which never shows the trust dialog" and "Variables Claude Code classifies as
+safe, such as model selection, timeouts and limits, and feature toggles: at
+startup from every settings file, apart from the variables project and local
+settings can't set". `CLAUDE_CODE_ENABLE_TODO_TOOLS` is not in § Variables
+Claude Code ignores in `env`. [settings] § A committed key doesn't reach teammates: "most `env` values
+apply only after each teammate trusts the folder".
+
+[tools] § Task tool availability gives the way as "Export
+`CLAUDE_CODE_ENABLE_TODO_TOOLS=1` before you start Claude Code", and
+§ Task-tracking tools in subagents and agent teams sets it through a
+settings `env` block: "start your session by running `claude --settings
+'{"env":{"CLAUDE_CODE_ENABLE_TODO_TOOLS":"1"}}'` in your shell". A
+`--settings` file's `env` applies "at startup".
+
+Not documented: whether the variable is one Claude Code "classifies as safe"
+and applies at startup from a project file, and whether the session's tool
+set, chosen at its start, follows a value applied only once the workspace is
+trusted.
+
+Proved live on 2026-11-23 with Claude Code 2.1.330 in `-p` mode, in a
+trusted demo repository, `CLAUDE_CODE_ENABLE_TODO_TOOLS` unset in the shell:
+with `.claude/settings.json` holding
+`{"env":{"CLAUDE_CODE_ENABLE_TODO_TOOLS":"1"}}`, asked whether a `TaskCreate`
+tool was available, the model answered "Sí"; with the file removed it
+answered "No". So in `-p` mode the task tools follow the variable from a
+repository's settings file. An interactive session after trust is not
+proved. So `init` says the setting was proved in `-p` mode only, that it
+takes effect from the next session started in the repository, and that
+exporting the variable before `claude` is the documented way.
+
+## 26. A failed call and a shell command's exit code in the hook input: VERIFIED
+
+Watch keeps a call's verdict: whether it failed and, for a shell command,
+its exit code, never the output.
+
+[hooks] § PostToolUseFailure: "Runs when a tool that started executing
+fails: the tool threw an error, or an MCP tool returned an error result". Its
+input carries "error information as top-level fields": "`error` | String
+describing what went wrong. The format depends on the tool that failed" and
+"`is_interrupt` | Optional boolean. True when the failure reached Claude Code
+as an abort rather than as an error the tool reported". "Key your hook on
+`tool_name`, `is_interrupt`, and the `Exit code N` first line; treat the
+rest of the string as display text, not a stable format": "For Bash and
+PowerShell, a command that ran and exited produces a first line `Exit code
+N`, then any output the command produced", and "A payload may also carry a
+bare failure message with no exit-code line, when Claude Code could not
+start the shell process itself". The example is a failed `npm test` with
+`"error": "Exit code 1\nError: Cannot find module 'express'"`.
+
+[hooks] § PostToolUse: it "Runs immediately after a tool completes
+successfully", and "`Bash` returns an object with `stdout`, `stderr`,
+`interrupted`, and `isImage` fields": no exit code. "In the main
+conversation, `PostToolUse` hooks from managed settings also run after some
+failed calls", and "For a failed call, `tool_response` is the error text as
+a string."
+
+So the hook records `ok: false` on `PostToolUseFailure`, and on a
+`PostToolUse` whose `tool_response` is a string, with the exit code from an
+`Exit code N` first line when there is one; a `PostToolUse` with a
+structured response is `ok: true` and has no exit code. That a command
+exiting non-zero always fires `PostToolUseFailure` rather than `PostToolUse`
+is shown by the example, not stated as a rule: NOT DOCUMENTED. Not proved
+live: no trial log so far holds a failed call.

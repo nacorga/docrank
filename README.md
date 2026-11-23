@@ -125,20 +125,32 @@ pushes made outside Claude Code; `init` offers it.
 For someone who does not read a terminal: a browser tab that shows what a
 session is doing, and what past sessions did. At the top, its state: *working*, *waiting for your
 permission*, *waiting for your answer* or *done*. Below, a graph of Claude,
-the tasks it is working on (the current one highlighted) and the subagents it
-dispatched, each under the task it was sent from, with its type
+the tasks it is working on (the current one highlighted), or its turns when it
+keeps no task list, and the subagents it
+dispatched, each under the task or turn it was sent from, with its type
 (`Explore`, `general-purpose`) and the skill it was forked for
 (`docrank:gates`) as small chips. Clicking a node shows its
-actions as sentences ("Run the tests — it failed", "Tried to send the work to
+actions as sentences ("Run the tests — failed", "Tried to send the work to
 the shared repository (push); a safety rule stopped it"), each with chips
 naming its tool (`Bash`, `Read`, `mcp__browser__browser_snapshot`), the gate
-it ran and the guard that refused it (`guard-bash`), the exact command or
-path folded behind *detail*. English or Spanish.
+it ran and the guard that refused it (`guard-bash`). A call that ran to an
+end carries ✓ or ✗ on its gate chip when it ran one (`run-gates ✓`,
+`run-gates ✗`), else on its tool chip (`Bash ✗`); a failed command's exit
+code and the exact command or path are folded behind *detail*. English or
+Spanish.
+
+When the session is done, or waits for your answer after a turn of work, a
+summary card heads the side panel: how many tasks were done of those listed
+(or how many turns, with no list), the subagents used by type (`Explore ×1`),
+whether the checks passed (`run-gates ✓`, `run-gates ✗`), the actions a
+safety rule stopped by guard (`guard-bash ×1`), how many actions failed
+("Nothing failed" too), and how long it took, from its first event to its
+last.
 
 On the left, the sessions on record, grouped by repository, live ones first,
 each with its start, its state and how many tasks it had; the tab follows the
 newest until one is picked. Under the graph, a timeline: a past session opens
-at its end, and the slider moves through it line by line, the graph and the
+at its end, on its summary card, and the slider moves through it line by line, the graph and the
 feeds drawn as they stood at that point; *Play* replays it from the start,
 *Pause* stops it. A live session can be moved through the same way, and
 *Follow the activity* brings it back to now.
@@ -152,8 +164,16 @@ itself after 30 minutes without activity.
 
 Tasks come from Claude Code's task tools, which are off by default on models
 newer than Opus 4.7, Sonnet 4.6 and Haiku 4.5 ([harness fact 22](docs/harness-facts.md)).
-Without them every action lands in *work without a list*; to get the list,
-start Claude Code with `CLAUDE_CODE_ENABLE_TODO_TOOLS=1`.
+Without them watch groups the work by turn, *Turn 1*, *Turn 2*…, one per
+prompt; a background subagent's result, which reaches Claude as a prompt, opens
+no turn when it comes within seconds of that subagent's end (a guess: no prompt
+text is stored). To get the list,
+start Claude Code with `CLAUDE_CODE_ENABLE_TODO_TOOLS=1`. `init`, when it turns
+watch on, offers to write that variable into the `env` of the repository's
+`.claude/settings.json`, and writes nothing without a yes. That the task tools
+follow it from there is not documented; it was proved in `-p` mode, not yet in an
+interactive session ([harness fact 25](docs/harness-facts.md)). It takes effect
+from the next session started in the repository.
 
 What is stored: one JSON line per hook event in
 `~/.claude/docrank/watch/<repository>-<hash>/<session id>.jsonl` (directory
@@ -162,7 +182,8 @@ only the fields its sentence names: a command and its description, a path, a
 search pattern, a URL, a task's subject, a subagent's errand. Secrets in them
 (tokens, passwords, `Authorization` headers, credentials in URLs, values
 written to an env file) are replaced with `[redacted]`. No tool output, no
-prompt and no file content is kept. The page is served to `127.0.0.1` only,
+prompt and no file content is kept: of a result, only whether the call
+failed and, for a command, its exit code. The page is served to `127.0.0.1` only,
 with a random token in its address. A session is kept for 30 days after its
 last line (`watch.retentionDays`): the server deletes older ones when it
 starts and once a day, and never one that wrote within the last 30 minutes.
@@ -212,7 +233,10 @@ grew; and the sixth's session replayed with "Play". Its defect, a session
 read as waiting for an answer while a helper still worked after the turn
 ended, is fixed in 0.4.1. Not proved for watch: the tab opening by itself, a
 person reading the page, an older server replaced live, the daily retention
-sweep, Linux. Not yet exercised
+sweep, Linux; and, from 0.5.0, turns, the ✓/✗ verdicts and the summary card,
+tested on the trials' logs and on synthetic ones (no trial log holds a failed
+call, [harness fact 26](docs/harness-facts.md)), and the task tools turned on
+from `.claude/settings.json` in an interactive session (fact 25). Not yet exercised
 live, though tested on stubbed input: the
 closing line rule, and the memory link, which is experimental: off by default,
 its directory rule undocumented by Claude Code.

@@ -1,6 +1,6 @@
 ---
 name: init
-description: Read this repository (branches, package manager, scripts, formatter, docs tree, ignored env files) and propose a complete `.claude/docrank.json` for the user to confirm, then write it, prove it loads, and offer the optional git pre-push hook. Use when adopting docrank in a repository, or to revisit its configuration.
+description: Read this repository (branches, package manager, scripts, formatter, docs tree, ignored env files) and propose a complete `.claude/docrank.json` for the user to confirm, then write it, prove it loads, and offer the optional git pre-push hook and, with watch on, the task tools' variable. Use when adopting docrank in a repository, or to revisit its configuration.
 disable-model-invocation: true
 allowed-tools: Bash(node ${CLAUDE_PLUGIN_ROOT}/bin/docrank.mjs *) Bash(git branch *) Bash(git remote *) Bash(git ls-files *) Bash(git status *) Bash(git rev-parse *) Read Grep Glob
 ---
@@ -80,6 +80,10 @@ neither settles a key, it stays out and the proposal says so; never guess.
   The default is `[".env", ".mcp.json"]`, so write the key only for a different
   set. `worktree.install` from the package manager's install command, when the
   repository has dependencies.
+- **Watch.** `watch.enabled` turns on the live view of a session in a
+  browser tab; nothing in a repository says whether its user wants one, so
+  ask, with the value of an existing `.claude/docrank.json` as the first
+  option when it has one. Off: the key stays out.
 - **Existing setup.** An existing `.claude/docrank.json` is read first and its
   keys kept; a `CLAUDE.md` is read for rules a key can state (a banned
   command is a `guard.extraDeny`, a file nobody edits a `paths.rules`).
@@ -139,6 +143,23 @@ answer, leaves the repository as step 3 left it.
   hooks` names the directory git runs hooks from, `core.hooksPath` honoured.
   Never over an existing hook without showing it. Say that
   `git push --no-verify` is the way past it.
+- **The task list for watch.** Only when the file written turns
+  `watch.enabled` on. Watch draws a session's tasks from Claude Code's task
+  tools, which newer models lack unless `CLAUDE_CODE_ENABLE_TODO_TOOLS` is
+  `1` (fact 22 of `${CLAUDE_PLUGIN_ROOT}/docs/harness-facts.md`); without
+  them watch groups the work by turn. Offer to add
+  `"env": { "CLAUDE_CODE_ENABLE_TODO_TOOLS": "1" }` to the repository's
+  `.claude/settings.json`, which is checked in, so it applies to everyone
+  working in the repository. Find the file with Glob first; when it exists,
+  read it and propose it whole with the one entry added, every other key and
+  `env` entry kept, and say so when it already sets the variable, offering
+  nothing. Write only after a yes. Say, from fact 25, that a repository's
+  `env` applies once the folder is trusted, that the task tools following it
+  from that file is not documented and was proved in `-p` mode only, not in
+  an interactive session, that it needs Claude Code
+  2.1.233 or later and takes effect from the next session started in the
+  repository, and that exporting the variable before `claude` is the
+  documented way.
 - **Fallback hooks.** For an event whose plugin hook does not act, and only
   that event: never one whose plugin hook acts, since the plugin's hook and
   the copy could both fire, and that Claude Code runs such a pair once is not

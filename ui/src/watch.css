@@ -77,4 +77,17 @@ main { flex: 1; display: flex; min-height: 0; }
 .chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 3px 0 1px; }
 .chip { font: 11px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chip.guard { color: var(--warn); }
+.chip.ok { color: var(--ok); }
+.chip.failed { color: var(--bad); }
 .react-flow__node.helper .chip { background: var(--card); }
+.closing { margin: 0 0 16px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
+.closing h2 { display: flex; justify-content: space-between; align-items: baseline; font-size: 15px; margin: 0 0 6px; }
+.closing .duration { color: var(--muted); font-size: 13px; font-weight: 400; font-variant-numeric: tabular-nums; }
+.closing ul { list-style: none; margin: 0; padding: 0; }
+.closing li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding: 2px 0; border: 0; font-size: 14px; }
+.closing li .chips { margin: 0; }
+.closing li .chip { background: var(--card); }
+.closing li.ok .dot { background: var(--ok); }
+.closing li.failed .dot { background: var(--bad); }
+.closing li.warning .dot { background: var(--warn); }
+.closing li .dot { width: 8px; height: 8px; margin: 0; }

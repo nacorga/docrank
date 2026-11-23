@@ -166,10 +166,12 @@ first written from:
   `.claude-plugin/plugin.json`; `claude plugin validate .`.
 - [x] **1l · PR** «feat(watch): a live plain-language view of the session».
   CI green on the four combinations.
-- [ ] **1m · Release and live trial (user).** Tag and release 0.3.0; one
+- [x] **1m · Release and live trial (user).** Tag and release 0.3.0; one
   session with an observer reading the tab: tasks, a helper, a gate run, a
   guard refusal, a permission wait. Recorded in harness-facts § 15 and the
   README «What is proved live».
+  Done: `docrank--v0.3.0` released on `8dd9971`; the trial run by the
+  orchestrator, its fixes landing as 0.3.1.
 
 ### [ ] 2 · History and timeline — branch `feat/watch-history`
 

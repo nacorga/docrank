@@ -10,7 +10,7 @@ import "@xyflow/react/dist/style.css";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { errand, helperChips, phrase, words } from "../../lib/watch/phrases.mjs";
-import { FREE, helperNode, reduce, taskNode } from "../../lib/watch/reduce.mjs";
+import { FREE, helperNode, reduce, taskNode, turnNode } from "../../lib/watch/reduce.mjs";
 import "./watch.css";
 
 const params = new URLSearchParams(location.search);
@@ -180,31 +180,52 @@ function Sessions({ sessions, chosen, pick }) {
   );
 }
 
-/** Claude on top, tasks in a row under it, each task's subagents stacked under it. */
+/**
+ * The columns under Claude: the tasks, after the free node when it holds
+ * work; with no list, the turns; with neither, the empty free node.
+ */
+function columnsOf(s) {
+  if (s.tasks.length === 0 && s.turns.length > 0) {
+    const last = s.turns.at(-1).n;
+    return s.turns.map((t) => ({
+      id: turnNode(t.n),
+      title: w.turn(t.n),
+      sub: time(t.startedAt),
+      actions: t.actions,
+      current: s.current == null && t.n === last,
+      mine: (h) => h.turn === t.n || (t.n === last && !s.turns.some((x) => x.n === h.turn)),
+    }));
+  }
+  const columns = s.tasks
+    .filter((t) => t.status !== "deleted")
+    .map((t) => ({ id: taskNode(t.id), title: t.subject ?? "…", sub: w.status[t.status] ?? t.status, status: t.status, actions: t.actions, current: s.current === t.id, mine: (h) => h.task === t.id }));
+  if (s.free.actions.length > 0 || columns.length === 0) {
+    const loose = (h) => h.task == null || !columns.some((c) => c.id === taskNode(h.task));
+    columns.unshift({ id: FREE, title: w.free, sub: "", actions: s.free.actions, current: s.current == null, mine: loose });
+  }
+  return columns;
+}
+
+/** Claude on top, tasks (or turns) in a row under it, each one's subagents stacked under it. */
 function layout(s, selected) {
   const W = 240;
   const GAP = 30;
   const nodes = [];
   const edges = [];
-  const columns = s.tasks.filter((t) => t.status !== "deleted").map((t) => ({ id: taskNode(t.id), task: t }));
-  if (s.free.actions.length > 0 || columns.length === 0) columns.unshift({ id: FREE, task: null });
-  const loose = s.helpers.filter((h) => h.task == null || !columns.some((c) => c.task?.id === h.task));
+  const columns = columnsOf(s);
   const width = columns.length * (W + GAP) - GAP;
   nodes.push({ id: "claude", position: { x: width / 2 - W / 2, y: 0 }, data: { label: <Card kind="claude" title={w.claude} sub={w.state[s.state]} /> }, className: "n claude", selectable: false, style: { width: W } });
   columns.forEach((c, i) => {
     const x = i * (W + GAP);
-    const t = c.task;
-    const current = t ? s.current === t.id : s.current == null;
     nodes.push({
       id: c.id,
       position: { x, y: 120 },
-      data: { label: <Card kind="task" title={t ? t.subject ?? "…" : w.free} sub={t ? w.status[t.status] ?? t.status : ""} count={(t ?? s.free).actions.length} /> },
-      className: `n task ${current ? "current" : ""} ${t?.status ?? ""} ${selected === c.id ? "selected" : ""}`,
+      data: { label: <Card kind="task" title={c.title} sub={c.sub} count={c.actions.length} /> },
+      className: `n task ${c.current ? "current" : ""} ${c.status ?? ""} ${selected === c.id ? "selected" : ""}`,
       style: { width: W },
     });
-    edges.push({ id: `e-${c.id}`, source: "claude", target: c.id, animated: current && s.state === "working" });
-    const mine = s.helpers.filter((h) => h.task != null && h.task === t?.id).concat(c.id === FREE ? loose : []);
-    mine.forEach((h, j) => {
+    edges.push({ id: `e-${c.id}`, source: "claude", target: c.id, animated: c.current && s.state === "working" });
+    s.helpers.filter(c.mine).forEach((h, j) => {
       const id = helperNode(h.id);
       nodes.push({
         id,
@@ -286,6 +307,10 @@ function Card({ kind, title, chips, sub, state, count }) {
 
 function feedOf(s, id) {
   if (id === FREE) return { title: w.free, actions: s.free.actions };
+  if (id.startsWith("turn:")) {
+    const t = s.turns.find((x) => turnNode(x.n) === id);
+    return t && { title: w.turn(t.n), actions: t.actions };
+  }
   if (id.startsWith("task:")) {
     const t = s.tasks.find((x) => taskNode(x.id) === id);
     return t && { title: t.subject ?? "…", actions: t.actions };
@@ -295,7 +320,7 @@ function feedOf(s, id) {
 }
 
 function Feed({ s, id }) {
-  const feed = (id && feedOf(s, id)) ?? feedOf(s, FREE);
+  const feed = (id && feedOf(s, id)) ?? (s.tasks.length === 0 && s.turns.length > 0 ? feedOf(s, turnNode(s.turns.at(-1).n)) : feedOf(s, FREE));
   return (
     <aside className="feed">
       <h2>{feed.title}</h2>

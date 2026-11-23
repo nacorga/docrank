@@ -125,8 +125,9 @@ pushes made outside Claude Code; `init` offers it.
 For someone who does not read a terminal: a browser tab that shows what a
 session is doing, and what past sessions did. At the top, its state: *working*, *waiting for your
 permission*, *waiting for your answer* or *done*. Below, a graph of Claude,
-the tasks it is working on (the current one highlighted) and the subagents it
-dispatched, each under the task it was sent from, with its type
+the tasks it is working on (the current one highlighted), or its turns when it
+keeps no task list, and the subagents it
+dispatched, each under the task or turn it was sent from, with its type
 (`Explore`, `general-purpose`) and the skill it was forked for
 (`docrank:gates`) as small chips. Clicking a node shows its
 actions as sentences ("Run the tests — it failed", "Tried to send the work to
@@ -152,7 +153,10 @@ itself after 30 minutes without activity.
 
 Tasks come from Claude Code's task tools, which are off by default on models
 newer than Opus 4.7, Sonnet 4.6 and Haiku 4.5 ([harness fact 22](docs/harness-facts.md)).
-Without them every action lands in *work without a list*; to get the list,
+Without them watch groups the work by turn, *Turn 1*, *Turn 2*…, one per
+prompt; a background subagent's result, which reaches Claude as a prompt, opens
+no turn when it comes within seconds of that subagent's end (a guess: no prompt
+text is stored). To get the list,
 start Claude Code with `CLAUDE_CODE_ENABLE_TODO_TOOLS=1`. `init`, when it turns
 watch on, offers to write that variable into the `env` of the repository's
 `.claude/settings.json`, and writes nothing without a yes; that the task tools

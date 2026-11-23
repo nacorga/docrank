@@ -41,7 +41,7 @@ changes on 2026-11-23, to ship together in one release (0.5.0):
 - [x] **1c · `init` offers the variable** when it proposes `watch.enabled`,
   writing nothing without confirmation, merging into an existing
   `.claude/settings.json`; README says so.
-- [ ] **1d · Turns when there is no list.** The reducer groups actions by
+- [x] **1d · Turns when there is no list.** The reducer groups actions by
   `UserPromptSubmit` into turn nodes when the session has no task; a task list
   that appears later takes over as today. Background-agent notifications that
   arrive as `UserPromptSubmit` (fact 23 area) do not open a new turn when a

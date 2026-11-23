@@ -840,7 +840,7 @@ execution, mapping `id` or `task_id` to `taskId` and `active_form` to
 `task_id` and `task_subject` as well.
 
 So on the models without the tools, the default today, a session has no task
-list and watch shows its work under "work without a list".
+list and watch groups its work by turn, one per prompt.
 
 ## 23. A helper's errand; a non-interactive session: errand by order, the rest NOT DOCUMENTED
 

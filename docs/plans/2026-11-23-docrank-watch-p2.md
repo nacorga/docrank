@@ -51,7 +51,7 @@ changes on 2026-11-23, to ship together in one release (0.5.0):
   and, for Bash, the exit code when the response carries it (checked against
   [hooks]; recorded as a fact if new). Phrases and chips carry ✓/✗; the gate
   chip says whether the gates passed. Tests.
-- [ ] **3a · Closing card.** From the reducer: tasks done/total, subagents by
+- [x] **3a · Closing card.** From the reducer: tasks done/total, subagents by
   type, refusals, failures, duration; shown at the end of a session and when a
   past session opens; en/es. Tests and a screenshot.
 - [ ] **4a · Documents and version 0.5.0**, README, `CLAUDE.md` if the shape

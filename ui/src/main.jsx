@@ -9,8 +9,8 @@ import { Background, ReactFlow, useReactFlow } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { errand, helperChips, phrase, words } from "../../lib/watch/phrases.mjs";
-import { FREE, helperNode, reduce, taskNode, turnNode } from "../../lib/watch/reduce.mjs";
+import { closingRows, errand, helperChips, phrase, span, words } from "../../lib/watch/phrases.mjs";
+import { FREE, closing, helperNode, reduce, taskNode, turnNode } from "../../lib/watch/reduce.mjs";
 import "./watch.css";
 
 const params = new URLSearchParams(location.search);
@@ -319,10 +319,39 @@ function feedOf(s, id) {
   return h && { title: errand(h, lang) ?? (h.type ? w.helperNamed(h.type) : w.helperAnon), actions: h.actions };
 }
 
+/**
+ * The closing card, at the top of the side panel: once the session is done,
+ * or waits for an answer after work, what it came to. A past session opens on
+ * it; the timeline at a working moment hides it.
+ */
+function Closing({ s }) {
+  const ran = s.turns.length > 0 || s.tasks.length > 0;
+  if (!ran || (s.state !== "done" && s.state !== "answer")) return null;
+  const c = closing(s);
+  return (
+    <section className="closing">
+      <h2>
+        {w.closing.title}
+        <span className="duration">{span(c.duration)}</span>
+      </h2>
+      <ul>
+        {closingRows(c, lang).map((r) => (
+          <li key={r.key} className={r.tone ?? ""}>
+            <span className="dot" />
+            <span className="text">{r.text}</span>
+            <Chips chips={r.chips} />
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 function Feed({ s, id }) {
   const feed = (id && feedOf(s, id)) ?? (s.tasks.length === 0 && s.turns.length > 0 ? feedOf(s, turnNode(s.turns.at(-1).n)) : feedOf(s, FREE));
   return (
     <aside className="feed">
+      <Closing s={s} />
       <h2>{feed.title}</h2>
       {feed.actions.length === 0 ? <p className="empty">{w.empty}</p> : null}
       <ol>

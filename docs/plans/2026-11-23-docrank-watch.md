@@ -85,7 +85,7 @@ first written from:
 
 ## Slices
 
-### [ ] 1 · The live view — branch `feat/watch-live`
+### [x] 1 · The live view — branch `feat/watch-live`
 
 - [x] **1a · The plan enters the tree.** Commit `docs: plan docrank watch`.
 - [x] **1b · Harness facts.** Re-read [hooks] and [tools] and record as new
@@ -174,7 +174,7 @@ first written from:
   orchestrator. Its fixes ship in 0.4.0: 0.3.1 was never released, and the
   plan ends in one release.
 
-### [ ] 2 · History and timeline — branch `feat/watch-history`
+### [x] 2 · History and timeline — branch `feat/watch-history`
 
 - [x] **2a · Retention.** The server deletes session files older than
   `watch.retentionDays` on start and daily; a test with dated files.
@@ -185,9 +185,12 @@ first written from:
   reducer over the events up to it. Tests on the reducer's prefixes.
 - [x] **2d · Documents and version 0.4.0**, PR, CI green. The 0.4.0 notes
   cover slice 1's trial fixes too, and what else landed since 0.3.0.
-- [ ] **2e · Release and live trial (user)**: an observer replays a session
+- [x] **2e · Release and live trial (user)**: an observer replays a session
   of slice 1's trial. Recorded as in 1m; this plan leaves the tree in the
   same PR.
+  Done: the trial ran on 0.4.0 (`c71127f`), driven by the orchestrator; its
+  one defect, a session read as waiting for an answer while a helper still
+  worked, is fixed in 0.4.1.
 
 [hooks]: https://code.claude.com/docs/en/hooks.md
 [tools]: https://code.claude.com/docs/en/tools-reference.md

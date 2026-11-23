@@ -158,7 +158,7 @@ first written from:
   - Checked in a real browser with a screenshot of a live session.
 - [x] **1i · CLI.** `lib/cli/watch.mjs`: `docrank watch` starts the server if
   needed and prints (and opens) the URL.
-- [ ] **1j · Documents.** `docs/config.md` (1c); README: what watch shows,
+- [x] **1j · Documents.** `docs/config.md` (1c); README: what watch shows,
   how to switch it on, how to get a task list on newer models, what is
   stored and where; `CLAUDE.md`: the bundle, its
   build, the dev dependencies and that the Node side still has none.

@@ -87,4 +87,69 @@ describe("guard-pr.mjs", () => {
     boxes.at(-1).git(dir, "update-ref", "-d", "refs/remotes/origin/develop");
     expect(await decision(dir, OPEN, session())).toBeNull();
   });
+
+  describe("with pr.requiredLines", () => {
+    const evidence = { ...config, pr: { ...config.pr, requiredLines: ["^Commercial reading: \\S", "^Gates: passed$"] } };
+    const BODY = "Commercial reading: nothing sold\nGates: passed";
+    const open = (flags) => `gh pr create --base develop --title x ${flags}`;
+
+    it("passes a body that carries every line, from --body, -b, --body-file or -F, the first time", async () => {
+      const dir = branchChanging("src/a.ts", evidence);
+      writeFileSync(path.join(dir, "body.md"), `Summary\n${BODY}\n`);
+      expect(await decision(dir, open(`--body "${BODY}"`), session())).toBeNull();
+      expect(await decision(dir, open(`-b '${BODY}'`), session())).toBeNull();
+      expect(await decision(dir, open(`--body="$(cat <<'EOF'\n${BODY}\nEOF\n)"`), session())).toBeNull();
+      expect(await decision(dir, open("--body-file body.md"), session())).toBeNull();
+      expect(await decision(dir, open("-F body.md"), session())).toBeNull();
+      expect(await decision(tmpdir(), `cd ${dir} && ${open("-F body.md")}`, session(), dir)).toBeNull();
+    });
+
+    it("reads a heredoc body whose prose holds quotes, an apostrophe and an unbalanced paren", async () => {
+      const dir = branchChanging("src/a.ts", evidence);
+      const prose = 'The "gates" passed; it\'s a 5" fix (really) & 1) item';
+      const heredoc = (lines, opener = "<<'EOF'", end = "EOF") => open(`--body "$(cat ${opener}\n${prose}\n${lines}\n${end}\n)"`);
+      for (const opener of ["<<'EOF'", "<<EOF", '<<"EOF"', "<<-EOF"]) {
+        expect(await decision(dir, heredoc(BODY, opener), session())).toBeNull();
+      }
+      expect(await decision(dir, `${heredoc(BODY)} && echo done`, session())).toBeNull();
+      const reason = await decision(dir, heredoc("Commercial reading: nothing sold"), session());
+      expect(reason).toContain("/^Gates: passed$/");
+      expect(reason).not.toContain("Commercial reading: \\S");
+    });
+
+    it("reads the body whole when it holds a `;`, an `&` or a `|`", async () => {
+      const dir = branchChanging("src/a.ts", evidence);
+      expect(await decision(dir, open(`--body "a; b & c | d\n${BODY}"`), session())).toBeNull();
+    });
+
+    it("refuses a body that lacks a line, naming it, every time and not once", async () => {
+      const dir = branchChanging("src/a.ts", evidence);
+      const id = session();
+      const command = open(`--body "Commercial reading: nothing sold"`);
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const reason = await decision(dir, command, id);
+        expect(reason).toContain("/^Gates: passed$/");
+        expect(reason).not.toContain("Commercial reading: \\S");
+        expect(reason).toContain("Read it against the site.");
+      }
+    });
+
+    it("matches a line case-insensitively and ignores a line that only holds the text inside another", async () => {
+      const dir = branchChanging("src/a.ts", evidence);
+      expect(await decision(dir, open(`--body "commercial READING: x\ngates: PASSED"`), session())).toBeNull();
+      expect(await decision(dir, open(`--body "Commercial reading: x\nGates: passed, almost"`), session())).toContain("Gates");
+    });
+
+    it("counts --fill, no body, stdin and a missing file as no body", async () => {
+      const dir = branchChanging("src/a.ts", evidence);
+      for (const flags of ["--fill", "", "--body-file -", "-F nowhere.md"]) {
+        expect(await decision(dir, open(flags), session())).toContain("not in the command");
+      }
+    });
+
+    it("still leaves a diff that touches neither list, and another base, alone", async () => {
+      expect(await decision(branchChanging("docs/a.md", evidence), open("--fill"), session())).toBeNull();
+      expect(await decision(branchChanging("src/a.ts", evidence), "gh pr create -B batch/x --fill", session())).toBeNull();
+    });
+  });
 });

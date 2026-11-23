@@ -20,7 +20,7 @@ Fact 16 was read on 2026-11-20 from
 [settings]=https://code.claude.com/docs/en/settings.md,
 [permissions]=https://code.claude.com/docs/en/permissions.md,
 [worktrees]=https://code.claude.com/docs/en/worktrees.md and [hooks].
-Facts 17 to 23 (docrank watch) were read on 2026-11-23 from [hooks], [tools],
+Facts 17 to 23 (docrank watch) and 24 were read on 2026-11-23 from [hooks], [tools],
 [components],
 [sdk-todo]=https://code.claude.com/docs/en/agent-sdk/todo-tracking.md and
 [sdk-ts]=https://code.claude.com/docs/en/agent-sdk/typescript.md.
@@ -49,6 +49,7 @@ Facts 17 to 23 (docrank watch) were read on 2026-11-23 from [hooks], [tools],
 | 21 | A `PreToolUse` hook's refusal fires no other event | VERIFIED |
 | 22 | The task tool sets and their shapes | VERIFIED; off by default on newer models |
 | 23 | A helper's errand; a non-interactive session in the hook input | errand by order; an id match and the `-p` signal NOT DOCUMENTED |
+| 24 | `transcript_path` in the hook input, and the shape of a transcript line | path VERIFIED; the line shape NOT DOCUMENTED, so a fallback |
 
 ## 1. `${CLAUDE_PLUGIN_ROOT}` in hook commands: VERIFIED
 
@@ -754,3 +755,34 @@ No hook input field says the session is non-interactive (`-p`): [hooks]
 § Common input fields lists none, and § SessionStart input has `source`,
 `model`, `agent_type` and `session_title` only. Watch opens no tab under `CI`
 or `SSH_CONNECTION` and does not tell a `-p` run apart.
+
+## 24. `transcript_path` in the hook input, and the shape of a transcript line: path VERIFIED; shape NOT DOCUMENTED
+
+`guard-message` with `messages.evidenceHeader` reads what the session wrote
+this turn from the session transcript. The path is documented: [hooks]'s
+notification example carries `"transcript_path":
+"/Users/.../.claude/projects/.../00893aaf-....jsonl"`, and fact 9 takes it as
+the field "every hook receives". [claude-dir] names the file's format by the
+subagents' copy: "Subagent transcripts in the same format as the session
+transcript", each stored as `.jsonl`.
+
+What a line holds is NOT DOCUMENTED. `hooks/guard-message.mjs` reads one JSON
+object per line with a `type` of `user` or `assistant`, a `message.content`
+that is a string or an array of blocks (`text`, `tool_use`, `tool_result`),
+and optional `isSidechain`, `isMeta`, `isCompactSummary` and
+`origin.kind`. A real prompt is a `user` entry whose content is a string or
+holds a `text` block, that is not `isMeta` and whose `origin.kind`, when
+`origin` is present, is `human`; a tool's answer is a `user` entry whose
+blocks are all `tool_result`. Observed in Claude Code 2.1.x transcripts, also
+as `user` entries with string content: a background task's notification
+(`origin.kind` `task-notification`), a subagent's hand-back or a peer message
+(`isMeta: true`, `origin.kind` `peer`) and the compaction summary
+(`isCompactSummary: true`, no `origin`). An entry with no `origin`, as in older
+versions and the summary, still counts as a prompt: the guard errs toward
+asking for the table again. A local transcript read on 2026-11-23 had that
+shape (`user` with a string content, `user` with `tool_result` blocks,
+`assistant` one entry per `text` block), which is an observation of one
+version, not a contract. So the guard decides on evidence only when it can
+read the file and finds a line it understands, and a transcript that is
+absent, unreadable, holds a line that is not JSON, or holds no user prompt
+makes it fall back to refusing once per input, as without the key.

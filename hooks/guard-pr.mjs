@@ -1,11 +1,16 @@
 #!/usr/bin/env node
 /**
- * PreToolUse on Bash: the first `gh pr create` of a branch in a session is
- * refused once with what its handover owes (`pr.checklist`), so the handover
- * does not depend on a skill being read. It applies when the diff touches
- * `pr.productPaths` or `surface.paths`; for the latter the delivery criterion
- * (`surface.criterion`) is named too. The same branch again in the same
- * session passes.
+ * PreToolUse on Bash: a `gh pr create` owes its handover (`pr.checklist`), so
+ * the handover does not depend on a skill being read. It applies when the diff
+ * touches `pr.productPaths` or `surface.paths`; for the latter the delivery
+ * criterion (`surface.criterion`) is named too.
+ *
+ * What passes it is evidence when `pr.requiredLines` is set: the body, read
+ * from the command (`--body`, `-b`, `--body-file`, `-F`), holds a line for
+ * each entry, and a body that lacks one is refused every time, naming the
+ * missing. Without `pr.requiredLines` a refusal proves nothing the retry
+ * does not, so the first `gh pr create` of a branch in a session is refused
+ * once and the same branch again passes.
  *
  * It stays out of the way for a pull request into a base other than
  * `branches.integration` (a slice into a shared base is read once, at its
@@ -45,6 +50,25 @@ const product = touches(pr.productPaths);
 const drawn = touches(surface.paths);
 if (!product && !drawn) process.exit(0);
 
+if (pr.requiredLines.length > 0) {
+  const body = bodyOf(command.slice(create.index + create[0].search(/gh\s+pr\s+create/u)), dir);
+  const lines = body === null ? [] : body.split(/\r?\n/u);
+  const missing = pr.requiredLines.filter((entry) => !lines.some((line) => new RegExp(entry, "ium").test(line)));
+  if (missing.length === 0) process.exit(0);
+  const list = missing.map((entry) => `/${entry}/`).join(", ");
+  deny(
+    [
+      drawn && surface.criterion && `This pull request draws screens: each must meet the delivery criterion — ${surface.criterion} — read rendered.`,
+      body === null
+        ? `Its body is not in the command (--body, -b, --body-file or -F with a readable file), so these lines cannot be seen: ${list}.`
+        : `Its body has no line matching ${list}.`,
+      pr.checklist,
+    ]
+      .filter(Boolean)
+      .join(" "),
+  );
+}
+
 const session = String(input.session_id ?? "none").replace(/[^\w-]/gu, "");
 const seenFile = path.join(tmpdir(), `docrank-pr-handover-${session}`);
 const seen = existsSync(seenFile) ? readFileSync(seenFile, "utf8") : "";
@@ -59,3 +83,108 @@ deny(
     .filter(Boolean)
     .join(" "),
 );
+
+/**
+ * The pull request body the command carries, or null when it carries none
+ * that can be read: `--fill`, no body flag, `-` (stdin) or a file that is not
+ * there. `text` starts at `gh pr create`; its words are read as a shell would
+ * split them, up to the first unquoted `;`, `&`, `|` or newline.
+ */
+function bodyOf(text, from) {
+  const words = shellWords(text);
+  let body = null;
+  for (const [i, word] of words.entries()) {
+    const [flag, ...rest] = word.split("=");
+    const inline = rest.length > 0 ? rest.join("=") : null;
+    const value = inline ?? words[i + 1];
+    if (value === undefined) continue;
+    if (flag === "--body" || flag === "-b") body = value;
+    else if (flag === "--body-file" || flag === "-F") body = value === "-" ? null : readBody(value, from);
+  }
+  return body;
+}
+
+function readBody(file, from) {
+  try {
+    return readFileSync(path.resolve(from, file.replace(/^~/u, process.env.HOME)), "utf8");
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Words of one shell command, quotes removed. A `$(…)`, inside double quotes
+ * or outside, is kept verbatim to its matching `)`: the usual body is
+ * `--body "$(cat <<'EOF' … EOF)"`, whose prose holds quotes and parens.
+ */
+function shellWords(text) {
+  const words = [];
+  let word = null;
+  let quote = null;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (quote === "'") {
+      if (c === "'") quote = null;
+      else word += c;
+    } else if (c === "$" && text[i + 1] === "(" && quote !== "'") {
+      const end = substitutionEnd(text, i);
+      word = (word ?? "") + text.slice(i, end);
+      i = end - 1;
+    } else if (quote === '"') {
+      if (c === '"') quote = null;
+      else if (c === "\\" && '"\\$`'.includes(text[i + 1] ?? "")) word += text[++i];
+      else word += c;
+    } else if (c === "'" || c === '"') {
+      quote = c;
+      word ??= "";
+    } else if (c === "\\") {
+      if (text[i + 1] !== "\n") word = (word ?? "") + (text[i + 1] ?? "");
+      i++;
+    } else if (/\s/u.test(c)) {
+      if (c === "\n") break;
+      if (word !== null) words.push(word);
+      word = null;
+    } else if (";&|".includes(c)) {
+      break;
+    } else {
+      word = (word ?? "") + c;
+    }
+  }
+  if (word !== null) words.push(word);
+  return words;
+}
+
+/**
+ * The index just past the `)` that closes the `$(` at `start`. A heredoc
+ * opened inside is read line by line to its terminator, quotes and parens
+ * ignored; elsewhere quoted text is skipped and parens are counted.
+ */
+function substitutionEnd(text, start) {
+  let depth = 0;
+  let i = start + 1;
+  while (i < text.length) {
+    const c = text[i];
+    if (c === "'" || c === '"') {
+      const close = text.indexOf(c, i + 1);
+      i = close === -1 ? text.length : close + 1;
+      continue;
+    }
+    const heredoc = c === "<" && text[i + 1] === "<" && /^<<(-?)\s*(["']?)([\w.-]+)\2/u.exec(text.slice(i, i + 80));
+    if (heredoc) {
+      const [opener, dash, , delimiter] = heredoc;
+      let at = text.indexOf("\n", i + opener.length);
+      while (at !== -1) {
+        const next = text.indexOf("\n", at + 1);
+        const line = text.slice(at + 1, next === -1 ? text.length : next);
+        at = next;
+        if ((dash ? line.replace(/^\t+/u, "") : line) === delimiter) break;
+      }
+      i = at === -1 ? text.length : at;
+      continue;
+    }
+    if (c === "(") depth++;
+    else if (c === ")" && --depth === 0) return i + 1;
+    i++;
+  }
+  return text.length;
+}

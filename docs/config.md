@@ -98,7 +98,8 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 
 | Key | Type | Default | Read by |
 |---|---|---|---|
-| `pr.productPaths` | path prefix[] | `[]` | PR handover guard: the first `gh pr create` of a branch in a session, into `branches.integration`, whose diff against `origin/<integration>` touches one is refused once with `checklist`. Empty here and in `surface.paths` means off |
+| `pr.productPaths` | path prefix[] | `[]` | PR handover guard: a `gh pr create` into `branches.integration` whose diff against `origin/<integration>` touches one is refused with `checklist`, the first of a branch in a session only, unless `requiredLines` decides it. Empty here and in `surface.paths` means off |
+| `pr.requiredLines` | regex[] | `[]` | PR handover guard: what passes it is evidence. Each entry is a regular expression, tried with the flags `i`, `m` and `u` (Unicode, case-insensitive) against each line of the pull request body, which the guard reads from the command: `--body`/`-b`, or the file `--body-file`/`-F` names, resolved against the directory the command runs in. A body with a line for every entry passes at the first attempt; one that lacks an entry is refused every time, naming the missing entries beside `checklist`. `--fill`, no body flag, `-` (stdin) and a file that cannot be read count as no body. Empty means the once-per-branch refusal |
 | `pr.checklist` | string | a generic handover line | PR handover guard: the text of that refusal. The default ends by telling the session to run the command again; a replacement should too |
 | `pr.ciBases` | glob[] | `[<integration>]` | `scripts/watch-pr.mjs`: bases whose pull requests run CI; the watcher of any other reports `NO CI` and exits 0 |
 
@@ -165,7 +166,8 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 
 | Key | Type | Default | Read by |
 |---|---|---|---|
-| `messages.tools` | regex[] | `[]` | external-message guard: tool names whose first call is refused with `checklist`, each tested unanchored against the name; only MCP tools (`mcp__*`) reach the hook, because a plugin's hook matcher is static; empty means off |
+| `messages.tools` | regex[] | `[]` | external-message guard: tool names whose call is refused with `checklist` (the first with a given input only, unless `evidenceHeader` decides it), each tested unanchored against the name; only MCP tools (`mcp__*`) reach the hook, because a plugin's hook matcher is static; empty means off |
+| `messages.evidenceHeader` | regex | `""` | external-message guard: what passes it is evidence. A regular expression, tried with the flags `i` and `u` against the header row of a Markdown table (a line starting `\|` with its `---` row under it). When an assistant text since the last user prompt of the session's transcript (`transcript_path`) holds one, the call passes at the first attempt; a transcript that is read and holds none refuses every time, with `checklist` and what is missing. A transcript that is absent, unreadable or not in the shape of harness fact 24 falls back to the once-per-input refusal. Empty means that refusal |
 | `messages.checklist` | string | a generic claims check | external-message guard: the text of that refusal |
 
 ## Example: guarding a local database

@@ -149,7 +149,7 @@ first written from:
     (no hook input tells a `-p` run apart, fact 23).
   - Tests: token and `Host` refused, SSE delivers an appended event, version
     mismatch, idle stop.
-- [ ] **1h · The UI.** `ui/` (React, `@xyflow/react`), built by esbuild to
+- [x] **1h · The UI.** `ui/` (React, `@xyflow/react`), built by esbuild to
   `ui/dist/watch.js` and committed; `npm run build:ui`.
   - The graph from the reducer; the active node's feed; "detail" folded; the
     session state in plain words at the top; `en`/`es` from config.

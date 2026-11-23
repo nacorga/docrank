@@ -33,7 +33,7 @@ changes on 2026-11-23, to ship together in one release (0.5.0):
 ## Slices
 
 - [x] **1a · The plan enters the tree.**
-- [ ] **1b · `env` in settings: harness fact.** Verify in the settings docs
+- [x] **1b · `env` in settings: harness fact.** Verify in the settings docs
   that `.claude/settings.json` `env` applies to the session at start, so that
   `CLAUDE_CODE_ENABLE_TODO_TOOLS` set there enables the task tools; record it
   in `docs/harness-facts.md` (VERIFIED with quote, or NOT DOCUMENTED). If NOT

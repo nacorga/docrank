@@ -24,6 +24,9 @@ Facts 17 to 23 (docrank watch) and 24 were read on 2026-11-23 from [hooks], [too
 [components],
 [sdk-todo]=https://code.claude.com/docs/en/agent-sdk/todo-tracking.md and
 [sdk-ts]=https://code.claude.com/docs/en/agent-sdk/typescript.md.
+Fact 25 was read on 2026-11-23 from [settings], [tools],
+[env-vars]=https://code.claude.com/docs/en/env-vars.md and
+[settings-ref]=https://code.claude.com/docs/en/settings-reference.md.
 
 | # | Fact | Status |
 |---|---|---|
@@ -50,6 +53,7 @@ Facts 17 to 23 (docrank watch) and 24 were read on 2026-11-23 from [hooks], [too
 | 22 | The task tool sets and their shapes | VERIFIED; off by default on newer models |
 | 23 | A helper's errand; a non-interactive session in the hook input | errand by order; an id match and the `-p` signal NOT DOCUMENTED |
 | 24 | `transcript_path` in the hook input, and the shape of a transcript line | path VERIFIED; the line shape NOT DOCUMENTED, so a fallback |
+| 25 | `CLAUDE_CODE_ENABLE_TODO_TOOLS` in the `env` of a repository's `.claude/settings.json` | the `env` reaching the session VERIFIED, after workspace trust; that the task tools follow it from that file NOT DOCUMENTED, not proved live |
 
 ## 1. `${CLAUDE_PLUGIN_ROOT}` in hook commands: VERIFIED
 
@@ -895,3 +899,42 @@ version, not a contract. So the guard decides on evidence only when it can
 read the file and finds a line it understands, and a transcript that is
 absent, unreadable, holds a line that is not JSON, or holds no user prompt
 makes it fall back to refusing once per input, as without the key.
+
+## 25. `CLAUDE_CODE_ENABLE_TODO_TOOLS` in a repository's `env`: the `env` VERIFIED; the task tools from it NOT DOCUMENTED
+
+`init` offers to turn the task tools (fact 22) on for a repository by writing
+the variable into the `env` of its `.claude/settings.json`.
+
+[env-vars] § Set variables in settings files: "Add variables under the `env`
+key in a `settings.json` file, creating the file if it doesn't exist. Claude
+Code reads them directly from the file, so they take effect no matter how
+`claude` was launched", its table naming "`.claude/settings.json` | Everyone
+working in the project, checked into source control"; and "a feature that
+reads its variables once at startup, such as OpenTelemetry monitoring, keeps
+its startup values until you relaunch". The variable's row: "Set to `1` to
+get the task-tracking tools on every model. ... Requires Claude Code
+v2.1.233 or later".
+
+[settings-ref] § When Claude Code applies `env` values: "From project and
+local settings: after you trust the workspace, or at startup in `-p` mode,
+which never shows the trust dialog" and "Variables Claude Code classifies as
+safe, such as model selection, timeouts and limits, and feature toggles: at
+startup from every settings file, apart from the variables project and local
+settings can't set". `CLAUDE_CODE_ENABLE_TODO_TOOLS` is not in § Variables
+Claude Code ignores in `env`. [settings] § A committed key doesn't reach teammates: "most `env` values
+apply only after each teammate trusts the folder".
+
+[tools] § Task tool availability gives the way as "Export
+`CLAUDE_CODE_ENABLE_TODO_TOOLS=1` before you start Claude Code", and
+§ Task-tracking tools in subagents and agent teams sets it through a
+settings `env` block: "start your session by running `claude --settings
+'{"env":{"CLAUDE_CODE_ENABLE_TODO_TOOLS":"1"}}'` in your shell". A
+`--settings` file's `env` applies "at startup".
+
+Not documented: whether the variable is one Claude Code "classifies as safe"
+and applies at startup from a project file, and whether the session's tool
+set, chosen at its start, follows a value applied only once the workspace is
+trusted. Not proved live. So `init` says the setting is unproved from a
+repository file, that it takes effect from the next session started in the
+repository, and that exporting the variable before `claude` is the
+documented way.

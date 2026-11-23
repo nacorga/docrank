@@ -179,7 +179,7 @@ first written from:
   `watch.retentionDays` on start and daily; a test with dated files.
 - [x] **2b · Sessions list.** The tab lists sessions by repository, live ones
   first, each with its start, its state and its task count.
-- [ ] **2c · Timeline.** A past session opens in its final state with a
+- [x] **2c · Timeline.** A past session opens in its final state with a
   slider over its events and a play button; the graph at any point is the
   reducer over the events up to it. Tests on the reducer's prefixes.
 - [ ] **2d · Documents and version 0.4.0**, PR, CI green.

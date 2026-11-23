@@ -2,7 +2,8 @@
  * The watch page: the sessions on record, grouped by repository; the chosen
  * session's state in plain words, a graph of Claude, its tasks and its
  * helpers, and the feed of the selected node. Every view comes from `reduce`
- * over the session's lines, as the server streams them.
+ * over the session's lines, as the server streams them; the timeline moves
+ * through a session by reducing only the lines up to a point.
  */
 import { Background, ReactFlow, useReactFlow } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
@@ -52,6 +53,70 @@ function useEvents(chosen) {
     return () => es.close();
   }, [chosen?.repo, chosen?.session]);
   return events;
+}
+
+/** A replay's step: 400 ms a line, quicker for a long session so it plays in about half a minute. */
+const stepMs = (n) => Math.max(40, Math.min(400, 30_000 / n));
+
+/**
+ * Where the timeline stands in `n` lines: `pos` null at the end, following
+ * the lines as they come (a past session opens there), else how many are
+ * drawn. Playing moves one line per step and stops at the end, following again. Back to the
+ * end whenever the session changes (`key`).
+ */
+function useTimeline(n, key) {
+  const [pos, setPos] = useState(null);
+  const [playing, setPlaying] = useState(false);
+  useEffect(() => {
+    setPos(null);
+    setPlaying(false);
+  }, [key]);
+  useEffect(() => {
+    if (!playing) return undefined;
+    if (pos == null) {
+      setPlaying(false);
+      return undefined;
+    }
+    const t = setTimeout(() => setPos(pos + 1 >= n ? null : pos + 1), stepMs(n));
+    return () => clearTimeout(t);
+  }, [playing, pos, n]);
+  return { pos, setPos, playing, setPlaying };
+}
+
+function Timeline({ events, t }) {
+  const n = events.length;
+  const at = t.pos ?? n;
+  return (
+    <div className="timeline">
+      <button
+        type="button"
+        disabled={n === 0}
+        onClick={() => {
+          if (t.playing) return t.setPlaying(false);
+          if (t.pos == null) t.setPos(1);
+          t.setPlaying(true);
+        }}
+      >
+        {t.playing ? w.pause : w.play}
+      </button>
+      <input
+        type="range"
+        min={n === 0 ? 0 : 1}
+        max={n}
+        value={at}
+        disabled={n === 0}
+        aria-label={w.step(at, n)}
+        onChange={(e) => {
+          const v = Number(e.target.value);
+          t.setPlaying(false);
+          t.setPos(v >= n ? null : v);
+        }}
+      />
+      <span className="at">
+        {n ? `${time(events[at - 1]?.time)} · ${w.step(at, n)}` : ""}
+      </span>
+    </div>
+  );
 }
 
 function useNow(ms) {
@@ -252,7 +317,9 @@ function App() {
   const chosen = picked ?? (sessions?.[0] ? { repo: sessions[0].repo, session: sessions[0].session } : null);
   const events = useEvents(chosen);
   const now = useNow(10_000);
-  const s = useMemo(() => reduce(events, { now }), [events, now]);
+  const t = useTimeline(events.length, chosen ? `${chosen.repo}/${chosen.session}` : "");
+  // A point on the timeline is judged by its lines alone, as the live page judged it then.
+  const s = useMemo(() => (t.pos == null ? reduce(events, { now }) : reduce(events.slice(0, t.pos))), [events, now, t.pos]);
   const [selected, setSelected] = useState(null);
   const shown = selected ?? s.active;
   const laid = useMemo(() => layout(s, shown), [s, shown]);
@@ -273,12 +340,14 @@ function App() {
         {s.repo ? <span className="repo">{s.repo}</span> : null}
         {lost ? <span className="lost">{w.lost}</span> : null}
         <span className="spacer" />
-        {selected || manual ? (
+        {selected || manual || t.pos != null ? (
           <button
             type="button"
             onClick={() => {
               setSelected(null);
               setManual(false);
+              t.setPlaying(false);
+              t.setPos(null);
             }}
           >
             {w.follow}
@@ -296,22 +365,26 @@ function App() {
             setManual(false);
           }}
         />
-        <div className="graph">
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            fitView
-            fitViewOptions={FIT}
-            onNodesChange={onNodesChange}
-            onMove={(e) => e && setManual(true)}
-            nodesDraggable={false}
-            nodesConnectable={false}
-            onNodeClick={(_, n) => n.id !== "claude" && setSelected(n.id)}
-            proOptions={{ hideAttribution: true }}
-          >
-            <Background gap={24} />
-            <Fit ids={ids} manual={manual} />
-          </ReactFlow>
+        <div className="stage">
+          <div className="graph">
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              fitView
+              fitViewOptions={FIT}
+              onNodesChange={onNodesChange}
+              onMove={(e) => e && setManual(true)}
+              nodesDraggable={false}
+              nodesConnectable={false}
+              onNodeClick={(_, n) => n.id !== "claude" && setSelected(n.id)}
+              proOptions={{ hideAttribution: true }}
+            >
+              <Background gap={24} />
+              <Fit ids={ids} manual={manual} />
+            </ReactFlow>
+          </div>
+          {/* Drawn with no lines too: the graph's height must not change under its first fit. */}
+          <Timeline events={events} t={t} />
         </div>
         <Feed s={s} id={shown} />
       </main>

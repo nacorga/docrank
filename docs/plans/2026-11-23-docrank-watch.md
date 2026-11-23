@@ -162,7 +162,7 @@ first written from:
   how to switch it on, how to get a task list on newer models, what is
   stored and where; `CLAUDE.md`: the bundle, its
   build, the dev dependencies and that the Node side still has none.
-- [ ] **1k · Version 0.3.0.** `package.json`, `package-lock.json`,
+- [x] **1k · Version 0.3.0.** `package.json`, `package-lock.json`,
   `.claude-plugin/plugin.json`; `claude plugin validate .`.
 - [ ] **1l · PR** «feat(watch): a live plain-language view of the session».
   CI green on the four combinations.

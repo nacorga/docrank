@@ -670,7 +670,7 @@ Chrome, not by a person.
   `UserPromptSubmit` hook got `prompt: "/probe:hi with some args"` for that
   prompt typed, the slash command as typed, not the skill's expanded text.
 
-Fixed after 0.5.0, found here:
+Fixed in 0.5.1, found here:
 
 - The helper read "un encargo sin nombre": the skill was the prompt, with no
   `Skill` call to take the errand from, and the hook kept nothing of a

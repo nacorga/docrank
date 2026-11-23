@@ -238,7 +238,7 @@ session read as three turns, the gates' subagent under the second, a command
 exiting 3 as `Bash ✗` with its exit code ([harness fact 26](docs/harness-facts.md)),
 and the card summing it up. Its defects, a skill typed as the prompt giving
 its subagent no errand and two repositories of one name sharing a heading in
-the sessions list, are fixed after 0.5.0. Not proved for watch: the tab
+the sessions list, are fixed in 0.5.1. Not proved for watch: the tab
 opening by itself, a person reading the page, an older server replaced live,
 the daily retention sweep, Linux, and the task tools turned on from
 `.claude/settings.json` in an interactive session (fact 25). Not yet exercised

@@ -164,7 +164,7 @@ first written from:
   build, the dev dependencies and that the Node side still has none.
 - [x] **1k · Version 0.3.0.** `package.json`, `package-lock.json`,
   `.claude-plugin/plugin.json`; `claude plugin validate .`.
-- [ ] **1l · PR** «feat(watch): a live plain-language view of the session».
+- [x] **1l · PR** «feat(watch): a live plain-language view of the session».
   CI green on the four combinations.
 - [ ] **1m · Release and live trial (user).** Tag and release 0.3.0; one
   session with an observer reading the tab: tasks, a helper, a gate run, a

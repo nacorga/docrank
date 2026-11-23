@@ -92,7 +92,7 @@ No page lists which events a plugin may register, and none excludes `Stop` or
 
 `Stop` from the plugin's `hooks/hooks.json` is proved live (§ 15): doc drift
 blocked a session's end with its message. `SessionEnd`, wired by watch since
-0.3.0, is proved live too (§ 15, the watch trial): leaving an interactive
+0.3.0, is proved live too (§ 15, both watch trials): leaving an interactive
 session recorded it with `reason` `prompt_input_exit`.
 
 ## 4. `SessionStart` `additionalContext` from a plugin: VERIFIED
@@ -584,6 +584,54 @@ Fixed in 0.4.0 (0.3.1 was never released), each found here:
 
 Not proved: the tab opening by itself (suppressed here), a person reading
 the page, Linux.
+
+### docrank watch 0.4.0, 2026-11-23
+
+Claude Code 2.1.330, model Opus 5.5, an interactive session in tmux driven
+by Claude, the plugin loaded with `--plugin-dir` from `main` at `c71127f`
+(0.4.0), in the demo's worktree on `demo/tracking`, with the same `watch`
+configuration and environment as the 0.3.0 trial and permissions in auto
+mode. The 0.3.0 trial's server had stopped itself after its idle timeout.
+One prompt: three tasks with the task tools, an Explore helper listing
+`src/` and `test/`, `/docrank:gates`, and a comparison of
+`src/checkout.mjs` with `docs/spec.md`. The page was read in a headless
+Chrome over the DevTools protocol, not by a person.
+
+- The `SessionStart` hook started a protocol-2 server on 47199.
+- The session's log, 67 lines: `SessionStart` 1, `UserPromptSubmit` 4,
+  `PreToolUse` 22, `PostToolUse` 22, `TaskCreated` 3, `SubagentStart` 3
+  (the Explore helper twice: `SendMessage` resumed it, and the page kept one
+  card for it), `SubagentStop` 7 (four for agents that never started, which
+  the reducer ignores), `Stop` 4 and `SessionEnd` 1 (`prompt_input_exit`,
+  again). It is `test/fixtures/watch-trial-0.4.0.jsonl`, its absolute paths
+  made generic.
+- Three of the four `UserPromptSubmit` lines (24, 38, 56) carried no human
+  prompt: each came as a background helper finished, its result delivered to
+  Claude as a new turn. The prompt is not stored, so the reducer cannot tell
+  them apart, and need not: Claude works on each, so *working* is right.
+- The sessions list showed both sessions under the repository, the live
+  one first ("Trabajando · 3 tareas") and the 0.3.0 trial's ("Terminado ·
+  3 tareas"); after the turn the live one read "Esperando tu respuesta".
+- Scrubbing the live session while it wrote: the slider at step 21 of 64
+  drew the graph as it stood then (task 1 in progress, its Explore helper
+  working, tasks 2 and 3 to do) while the log grew from 56 to 66 lines.
+- Opening the 0.3.0 session and pressing "Reproducir" played it back
+  ("Pausa · paso 18 de 52" about seven seconds later).
+
+Fixed in 0.4.1, found here:
+
+- A turn ended while its helper still worked: `Stop` at line 20, the
+  Explore helper's `SubagentStop` only at line 26. Until the helper's next
+  call the header and the sessions list read "Esperando tu respuesta" while
+  Claude waited for its helper. The reducer now counts the helpers started
+  and not stopped; while one runs the session is *working*. A helper's own
+  calls no longer undo the turn's `Stop` either, so once the last one stops
+  the session waits for an answer until a prompt, a call or a helper says
+  otherwise. The 0.3.0 log had the same moment at line 34, unnoticed then.
+
+Not proved: a protocol-1 server replaced live (the old one had already
+stopped; unit-tested only), the daily retention timer, the tab opening by
+itself, a person reading the page, Linux.
 
 ## 16. Install scopes, `--plugin-dir`, a session in a worktree: VERIFIED
 

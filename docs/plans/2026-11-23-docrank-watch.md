@@ -101,7 +101,7 @@ first written from:
   `watch.port` (int, a fixed default above 1024), `watch.language`
   (`"en" | "es"`, `"en"`), `watch.retentionDays` (int, used by slice 2).
   The `doc-facts` test keeps the two in step.
-- [ ] **1d · The observation hook.** `hooks/watch-event.mjs`, wired with
+- [x] **1d · The observation hook.** `hooks/watch-event.mjs`, wired with
   `async: true` on `PreToolUse`, `PostToolUse` and `PostToolUseFailure` with
   matcher `"*"`, and on `PermissionRequest`, `PermissionDenied`,
   `Notification`, `SubagentStart`, `SubagentStop`, `TaskCreated`,

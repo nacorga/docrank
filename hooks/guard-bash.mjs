@@ -17,12 +17,16 @@ import os from "node:os";
 import path from "node:path";
 import { loadConfig } from "../lib/config.mjs";
 import { esc, git, glob, mergedTip, run } from "../lib/git.mjs";
+import { recordRefusal } from "../lib/watch/record.mjs";
 
-let command;
+let input;
 try {
-  command = JSON.parse(readFileSync(0, "utf8")).tool_input?.command;
+  input = JSON.parse(readFileSync(0, "utf8"));
 } catch {}
+const command = input?.tool_input?.command;
 if (!command) process.exit(0);
+
+let config;
 
 function refuse(reason, message) {
   try {
@@ -30,11 +34,12 @@ function refuse(reason, message) {
     mkdirSync(path.dirname(log), { recursive: true });
     appendFileSync(log, `[${new Date().toISOString()}] ${reason}\n  cmd: ${command}\n`);
   } catch {}
+  // No hook event reports this refusal (harness fact 21): docrank watch hears it here.
+  recordRefusal(input, config, message, "guard-bash");
   process.stderr.write(`${message}\n`);
   process.exit(2);
 }
 
-let config;
 try {
   config = loadConfig({ cwd: process.cwd() });
 } catch (e) {

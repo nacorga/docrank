@@ -5,7 +5,12 @@
  * session's watch log to it as server-sent events, tailing the JSONL files the
  * observer hook appends to. Node built-ins only.
  *
- *   watch-server.mjs [--port <n>]    0 picks a free port (tests)
+ *   watch-server.mjs [--port <n>] [--retention-days <n>]
+ *
+ * `--port 0` picks a free port (tests). `--retention-days` is the
+ * `watch.retentionDays` of the session that started the server: one server
+ * serves every repository, so that value applies to all of them. Session logs
+ * older than that are deleted on start and once a day (`lib/watch/history.mjs`).
  *
  * It listens on 127.0.0.1 only. Every request carries the random token it
  * wrote to `server.json` (0600, in the watch home), and its `Host` must be
@@ -19,6 +24,7 @@ import { closeSync, existsSync, mkdirSync, openSync, readdirSync, readFileSync, 
 import { createServer } from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { DAY_MS, prune } from "../lib/watch/history.mjs";
 import { IDLE_MS, PROTOCOL, statePath, validRepo, validSession } from "../lib/watch/launch.mjs";
 import { watchHome } from "../lib/watch/record.mjs";
 
@@ -30,6 +36,7 @@ const arg = (name) => {
   return i === -1 ? undefined : process.argv[i + 1];
 };
 const port = Number(arg("--port") ?? 47173);
+const retentionDays = Number(arg("--retention-days")) || 30;
 const idleMs = Number(process.env.DOCRANK_WATCH_IDLE_MS) || IDLE_MS;
 // A test stands for an older server with this; nothing else sets it.
 const protocol = Number(process.env.DOCRANK_WATCH_PROTOCOL_OVERRIDE) || PROTOCOL;
@@ -39,6 +46,11 @@ const home = watchHome();
 const streams = new Set(); // the page's session-list streams: one per open tab
 
 const names = new Map(); // a log's path → its checkout's name, once its first line is complete
+
+/** Applies the retention: deletes the logs older than `retentionDays`. */
+function sweep() {
+  for (const file of prune(home, retentionDays, { idleMs })) names.delete(file);
+}
 
 /**
  * The name of the checkout a session ran in, from the `SessionStart` line the
@@ -221,6 +233,8 @@ server.listen(port, "127.0.0.1", () => {
   const tmp = `${statePath()}.${process.pid}`;
   writeFileSync(tmp, JSON.stringify({ pid: process.pid, port: server.address().port, token, protocol }), { mode: 0o600 });
   renameSync(tmp, statePath());
+  sweep();
+  setInterval(sweep, DAY_MS).unref();
   setInterval(() => {
     const latest = Math.max(started, sessions()[0]?.updatedAt ?? 0);
     if (Date.now() - latest > idleMs) stop();

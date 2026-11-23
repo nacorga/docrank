@@ -175,7 +175,7 @@ first written from:
 
 ### [ ] 2 · History and timeline — branch `feat/watch-history`
 
-- [ ] **2a · Retention.** The server deletes session files older than
+- [x] **2a · Retention.** The server deletes session files older than
   `watch.retentionDays` on start and daily; a test with dated files.
 - [ ] **2b · Sessions list.** The tab lists sessions by repository, live ones
   first, each with its start, its state and its task count.

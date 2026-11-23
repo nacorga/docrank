@@ -54,7 +54,7 @@ changes on 2026-11-23, to ship together in one release (0.5.0):
 - [x] **3a · Closing card.** From the reducer: tasks done/total, subagents by
   type, refusals, failures, duration; shown at the end of a session and when a
   past session opens; en/es. Tests and a screenshot.
-- [ ] **4a · Documents and version 0.5.0**, README, `CLAUDE.md` if the shape
+- [x] **4a · Documents and version 0.5.0**, README, `CLAUDE.md` if the shape
   changed; PR, CI green.
 - [ ] **4b · Release 0.5.0** after the merge; this plan leaves the tree in the
   same PR as 4a (checked before deletion).

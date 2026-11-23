@@ -139,10 +139,18 @@ end carries ✓ or ✗ on its gate chip when it ran one (`run-gates ✓`,
 code and the exact command or path are folded behind *detail*. English or
 Spanish.
 
+When the session is done, or waits for your answer after a turn of work, a
+summary card heads the side panel: how many tasks were done of those listed
+(or how many turns, with no list), the subagents used by type (`Explore ×1`),
+whether the checks passed (`run-gates ✓`, `run-gates ✗`), the actions a
+safety rule stopped by guard (`guard-bash ×1`), how many actions failed
+("Nothing failed" too), and how long it took, from its first event to its
+last.
+
 On the left, the sessions on record, grouped by repository, live ones first,
 each with its start, its state and how many tasks it had; the tab follows the
 newest until one is picked. Under the graph, a timeline: a past session opens
-at its end, and the slider moves through it line by line, the graph and the
+at its end, on its summary card, and the slider moves through it line by line, the graph and the
 feeds drawn as they stood at that point; *Play* replays it from the start,
 *Pause* stops it. A live session can be moved through the same way, and
 *Follow the activity* brings it back to now.
@@ -225,7 +233,10 @@ grew; and the sixth's session replayed with "Play". Its defect, a session
 read as waiting for an answer while a helper still worked after the turn
 ended, is fixed in 0.4.1. Not proved for watch: the tab opening by itself, a
 person reading the page, an older server replaced live, the daily retention
-sweep, Linux. Not yet exercised
+sweep, Linux; and, from 0.5.0, turns, the ✓/✗ verdicts and the summary card,
+tested on the trials' logs and on synthetic ones (no trial log holds a failed
+call, [harness fact 26](docs/harness-facts.md)), and the task tools turned on
+from `.claude/settings.json` in an interactive session (fact 25). Not yet exercised
 live, though tested on stubbed input: the
 closing line rule, and the memory link, which is experimental: off by default,
 its directory rule undocumented by Claude Code.

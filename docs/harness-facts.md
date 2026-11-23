@@ -29,7 +29,7 @@ Facts 17 to 23 (docrank watch) were read on 2026-11-23 from [hooks], [tools],
 |---|---|---|
 | 1 | `${CLAUDE_PLUGIN_ROOT}` works in hook commands | VERIFIED |
 | 2 | A plugin can wire `WorktreeCreate` | VERIFIED, with two limits; PROVED LIVE |
-| 3 | A plugin can wire `Stop` and `SessionEnd` | NOT DOCUMENTED per event; `Stop` PROVED LIVE |
+| 3 | A plugin can wire `Stop` and `SessionEnd` | NOT DOCUMENTED per event; both PROVED LIVE |
 | 4 | A plugin's `SessionStart` hook can return `additionalContext` | VERIFIED |
 | 5 | The hook input carries `agent_type` | VERIFIED |
 | 6 | Plugin agents' `mcpServers` and `skills` frontmatter | `mcpServers` ignored, the plugin's `.mcp.json` instead; `skills` supported, a plugin skill's name there NOT DOCUMENTED; browser server PROVED LIVE |
@@ -90,7 +90,9 @@ No page lists which events a plugin may register, and none excludes `Stop` or
 `SessionEnd`; [hooks] describes both events without tying them to plugins.
 
 `Stop` from the plugin's `hooks/hooks.json` is proved live (§ 15): doc drift
-blocked a session's end with its message. `SessionEnd` is not wired by docrank.
+blocked a session's end with its message. `SessionEnd`, wired by watch since
+0.3.0, is proved live too (§ 15, the watch trial): leaving an interactive
+session recorded it with `reason` `prompt_input_exit`.
 
 ## 4. `SessionStart` `additionalContext` from a plugin: VERIFIED
 
@@ -534,6 +536,54 @@ that commit's tree.
 - The install step chained `cp && chmod && ls && cmp` in one Bash call, once:
   no error, but a chain.
 
+### docrank watch 0.3.0, 2026-11-23
+
+Claude Code 2.1.330, model Fable 5.2, an interactive session in tmux driven
+by Claude, the plugin loaded with `--plugin-dir` from `main` at `8dd9971`
+(0.3.0), in `repo-tracking` as `scripts/demo.mjs` builds it. Its
+`.claude/docrank.json` had `"watch": { "enabled": true, "language": "es",
+"port": 47199 }`; the environment `CLAUDE_CODE_ENABLE_TODO_TOOLS=1
+DOCRANK_WATCH_NO_OPEN=1`; permissions asked. One prompt: three tasks with
+the task tools, then an Explore helper summarising `docs/spec.md`,
+`/docrank:gates`, and `git push origin HEAD:main` once. The page was read in
+a headless Chrome over the DevTools protocol, not by a person.
+
+- The `SessionStart` hook started the server on 47199, `server.json` 0600,
+  and opened no tab.
+- The session's log, 52 lines: `SessionStart` 1, `UserPromptSubmit` 3,
+  `PreToolUse` 16, `PostToolUse` 15, `TaskCreated` 3, `SubagentStart` 2,
+  `SubagentStop` 5 (three for agents that never started, which the reducer
+  ignores), `PermissionRequest` 1, `Notification` 1 (`permission_prompt`, six
+  seconds after the request, as fact 18), `Stop` 3, `Refused` 1 and
+  `SessionEnd` 1 (`prompt_input_exit`, on leaving the session). No secret-like
+  value was produced, and none is in the log. It is
+  `test/fixtures/watch-trial-0.3.0.jsonl`, its absolute paths made generic.
+- The header read "Esperando tu permiso" while the `Skill(docrank:gates)`
+  prompt was open and "Esperando tu respuesta" once the turn ended.
+- The three tasks read Hecha, En curso and Hecha as they went; the Explore
+  helper hung under task 1 with its errand "Resumir docs/spec.md"; the gate
+  run read "Pasar todas las comprobaciones" in the gates helper.
+- `guard-bash` refused the push; the page read "Intentó enviar el trabajo al
+  repositorio compartido (push); una regla de seguridad lo impidió", the
+  command and the `BLOCKED` message folded behind "detalle".
+
+Fixed in 0.3.1, each found here:
+
+- The graph was framed on part of the nodes, or none, on some loads, and the
+  Claude node and its edges were missing. The page rebuilt its nodes on every
+  event without the sizes React Flow had measured, so each update made every
+  node new and unmeasured: hidden until measured again, and left out of a
+  fit. The sizes are now kept; a sampled load shows no hidden node and a fit
+  on each added node.
+- `/docrank:gates` runs forked: its helper's `SubagentStart` (type
+  `general-purpose`) followed a `Skill` call, not an `Agent` call, so it read
+  "un encargo sin nombre". A `Skill` call is now an errand too (fact 23).
+- The session list named the repository by its directory key ("repo"), the
+  header by the checkout ("repo-tracking"); both now name the checkout.
+
+Not proved: the tab opening by itself (suppressed here), a person reading
+the page, Linux.
+
 ## 16. Install scopes, `--plugin-dir`, a session in a worktree: VERIFIED
 
 **Scopes.** [plugins] § Understand install scopes: "**User scope**: enabled
@@ -749,6 +799,17 @@ helper's own, so which agent spawned it is not known either. An id match is NOT 
 `agentId` example is `"a4d2c8f1e0b3a297"`, the `SubagentStart` example's
 `agent_id` is `"agent-abc123"` (fact 12), and a foreground `Agent` call's
 `PostToolUse` arrives only when the helper has finished.
+
+A skill with `context: fork` (fact 10) starts a helper with no `Agent` call:
+in the watch trial (§ 15) `/docrank:gates`'s `SubagentStart`, type
+`general-purpose`, followed the `Skill` call's `PreToolUse` and preceded its
+`PostToolUse` by 13 ms. A `Skill` call is therefore an errand too, the
+skill's name: a helper takes the oldest `Agent` call of its type, else the
+oldest `Skill` call, else the oldest `Agent` call of any type. A skill that
+ran inline leaves its `Skill` call untaken; it is forgotten at `Stop` or the
+next prompt, and until then a helper with no call of its own takes it. A
+helper whose `SubagentStart` line lands before its call's (async hooks,
+fact 19) gets no errand.
 
 No hook input field says the session is non-interactive (`-p`): [hooks]
 § Common input fields lists none, and § SessionStart input has `source`,

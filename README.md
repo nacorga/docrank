@@ -178,9 +178,17 @@ hook reads the `.claude/docrank.json` of the worktree a session is started
 in; and saw `init` read with Read and one command per Bash call, offer
 `src/**` ahead of the named file for the ground and pair `src/` for doc drift,
 proving its wording changed after the third, then, on the 0.2.2 branch, run
-with no error. Not yet exercised live, though tested on stubbed input: watch, whose page
-was checked only in a headless Chrome against a session recorded through its
-hook; the
+with no error. A sixth, with 0.3.0 and a session driven by Claude, proved
+watch: the session's hook started the server, and the page, read in a
+headless Chrome, showed the wait for permission and for an answer, three
+tasks and their states, an Explore helper under its task with its errand, a
+gate run inside the gates helper, and the guard's refusal of a push as a
+plain warning with its command folded; `SessionEnd` from the plugin was
+recorded on leaving. Its three defects, a graph framed on part of its nodes,
+a forked skill's helper with no errand and the session list naming another
+repository than the header, are fixed in 0.3.1. Not proved for watch: the
+tab opening by itself, a person reading the page, Linux. Not yet exercised
+live, though tested on stubbed input: the
 closing line rule, and the memory link, which is experimental: off by default,
 its directory rule undocumented by Claude Code.
 

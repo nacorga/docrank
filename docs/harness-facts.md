@@ -743,8 +743,9 @@ list and watch shows its work under "work without a list".
 
 `SubagentStart` carries no description (fact 17). The errand is the
 `description` of the `Agent` call that spawned it, matched by order: the
-oldest `Agent` call of the same `subagent_type`, from the same agent, that no
-helper has taken yet. An id match is NOT DOCUMENTED: the `Agent` response's
+oldest `Agent` call of the same `subagent_type` that no helper has taken yet,
+else the oldest of any type. `SubagentStart`'s `agent_id` is the new
+helper's own, so which agent spawned it is not known either. An id match is NOT DOCUMENTED: the `Agent` response's
 `agentId` example is `"a4d2c8f1e0b3a297"`, the `SubagentStart` example's
 `agent_id` is `"agent-abc123"` (fact 12), and a foreground `Agent` call's
 `PostToolUse` arrives only when the helper has finished.

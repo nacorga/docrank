@@ -65,8 +65,7 @@ first written from:
   reducer accepts either order. Under `-p`, async hooks are killed at
   teardown: the server is started fully detached.
 - A helper's errand stays matched by order (fact 23), narrowed to the
-  oldest untaken `Agent` call of the same `subagent_type` from the same
-  agent. No hook input says a session is non-interactive: the tab is not
+  oldest untaken `Agent` call of the same `subagent_type`. No hook input says a session is non-interactive: the tab is not
   opened under `CI` or `SSH_CONNECTION`, and `-p` is not told apart.
 - `SessionEnd` from a plugin is NOT DOCUMENTED per event (fact 3): it is
   wired, and the idle timeout still ends a session that sends none.
@@ -119,7 +118,7 @@ first written from:
   - Redaction: env-file contents, `Authorization`/token/key/password-like
     assignments and URLs with credentials. Tests per pattern.
   - A `Bash` command that equals one of `gates.run` is tagged as that gate.
-- [ ] **1e · The reducer.** `lib/watch/reduce.mjs`, pure ESM with no React,
+- [x] **1e · The reducer.** `lib/watch/reduce.mjs`, pure ESM with no React,
   shared by the server tests and the bundle: events → `{ session state, tasks,
   helpers, feed per node }`.
   - Tasks from `TaskCreate`/`TaskUpdate` and from `TodoWrite`; actions before

@@ -104,6 +104,19 @@ describe("guard-pr.mjs", () => {
       expect(await decision(tmpdir(), `cd ${dir} && ${open("-F body.md")}`, session(), dir)).toBeNull();
     });
 
+    it("reads a heredoc body whose prose holds quotes, an apostrophe and an unbalanced paren", async () => {
+      const dir = branchChanging("src/a.ts", evidence);
+      const prose = 'The "gates" passed; it\'s a 5" fix (really) & 1) item';
+      const heredoc = (lines, opener = "<<'EOF'", end = "EOF") => open(`--body "$(cat ${opener}\n${prose}\n${lines}\n${end}\n)"`);
+      for (const opener of ["<<'EOF'", "<<EOF", '<<"EOF"', "<<-EOF"]) {
+        expect(await decision(dir, heredoc(BODY, opener), session())).toBeNull();
+      }
+      expect(await decision(dir, `${heredoc(BODY)} && echo done`, session())).toBeNull();
+      const reason = await decision(dir, heredoc("Commercial reading: nothing sold"), session());
+      expect(reason).toContain("/^Gates: passed$/");
+      expect(reason).not.toContain("Commercial reading: \\S");
+    });
+
     it("reads the body whole when it holds a `;`, an `&` or a `|`", async () => {
       const dir = branchChanging("src/a.ts", evidence);
       expect(await decision(dir, open(`--body "a; b & c | d\n${BODY}"`), session())).toBeNull();

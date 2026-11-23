@@ -112,7 +112,11 @@ function readBody(file, from) {
   }
 }
 
-/** Words of one shell command, quotes removed; `$(…)` and variables stay as written. */
+/**
+ * Words of one shell command, quotes removed. A `$(…)`, inside double quotes
+ * or outside, is kept verbatim to its matching `)`: the usual body is
+ * `--body "$(cat <<'EOF' … EOF)"`, whose prose holds quotes and parens.
+ */
 function shellWords(text) {
   const words = [];
   let word = null;
@@ -122,6 +126,10 @@ function shellWords(text) {
     if (quote === "'") {
       if (c === "'") quote = null;
       else word += c;
+    } else if (c === "$" && text[i + 1] === "(" && quote !== "'") {
+      const end = substitutionEnd(text, i);
+      word = (word ?? "") + text.slice(i, end);
+      i = end - 1;
     } else if (quote === '"') {
       if (c === '"') quote = null;
       else if (c === "\\" && '"\\$`'.includes(text[i + 1] ?? "")) word += text[++i];
@@ -144,4 +152,39 @@ function shellWords(text) {
   }
   if (word !== null) words.push(word);
   return words;
+}
+
+/**
+ * The index just past the `)` that closes the `$(` at `start`. A heredoc
+ * opened inside is read line by line to its terminator, quotes and parens
+ * ignored; elsewhere quoted text is skipped and parens are counted.
+ */
+function substitutionEnd(text, start) {
+  let depth = 0;
+  let i = start + 1;
+  while (i < text.length) {
+    const c = text[i];
+    if (c === "'" || c === '"') {
+      const close = text.indexOf(c, i + 1);
+      i = close === -1 ? text.length : close + 1;
+      continue;
+    }
+    const heredoc = c === "<" && text[i + 1] === "<" && /^<<(-?)\s*(["']?)([\w.-]+)\2/u.exec(text.slice(i, i + 80));
+    if (heredoc) {
+      const [opener, dash, , delimiter] = heredoc;
+      let at = text.indexOf("\n", i + opener.length);
+      while (at !== -1) {
+        const next = text.indexOf("\n", at + 1);
+        const line = text.slice(at + 1, next === -1 ? text.length : next);
+        at = next;
+        if ((dash ? line.replace(/^\t+/u, "") : line) === delimiter) break;
+      }
+      i = at === -1 ? text.length : at;
+      continue;
+    }
+    if (c === "(") depth++;
+    else if (c === ")" && --depth === 0) return i + 1;
+    i++;
+  }
+  return text.length;
 }

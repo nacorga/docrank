@@ -67,7 +67,7 @@ Every key is documented once, with its default, in [docs/config.md](docs/config.
 | Bash | moving the main checkout off the integration branch, deleting an unmerged branch | `branches.integration` |
 | Bash | any command that matches a pattern the repository adds | `guard.extraDeny` |
 | Bash | a write or a command that runs, from a read-only agent | `judges.skill` |
-| Agent | a fork dispatch; an Opus dispatch with no `Heavy:` line; completes a dispatch with the guardrails block, and sets the default model and effort | `dispatch.*` |
+| Agent | a fork dispatch; a `general-purpose` Opus dispatch with no `Heavy:` line; completes a dispatch with the guardrails block, and sets the default model and effort | `dispatch.*` |
 | SendMessage | a message to a judge past its re-check limit, once | `judges.maxRechecks` |
 | Edit, Write | `.env*` except `.env.example`, lockfiles, and the repository's own rules | `paths.builtIns`, `paths.rules` |
 | ExitPlanMode | a plan without a required heading | `plan.requiredHeadings` |

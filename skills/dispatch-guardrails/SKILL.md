@@ -87,6 +87,17 @@ constraints`, verbatim too:
 docrank's read-only guard holds an agent whose type cannot edit to Bash reads
 alone, so for a read-only reviewer that line is enforced, not only asked.
 
+## Dispatching on Opus
+
+With `dispatch.heavyMarker` on (the default), the dispatch guard refuses a
+`general-purpose` dispatch, named or by default, whose `model` contains
+`opus` unless its prompt holds a line of its own, `Heavy: <path>`. The path,
+read from the repository root or absolute, must name a file that can be read
+and whose text contains the word "heavy", in any case, anywhere: the plan
+that marks the slice. A dispatch that names no model needs no line: it runs
+on `dispatch.defaultModel`. Any other agent type, an `Explore` too, is not
+checked for it.
+
 ## When the report does not arrive
 
 A subagent's final message is not guaranteed to arrive. Claude Code keeps

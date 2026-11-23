@@ -183,7 +183,8 @@ search pattern, a URL, a task's subject, a subagent's errand. Secrets in them
 (tokens, passwords, `Authorization` headers, credentials in URLs, values
 written to an env file) are replaced with `[redacted]`. No tool output, no
 prompt and no file content is kept: of a result, only whether the call
-failed and, for a command, its exit code. The page is served to `127.0.0.1` only,
+failed and, for a command, its exit code; of a prompt, only the name of the
+slash command it opens with, such as `docrank:gates`. The page is served to `127.0.0.1` only,
 with a random token in its address. A session is kept for 30 days after its
 last line (`watch.retentionDays`): the server deletes older ones when it
 starts and once a day, and never one that wrote within the last 30 minutes.
@@ -231,12 +232,16 @@ sixth's below it, each with its state and task count; scrubbing the live
 session's timeline drew the graph as it stood at that step while the log
 grew; and the sixth's session replayed with "Play". Its defect, a session
 read as waiting for an answer while a helper still worked after the turn
-ended, is fixed in 0.4.1. Not proved for watch: the tab opening by itself, a
-person reading the page, an older server replaced live, the daily retention
-sweep, Linux; and, from 0.5.0, turns, the ✓/✗ verdicts and the summary card,
-tested on the trials' logs and on synthetic ones (no trial log holds a failed
-call, [harness fact 26](docs/harness-facts.md)), and the task tools turned on
-from `.claude/settings.json` in an interactive session (fact 25). Not yet exercised
+ended, is fixed in 0.4.1. An eighth, with 0.5.0 in `-p` mode and no task
+list, proved turns, the verdicts and the closing card: three runs of one
+session read as three turns, the gates' subagent under the second, a command
+exiting 3 as `Bash ✗` with its exit code ([harness fact 26](docs/harness-facts.md)),
+and the card summing it up. Its defects, a skill typed as the prompt giving
+its subagent no errand and two repositories of one name sharing a heading in
+the sessions list, are fixed after 0.5.0. Not proved for watch: the tab
+opening by itself, a person reading the page, an older server replaced live,
+the daily retention sweep, Linux, and the task tools turned on from
+`.claude/settings.json` in an interactive session (fact 25). Not yet exercised
 live, though tested on stubbed input: the
 closing line rule, and the memory link, which is experimental: off by default,
 its directory rule undocumented by Claude Code.

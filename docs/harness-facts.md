@@ -55,7 +55,7 @@ Fact 26 was read on 2026-11-23 from [hooks].
 | 23 | A helper's errand; a non-interactive session in the hook input | errand by order; an id match and the `-p` signal NOT DOCUMENTED |
 | 24 | `transcript_path` in the hook input, and the shape of a transcript line | path VERIFIED; the line shape NOT DOCUMENTED, so a fallback |
 | 25 | `CLAUDE_CODE_ENABLE_TODO_TOOLS` in the `env` of a repository's `.claude/settings.json` | the `env` reaching the session VERIFIED, after workspace trust; that the task tools follow it from that file NOT DOCUMENTED; PROVED LIVE in `-p` mode, an interactive session after trust not proved |
-| 26 | A failed tool call and a shell command's exit code in the hook input | VERIFIED; that every non-zero exit fires `PostToolUseFailure` NOT DOCUMENTED as a rule |
+| 26 | A failed tool call and a shell command's exit code in the hook input | VERIFIED; that every non-zero exit fires `PostToolUseFailure` NOT DOCUMENTED as a rule, PROVED LIVE in `-p` mode (exit 1 and 3) |
 
 ## 1. `${CLAUDE_PLUGIN_ROOT}` in hook commands: VERIFIED
 
@@ -639,6 +639,53 @@ Not proved: a protocol-1 server replaced live (the old one had already
 stopped; unit-tested only), the daily retention timer, the tab opening by
 itself, a person reading the page, Linux.
 
+### docrank watch 0.5.0, 2026-11-23
+
+Claude Code 2.1.330, `-p` mode, the plugin loaded with `--plugin-dir` from
+`main` at `f73b30d` (0.5.0), in the demo's worktree on `demo/tracking` with
+`"watch": { "enabled": true }` and `CLAUDE_CODE_ENABLE_TODO_TOOLS` unset, so
+no task list. One session, three `-p` runs resumed with `--resume`: "run
+`node --test test/no-existe.mjs`", then the prompt `/docrank:gates` typed
+alone, then `node -e 'process.exit(3)'`. The page was read in a headless
+Chrome, not by a person.
+
+- Each run had its own `SessionStart` (`startup`, then `resume` twice) and
+  `SessionEnd` (`other`) under the same session id, in one log of 20 lines:
+  `SessionStart` 3, `UserPromptSubmit` 3, `PreToolUse` 3, `PostToolUse` 2,
+  `PostToolUseFailure` 1, `SubagentStart` 1, `SubagentStop` 1, `Stop` 3 and
+  `SessionEnd` 3. It is `test/fixtures/watch-trial-0.5.0.jsonl`, its absolute
+  paths made generic.
+- Run 1: Claude appended `; echo "exit=$?"` to the command, so the shell
+  exited 0 and `PostToolUse` with `ok: true` was right.
+- Run 2: the typed `/docrank:gates` forked a `general-purpose` helper with no
+  `Skill` call; it ran the gates runner, which passed.
+- Run 3: `PostToolUseFailure` with exit code 3 (fact 26).
+- The page showed three turns, the helper under turn 2, `Bash ✗` "— falló"
+  in turn 3, and the closing card: 3 turns, general-purpose ×1, the gates
+  ✓, 1 failed, 1 min 22 s, Terminado.
+- A probe plugin dumping the raw hook input, in `-p`: `node --test
+  test/no-existe.mjs` alone fired `PostToolUseFailure` with `error: "Exit
+  code 1\nCould not find 'test/no-existe.mjs'"` and no `tool_response`; `node
+  -e 'process.exit(3)'` fired it with `error: "Exit code 3"`. A
+  `UserPromptSubmit` hook got `prompt: "/probe:hi with some args"` for that
+  prompt typed, the slash command as typed, not the skill's expanded text.
+
+Fixed after 0.5.0, found here:
+
+- The helper read "un encargo sin nombre": the skill was the prompt, with no
+  `Skill` call to take the errand from, and the hook kept nothing of a
+  prompt. It now keeps the name of the slash command a prompt opens with
+  (`docrank:gates`), nothing after it, and the reducer counts it as a
+  `Skill` call (fact 23).
+- The sessions list showed two groups both headed "REPO": two demo builds,
+  each a main checkout named `repo` in a different temporary directory, so
+  two keys, `repo-df84d24d` and `repo-03d2e62e`, with one name. A heading now
+  carries its key's short hash when another listed key has the same name.
+
+Not proved: the task tools from `.claude/settings.json` in an interactive
+session (fact 25), the tab opening by itself, a person reading the page,
+Linux.
+
 ## 16. Install scopes, `--plugin-dir`, a session in a worktree: VERIFIED
 
 **Scopes.** [plugins] § Understand install scopes: "**User scope**: enabled
@@ -866,6 +913,12 @@ next prompt, and until then a helper with no call of its own takes it. A
 helper whose `SubagentStart` line lands before its call's (async hooks,
 fact 19) gets no errand.
 
+A skill typed as the prompt (`/docrank:gates`) forks with no `Skill` call at
+all (§ 15, 0.5.0). `UserPromptSubmit`'s `prompt` is "the submitted text"
+(fact 17), and a probe proved it is the slash command as typed, in `-p`
+(§ 15). So the hook keeps the command's name, `plugin:skill` or `skill`, and
+nothing after it, and the reducer counts it as a `Skill` call of that turn.
+
 No hook input field says the session is non-interactive (`-p`): [hooks]
 § Common input fields lists none, and § SessionStart input has `source`,
 `model`, `agent_type` and `session_title` only. Watch opens no tab under `CI`
@@ -980,5 +1033,6 @@ So the hook records `ok: false` on `PostToolUseFailure`, and on a
 `Exit code N` first line when there is one; a `PostToolUse` with a
 structured response is `ok: true` and has no exit code. That a command
 exiting non-zero always fires `PostToolUseFailure` rather than `PostToolUse`
-is shown by the example, not stated as a rule: NOT DOCUMENTED. Not proved
-live: no trial log so far holds a failed call.
+is shown by the example, not stated as a rule: NOT DOCUMENTED. PROVED LIVE
+in `-p` (§ 15, 0.5.0): a command exiting 1 and one exiting 3 each fired
+`PostToolUseFailure` with an `Exit code N` first line, and no `PostToolUse`.

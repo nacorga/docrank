@@ -130,7 +130,7 @@ first written from:
     `permission_prompt`), *waiting for an answer* (`idle_prompt` or `Stop`),
     *done* (`SessionEnd`, or no event for the idle timeout).
   - Tested on recorded event sequences, one per case above.
-- [ ] **1f · Plain sentences.** `lib/watch/phrases.mjs`, `en` and `es`: one
+- [x] **1f · Plain sentences.** `lib/watch/phrases.mjs`, `en` and `es`: one
   sentence per built-in tool, by path or scope (`Read`, `Edit`, `Write`,
   `Glob`, `Grep`, `Bash`, `Agent`, `WebFetch`, task tools, …), gates by name,
   common Bash families (git, tests, install), a guard refusal as a warning,

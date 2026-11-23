@@ -35,6 +35,15 @@ dispatch copies both.
   different check and will not catch what the gate catches.
 - **Never hand-edit a generated file.** Change its source and run its
   generator, or leave it alone and say so.
+- **In a worktree, `git` runs plain.** Claude Code refuses a command it
+  cannot prove stays there, such as a long heredoc carrying a script or a
+  file, or `git` in a command that also holds a `$(…)`, a loop, a
+  multi-line inline script or a path out of the worktree: edit files with
+  Edit or Write, write a script or a commit message to a file and run it or
+  pass it, and run `git` as a call of its own — no `cd … &&` before it, no
+  `git -C`, no `source`.
+- **Open a file with Read before you edit it.** A `cat` or a `sed` read does
+  not count: Edit refuses a file Read has not opened.
 - **Escalate rather than route around.** "This is too hard for me" is a
   complete report: bad work is worse than no work.
 

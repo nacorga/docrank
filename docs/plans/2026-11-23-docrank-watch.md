@@ -39,38 +39,37 @@ timeline; the live view ships first, the history second.
 
 ### Harness facts this rests on
 
-Read on 2026-11-23 from [hooks], [tools] and
-https://code.claude.com/docs/en/agent-sdk/todo-tracking.md through a
-summarizer; slice 1b re-reads each one and records it with its exact quote.
+Recorded with their quotes as facts 17 to 23 of `docs/harness-facts.md`
+(slice 1b, 2026-11-23). What they change against the leads this plan was
+first written from:
 
-- Events exist for `PreToolUse`, `PostToolUse`, `PostToolUseFailure`,
-  `PermissionRequest`, `PermissionDenied`, `Notification`, `SubagentStart`,
-  `SubagentStop`, `TaskCreated`, `TaskCompleted`, `Stop`, `SessionStart` and
-  `SessionEnd`, among 33.
-- `Notification` carries `notification_type`, with `permission_prompt` and
-  `idle_prompt` among its values: the two waiting states. `permission_prompt`
-  did not fire in some sessions before v2.1.233.
-- A command hook takes `async: true` ("runs in the background without
-  blocking"); its timeout is not enforced. That a plugin's `hooks.json`
-  honours it is NOT DOCUMENTED until 1b reads it.
-- A hook that exits non-zero (other than 2), prints invalid JSON or times out
-  does not block the tool, unless it sets `onFailure: "block"`: fail-open is
-  the default.
-- `"*"`, `""` or no matcher matches every tool.
-- `tool_use_id` reaches `PreToolUse`, `PostToolUse`, `PostToolUseFailure`
-  and `PermissionDenied`, not `PermissionRequest`. A hook fired inside a
-  subagent carries `agent_id` and `agent_type`. `SubagentStart` carries
-  `agent_id` and `agent_type` only, no description: a helper's errand is the
-  `description` of the `Agent` call that preceded it, matched by order — a
-  heuristic, stated as such in the code.
-- `TodoWrite` is "Disabled by default in favor of `TaskCreate`, `TaskGet`,
-  `TaskList`, and `TaskUpdate`" (`CLAUDE_CODE_ENABLE_TASKS=0` brings it back),
-  and the Task tools are on by default only on some models. `TaskCreate`
-  takes `subject` and `activeForm`; `TaskUpdate` takes `taskId` and `status`
-  (`pending`, `in_progress`, `completed`, `deleted`); the result of
-  `TaskCreate` is `{ task: { id, subject } }`. `TodoWrite`'s input shape is
-  NOT DOCUMENTED: it is read defensively, and an unreadable call falls back to
-  "work without a list".
+- A refusal by a `PreToolUse` hook fires neither `PermissionDenied` nor
+  `PostToolUseFailure` (fact 21), and the watch hook runs in parallel with
+  the guards. Fallback: a docrank guard that refuses appends the refusal to
+  the watch log itself, by `tool_use_id`. Other refusals (a deny rule, the
+  user) leave the action without an outcome.
+- `permission_prompt` comes only after about six seconds without typing
+  (fact 18). `PermissionRequest` is the immediate signal and is wired too;
+  either one means *waiting for permission*. `UserPromptSubmit` is wired so
+  a new prompt ends *waiting for an answer*; the prompt is not stored.
+- The Task tools and `TodoWrite` are off by default on every model newer
+  than Opus 4.7, Sonnet 4.6 and Haiku 4.5 (fact 22): on those, "work without
+  a list" is the usual graph, and the README says how to opt in
+  (`CLAUDE_CODE_ENABLE_TODO_TOOLS=1`). `TodoWrite`'s input shape is
+  documented after all (`todos[].content`, `status`, `activeForm`).
+  `TaskCreated` carries `task_id` and `task_subject` and is wired as a
+  second source of a task's id.
+- `async: true` is documented for command hooks; for a plugin's
+  `hooks/hooks.json` only by its shape (fact 19). Async hooks are separate
+  processes, so a `PostToolUse` line can precede its `PreToolUse` line; the
+  reducer accepts either order. Under `-p`, async hooks are killed at
+  teardown: the server is started fully detached.
+- A helper's errand stays matched by order (fact 23), narrowed to the
+  oldest untaken `Agent` call of the same `subagent_type` from the same
+  agent. No hook input says a session is non-interactive: the tab is not
+  opened under `CI` or `SSH_CONNECTION`, and `-p` is not told apart.
+- `SessionEnd` from a plugin is NOT DOCUMENTED per event (fact 3): it is
+  wired, and the idle timeout still ends a session that sends none.
 
 ## How the work runs
 
@@ -90,7 +89,7 @@ summarizer; slice 1b re-reads each one and records it with its exact quote.
 ### [ ] 1 · The live view — branch `feat/watch-live`
 
 - [x] **1a · The plan enters the tree.** Commit `docs: plan docrank watch`.
-- [ ] **1b · Harness facts.** Re-read [hooks] and [tools] and record as new
+- [x] **1b · Harness facts.** Re-read [hooks] and [tools] and record as new
   facts in `docs/harness-facts.md`, each VERIFIED with its quote or NOT
   DOCUMENTED: the events above and their inputs, `notification_type`'s
   values, `async` (and whether plugin hooks honour it), fail-open on error
@@ -103,9 +102,11 @@ summarizer; slice 1b re-reads each one and records it with its exact quote.
   (`"en" | "es"`, `"en"`), `watch.retentionDays` (int, used by slice 2).
   The `doc-facts` test keeps the two in step.
 - [ ] **1d · The observation hook.** `hooks/watch-event.mjs`, wired with
-  `async: true` (if 1b allows it) on `PreToolUse`, `PostToolUse` and
-  `PostToolUseFailure` with matcher `"*"`, and on `PermissionDenied`,
-  `Notification`, `SubagentStart`, `SubagentStop`, `Stop` and `SessionStart`.
+  `async: true` on `PreToolUse`, `PostToolUse` and `PostToolUseFailure` with
+  matcher `"*"`, and on `PermissionRequest`, `PermissionDenied`,
+  `Notification`, `SubagentStart`, `SubagentStop`, `TaskCreated`,
+  `UserPromptSubmit` (the prompt is not stored), `Stop`, `SessionStart` and
+  `SessionEnd`. The docrank guards append their own refusals (fact 21).
   - With `watch.enabled` off, or an invalid config, it exits 0 at once. It
     never refuses and never prints a decision: unlike the guards, it fails
     open, and its header says why.
@@ -126,9 +127,9 @@ summarizer; slice 1b re-reads each one and records it with its exact quote.
   - `Pre`/`Post` paired by `tool_use_id`, parallel calls included; actions
     inside a helper by `agent_id`; a helper hangs from the task in progress
     when its `Agent` call was made.
-  - State: *working*, *waiting for permission* (`permission_prompt`),
-    *waiting for an answer* (`idle_prompt` or `Stop`), *done* (no event for
-    the idle timeout or `SessionEnd` if 1b proves it).
+  - State: *working*, *waiting for permission* (`PermissionRequest` or
+    `permission_prompt`), *waiting for an answer* (`idle_prompt` or `Stop`),
+    *done* (`SessionEnd`, or no event for the idle timeout).
   - Tested on recorded event sequences, one per case above.
 - [ ] **1f · Plain sentences.** `lib/watch/phrases.mjs`, `en` and `es`: one
   sentence per built-in tool, by path or scope (`Read`, `Edit`, `Write`,
@@ -145,9 +146,8 @@ summarizer; slice 1b re-reads each one and records it with its exact quote.
     the old server and starts its own.
   - Stops itself after the idle timeout with no live session.
   - The `SessionStart` hook starts it detached when absent and opens the tab
-    only when no tab is connected and not under `CI`, `SSH_CONNECTION` or a
-    non-interactive session (how `-p` shows in the hook input is checked in
-    1b; without a signal, `CI` and SSH only).
+    only when no tab is connected and not under `CI` or `SSH_CONNECTION`
+    (no hook input tells a `-p` run apart, fact 23).
   - Tests: token and `Host` refused, SSE delivers an appended event, version
     mismatch, idle stop.
 - [ ] **1h · The UI.** `ui/` (React, `@xyflow/react`), built by esbuild to
@@ -160,7 +160,8 @@ summarizer; slice 1b re-reads each one and records it with its exact quote.
 - [ ] **1i · CLI.** `lib/cli/watch.mjs`: `docrank watch` starts the server if
   needed and prints (and opens) the URL.
 - [ ] **1j · Documents.** `docs/config.md` (1c); README: what watch shows,
-  how to switch it on, what is stored and where; `CLAUDE.md`: the bundle, its
+  how to switch it on, how to get a task list on newer models, what is
+  stored and where; `CLAUDE.md`: the bundle, its
   build, the dev dependencies and that the Node side still has none.
 - [ ] **1k · Version 0.3.0.** `package.json`, `package-lock.json`,
   `.claude-plugin/plugin.json`; `claude plugin validate .`.

@@ -27,6 +27,7 @@ Facts 17 to 23 (docrank watch) and 24 were read on 2026-11-23 from [hooks], [too
 Fact 25 was read on 2026-11-23 from [settings], [tools],
 [env-vars]=https://code.claude.com/docs/en/env-vars.md and
 [settings-ref]=https://code.claude.com/docs/en/settings-reference.md.
+Fact 26 was read on 2026-11-23 from [hooks].
 
 | # | Fact | Status |
 |---|---|---|
@@ -54,6 +55,7 @@ Fact 25 was read on 2026-11-23 from [settings], [tools],
 | 23 | A helper's errand; a non-interactive session in the hook input | errand by order; an id match and the `-p` signal NOT DOCUMENTED |
 | 24 | `transcript_path` in the hook input, and the shape of a transcript line | path VERIFIED; the line shape NOT DOCUMENTED, so a fallback |
 | 25 | `CLAUDE_CODE_ENABLE_TODO_TOOLS` in the `env` of a repository's `.claude/settings.json` | the `env` reaching the session VERIFIED, after workspace trust; that the task tools follow it from that file NOT DOCUMENTED; PROVED LIVE in `-p` mode, an interactive session after trust not proved |
+| 26 | A failed tool call and a shell command's exit code in the hook input | VERIFIED; that every non-zero exit fires `PostToolUseFailure` NOT DOCUMENTED as a rule |
 
 ## 1. `${CLAUDE_PLUGIN_ROOT}` in hook commands: VERIFIED
 
@@ -946,3 +948,37 @@ repository's settings file. An interactive session after trust is not
 proved. So `init` says the setting was proved in `-p` mode only, that it
 takes effect from the next session started in the repository, and that
 exporting the variable before `claude` is the documented way.
+
+## 26. A failed call and a shell command's exit code in the hook input: VERIFIED
+
+Watch keeps a call's verdict: whether it failed and, for a shell command,
+its exit code, never the output.
+
+[hooks] § PostToolUseFailure: "Runs when a tool that started executing
+fails: the tool threw an error, or an MCP tool returned an error result". Its
+input carries "error information as top-level fields": "`error` | String
+describing what went wrong. The format depends on the tool that failed" and
+"`is_interrupt` | Optional boolean. True when the failure reached Claude Code
+as an abort rather than as an error the tool reported". "Key your hook on
+`tool_name`, `is_interrupt`, and the `Exit code N` first line; treat the
+rest of the string as display text, not a stable format": "For Bash and
+PowerShell, a command that ran and exited produces a first line `Exit code
+N`, then any output the command produced", and "A payload may also carry a
+bare failure message with no exit-code line, when Claude Code could not
+start the shell process itself". The example is a failed `npm test` with
+`"error": "Exit code 1\nError: Cannot find module 'express'"`.
+
+[hooks] § PostToolUse: it "Runs immediately after a tool completes
+successfully", and "`Bash` returns an object with `stdout`, `stderr`,
+`interrupted`, and `isImage` fields": no exit code. "In the main
+conversation, `PostToolUse` hooks from managed settings also run after some
+failed calls", and "For a failed call, `tool_response` is the error text as
+a string."
+
+So the hook records `ok: false` on `PostToolUseFailure`, and on a
+`PostToolUse` whose `tool_response` is a string, with the exit code from an
+`Exit code N` first line when there is one; a `PostToolUse` with a
+structured response is `ok: true` and has no exit code. That a command
+exiting non-zero always fires `PostToolUseFailure` rather than `PostToolUse`
+is shown by the example, not stated as a rule: NOT DOCUMENTED. Not proved
+live: no trial log so far holds a failed call.

@@ -64,6 +64,22 @@ describe("watch-event.mjs", () => {
     expect(statSync(path.join(s.watch, repo)).mode & 0o777).toBe(0o700);
     expect(statSync(path.join(s.watch, repo, "s1.jsonl")).mode & 0o777).toBe(0o600);
   });
+
+  it("records whether a command passed or failed, and its exit code, never its output", async () => {
+    const s = sandbox();
+    const cmd = { command: "npm test" };
+    await s.fire({ hook_event_name: "PostToolUse", tool_name: "Bash", tool_input: cmd, tool_use_id: "p", tool_response: { stdout: "all 12 passed", stderr: "", interrupted: false, isImage: false } });
+    await s.fire({ hook_event_name: "PostToolUseFailure", tool_name: "Bash", tool_input: cmd, tool_use_id: "f", error: "Exit code 2\nError: secret detail", is_interrupt: false });
+    await s.fire({ hook_event_name: "PostToolUseFailure", tool_name: "Read", tool_input: { file_path: `${s.dir}/missing` }, tool_use_id: "r", error: "File does not exist." });
+    const [pass, fail, read] = s.lines();
+    expect(pass).toMatchObject({ toolUseId: "p", ok: true, gate: "test" });
+    expect(pass).not.toHaveProperty("exitCode");
+    expect(fail).toMatchObject({ toolUseId: "f", ok: false, exitCode: 2, gate: "test" });
+    expect(read).toMatchObject({ toolUseId: "r", tool: "Read", ok: false });
+    expect(read).not.toHaveProperty("exitCode");
+    const raw = readFileSync(path.join(s.watch, readdirSync(s.watch)[0], "s1.jsonl"), "utf8");
+    for (const out of ["all 12 passed", "secret detail", "does not exist"]) expect(raw).not.toContain(out);
+  });
 });
 
 describe("a guard's refusal reaches the watch log", () => {

@@ -47,7 +47,7 @@ changes on 2026-11-23, to ship together in one release (0.5.0):
   arrive as `UserPromptSubmit` (fact 23 area) do not open a new turn when a
   subagent result just arrived — or, if they cannot be told apart, the code
   says so. Tests on the trial fixtures and a synthetic no-task log.
-- [ ] **2a · Verdicts.** The hook records `ok: false` on `PostToolUseFailure`
+- [x] **2a · Verdicts.** The hook records `ok: false` on `PostToolUseFailure`
   and, for Bash, the exit code when the response carries it (checked against
   [hooks]; recorded as a fact if new). Phrases and chips carry ✓/✗; the gate
   chip says whether the gates passed. Tests.

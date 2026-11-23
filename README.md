@@ -130,11 +130,14 @@ keeps no task list, and the subagents it
 dispatched, each under the task or turn it was sent from, with its type
 (`Explore`, `general-purpose`) and the skill it was forked for
 (`docrank:gates`) as small chips. Clicking a node shows its
-actions as sentences ("Run the tests — it failed", "Tried to send the work to
+actions as sentences ("Run the tests — failed", "Tried to send the work to
 the shared repository (push); a safety rule stopped it"), each with chips
 naming its tool (`Bash`, `Read`, `mcp__browser__browser_snapshot`), the gate
-it ran and the guard that refused it (`guard-bash`), the exact command or
-path folded behind *detail*. English or Spanish.
+it ran and the guard that refused it (`guard-bash`). A call that ran to an
+end carries ✓ or ✗ on its gate chip when it ran one (`run-gates ✓`,
+`run-gates ✗`), else on its tool chip (`Bash ✗`); a failed command's exit
+code and the exact command or path are folded behind *detail*. English or
+Spanish.
 
 On the left, the sessions on record, grouped by repository, live ones first,
 each with its start, its state and how many tasks it had; the tab follows the
@@ -171,7 +174,8 @@ only the fields its sentence names: a command and its description, a path, a
 search pattern, a URL, a task's subject, a subagent's errand. Secrets in them
 (tokens, passwords, `Authorization` headers, credentials in URLs, values
 written to an env file) are replaced with `[redacted]`. No tool output, no
-prompt and no file content is kept. The page is served to `127.0.0.1` only,
+prompt and no file content is kept: of a result, only whether the call
+failed and, for a command, its exit code. The page is served to `127.0.0.1` only,
 with a random token in its address. A session is kept for 30 days after its
 last line (`watch.retentionDays`): the server deletes older ones when it
 starts and once a day, and never one that wrote within the last 30 minutes.

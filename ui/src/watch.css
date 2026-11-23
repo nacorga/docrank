@@ -77,4 +77,6 @@ main { flex: 1; display: flex; min-height: 0; }
 .chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 3px 0 1px; }
 .chip { font: 11px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chip.guard { color: var(--warn); }
+.chip.ok { color: var(--ok); }
+.chip.failed { color: var(--bad); }
 .react-flow__node.helper .chip { background: var(--card); }

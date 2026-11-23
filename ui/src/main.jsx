@@ -275,13 +275,13 @@ function useSizes() {
   return [sizes, onNodesChange];
 }
 
-/** Technical names (tool, gate, guard, subagent type, skill), small and quiet. */
+/** Technical names (tool, gate, guard, subagent type, skill), small and quiet; a verdict in colour. */
 function Chips({ chips }) {
   if (!chips?.length) return null;
   return (
     <span className="chips">
       {chips.map((c) => (
-        <code key={`${c.kind}:${c.text}`} className={`chip ${c.kind}`} title={c.title}>
+        <code key={`${c.kind}:${c.text}`} className={`chip ${c.kind}${c.verdict ? ` ${c.verdict}` : ""}`} title={c.title}>
           {c.text}
         </code>
       ))}

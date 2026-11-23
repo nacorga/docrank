@@ -55,9 +55,14 @@ plugin lists each key with its default. Read the file once before stage 1.
    first attempt with the repository's checklist (`pr.checklist`): answer it,
    then run the same command again.
 6. **CI.** `node "${CLAUDE_PLUGIN_ROOT}/scripts/watch-pr.mjs" <n>` in the
-   background: it prints `GREEN`, `NO CI` or `RED` with the failed checks, and
-   its exit wakes the session. Red: read the failed log, fix on this branch,
-   stages 4 to 6 again. The pull request is handed over green.
+   background: it prints `GREEN`, `NO CI`, `RED` with the failed checks,
+   `CONFLICTING`, `MERGED` or `CLOSED`, and its exit wakes the session. Red:
+   read the failed log, fix on this branch, stages 4 to 6 again.
+   `CONFLICTING`: GitHub runs no check on a conflicting pull request, so none
+   will register; rebase on `origin/<integration>`, stage 4 again,
+   `git push --force-with-lease`, and watch again. `MERGED` or `CLOSED`: the
+   user acted meanwhile; go on to stage 8 for the first, stop with what it
+   showed for the second. The pull request is handed over green.
 7. **Report**, in `principles.reportLanguage`: the link, what changed in a few
    lines, the evidence and every finding the judges left open. When
    `principles.closingLine` is set, end with that line naming exactly what the
@@ -72,6 +77,8 @@ plugin lists each key with its default. Read the file once before stage 1.
    worktrees whose pull request merged the same way; `--apply` removes them.
    `CONFLICTING`: another merge landed first. Rebase on
    `origin/<integration>`, stage 4 again, `git push --force-with-lease`, stages
-   6 and 7 again. `ORPHANED`: a commit reached the branch after the merge; it
+   6 and 7 again. `RED` with the failed checks: one failed while the pull
+   request waited for its merge; read the failed log, fix on this branch,
+   stages 4 to 7 again. `ORPHANED`: a commit reached the branch after the merge; it
    is in no release, so open a pull request for it before deleting anything.
    `CLOSED`, or the commit missing, stops here with what it showed.

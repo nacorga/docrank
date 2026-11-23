@@ -136,7 +136,7 @@ first written from:
   common Bash families (git, tests, install), a guard refusal as a warning,
   and a generic sentence for an unknown or MCP tool. Tests: each tool in
   both languages, the fallback, no raw secret in any sentence.
-- [ ] **1g · The server.** `scripts/watch-server.mjs`, Node built-ins only:
+- [x] **1g · The server.** `scripts/watch-server.mjs`, Node built-ins only:
   - `127.0.0.1` on `watch.port`; a random token in the URL, required on every
     request; `Host` must be `127.0.0.1:<port>` or `localhost:<port>`.
   - Serves the bundle and an SSE stream of new events per session, tailing

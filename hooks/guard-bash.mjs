@@ -229,7 +229,7 @@ function switchesBranch(dir) {
 if (has(String.raw`${GIT}(?:switch|checkout)\b|${GH}pr${S}+checkout\b`)) {
   const dir = targetDir();
   if (isMainCheckout(dir) && switchesBranch(dir)) {
-    refuse("main-checkout", `BLOCKED: this moves the main checkout off ${integration}, under every session working in it. Branch work goes in a worktree (git worktree add, cut from origin/${integration}). Going back to ${integration} is allowed.`);
+    refuse("main-checkout", `BLOCKED: this moves the main checkout off ${integration}, under every session working in it. Branch work goes in a worktree: node "${process.env.CLAUDE_PLUGIN_ROOT ?? "<plugin>"}/bin/docrank.mjs" worktree <branch> cuts one from origin/${integration}, with worktree.copy and worktree.install. Going back to ${integration} is allowed.`);
   }
 }
 

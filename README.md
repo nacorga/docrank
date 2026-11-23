@@ -109,6 +109,10 @@ The CLI is `node <plugin>/bin/docrank.mjs <command>`:
 - `check sections` and `check drift-pairs` hold the documents to their
   references and to a pair for every code unit (`docs.scanRoots`, `docs.unitRoots`).
 - `judges [<range>]` names the judges a diff needs (`judges.routes`).
+- `worktree <branch>` makes the worktree `claude -w` makes (cut from the
+  fetched `origin/<branches.integration>`, `worktree.copy` copied,
+  `worktree.install` run) for a session the hook did not reach, and prints its
+  path.
 
 - `watch [--no-open]` starts the watch server when none runs, prints the
   page's address and opens it.

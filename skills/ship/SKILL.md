@@ -25,10 +25,11 @@ plugin lists each key with its default. Read the file once before stage 1.
    the work will carry. The `WorktreeCreate` hook cuts the branch from a
    fetched `origin/<integration>` in `../<repo>-<slug>`, copies
    `worktree.copy` and runs `worktree.install`. If the harness did not run it
-   (`--worktree --tmux`, or Claude Code older than v2.1.300), cut it by hand
-   with `git worktree add --no-track -b <name> ../<repo>-<slug>
-   origin/<integration>` after `git fetch`. From then on every edit and
-   command is the worktree's; the main checkout belongs to other sessions.
+   (`--worktree --tmux`, or Claude Code older than v2.1.300), run
+   `node "${CLAUDE_PLUGIN_ROOT}/bin/docrank.mjs" worktree <name>`: it makes
+   the same worktree, and prints its path. A bare `git worktree add` skips
+   the copy and the install. From then on every edit and command is the
+   worktree's; the main checkout belongs to other sessions.
 2. **Plan.** Write it in `ship.plansDir`, named by today's date and the slug:
    what was asked, then checkable items, each naming the evidence that will
    close it. When `plan.requiredHeadings` is set, the plan also carries a

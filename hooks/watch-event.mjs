@@ -31,7 +31,7 @@ try {
     if (input.hook_event_name === "SessionStart") {
       // The page opens once per machine: a connected tab follows the new session.
       const { ensureServer, openTab, pageUrl } = await import("../lib/watch/launch.mjs");
-      const server = await ensureServer(config.watch.port);
+      const server = await ensureServer(config.watch.port, { retentionDays: config.watch.retentionDays });
       if (server && server.tabs === 0) {
         openTab(pageUrl(server, { lang: config.watch.language, repo: repoKey(config.root), session: input.session_id }));
       }

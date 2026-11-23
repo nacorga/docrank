@@ -1,7 +1,9 @@
 /**
- * The watch page: the session's state in plain words, a graph of Claude, its
- * tasks and its helpers, and the feed of the selected node. Every view comes
- * from `reduce` over the session's lines, as the server streams them.
+ * The watch page: the sessions on record, grouped by repository; the chosen
+ * session's state in plain words, a graph of Claude, its tasks and its
+ * helpers, and the feed of the selected node. Every view comes from `reduce`
+ * over the session's lines, as the server streams them; the timeline moves
+ * through a session by reducing only the lines up to a point.
  */
 import { Background, ReactFlow, useReactFlow } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
@@ -53,6 +55,70 @@ function useEvents(chosen) {
   return events;
 }
 
+/** A replay's step: 400 ms a line, quicker for a long session so it plays in about half a minute. */
+const stepMs = (n) => Math.max(40, Math.min(400, 30_000 / n));
+
+/**
+ * Where the timeline stands in `n` lines: `pos` null at the end, following
+ * the lines as they come (a past session opens there), else how many are
+ * drawn. Playing moves one line per step and stops at the end, following again. Back to the
+ * end whenever the session changes (`key`).
+ */
+function useTimeline(n, key) {
+  const [pos, setPos] = useState(null);
+  const [playing, setPlaying] = useState(false);
+  useEffect(() => {
+    setPos(null);
+    setPlaying(false);
+  }, [key]);
+  useEffect(() => {
+    if (!playing) return undefined;
+    if (pos == null) {
+      setPlaying(false);
+      return undefined;
+    }
+    const t = setTimeout(() => setPos(pos + 1 >= n ? null : pos + 1), stepMs(n));
+    return () => clearTimeout(t);
+  }, [playing, pos, n]);
+  return { pos, setPos, playing, setPlaying };
+}
+
+function Timeline({ events, t }) {
+  const n = events.length;
+  const at = t.pos ?? n;
+  return (
+    <div className="timeline">
+      <button
+        type="button"
+        disabled={n === 0}
+        onClick={() => {
+          if (t.playing) return t.setPlaying(false);
+          if (t.pos == null) t.setPos(1);
+          t.setPlaying(true);
+        }}
+      >
+        {t.playing ? w.pause : w.play}
+      </button>
+      <input
+        type="range"
+        min={n === 0 ? 0 : 1}
+        max={n}
+        value={at}
+        disabled={n === 0}
+        aria-label={w.step(at, n)}
+        onChange={(e) => {
+          const v = Number(e.target.value);
+          t.setPlaying(false);
+          t.setPos(v >= n ? null : v);
+        }}
+      />
+      <span className="at">
+        {n ? `${time(events[at - 1]?.time)} · ${w.step(at, n)}` : ""}
+      </span>
+    </div>
+  );
+}
+
 function useNow(ms) {
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
@@ -64,6 +130,55 @@ function useNow(ms) {
 
 const time = (t) => (t ? new Date(t).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "");
 const repoName = (key) => key.replace(/-[0-9a-f]{8}$/u, "");
+const sameDay = (a, b) => new Date(a).toDateString() === new Date(b).toDateString();
+/** A start as the list shows it: the time today, the day and time before. */
+const when = (t) =>
+  !t ? "" : sameDay(t, Date.now()) ? time(t) : new Date(t).toLocaleString(lang, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+
+const live = (x) => x.state !== "done";
+const byLive = (a, b) => live(b) - live(a) || b.updatedAt - a.updatedAt;
+
+/** The sessions by repository: repositories with a live session first, then the latest; in each, live ones first. */
+function groups(sessions) {
+  const by = new Map();
+  for (const x of sessions) {
+    if (!by.has(x.repo)) by.set(x.repo, []);
+    by.get(x.repo).push(x);
+  }
+  const out = [...by].map(([repo, list]) => ({ repo, list: list.sort(byLive) }));
+  return out.sort((a, b) => byLive(a.list[0], b.list[0]));
+}
+
+function Sessions({ sessions, chosen, pick }) {
+  const key = (x) => `${x.repo}/${x.session}`;
+  return (
+    <nav className="sessions">
+      <h2>{w.sessions}</h2>
+      {groups(sessions).map((g) => (
+        <section key={g.repo}>
+          <h3>{repoName(g.repo)}</h3>
+          <ul>
+            {g.list.map((x) => (
+              <li key={key(x)}>
+                <button type="button" className={chosen && key(chosen) === key(x) ? "chosen" : ""} onClick={() => pick(x)}>
+                  <span className="top">
+                    <span className="start">{when(x.startedAt ?? x.updatedAt)}</span>
+                    {x.name && x.name !== repoName(g.repo) ? <span className="checkout">{x.name}</span> : null}
+                  </span>
+                  <span className={`state ${x.state}`}>
+                    <span className="dot" />
+                    {w.state[x.state]}
+                  </span>
+                  <span className="tasks">{x.tasks ? w.tasks(x.tasks) : w.noTasks}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
+    </nav>
+  );
+}
 
 /** Claude on top, tasks in a row under it, each task's helpers stacked under it. */
 function layout(s, selected) {
@@ -202,7 +317,9 @@ function App() {
   const chosen = picked ?? (sessions?.[0] ? { repo: sessions[0].repo, session: sessions[0].session } : null);
   const events = useEvents(chosen);
   const now = useNow(10_000);
-  const s = useMemo(() => reduce(events, { now }), [events, now]);
+  const t = useTimeline(events.length, chosen ? `${chosen.repo}/${chosen.session}` : "");
+  // A point on the timeline is judged by its lines alone, as the live page judged it then.
+  const s = useMemo(() => (t.pos == null ? reduce(events, { now }) : reduce(events.slice(0, t.pos))), [events, now, t.pos]);
   const [selected, setSelected] = useState(null);
   const shown = selected ?? s.active;
   const laid = useMemo(() => layout(s, shown), [s, shown]);
@@ -212,7 +329,6 @@ function App() {
   const ids = nodes.map((n) => n.id).join(" ");
   // Panned or zoomed by hand: the view stays put until the observer follows again.
   const [manual, setManual] = useState(false);
-  const key = (x) => `${x.repo}/${x.session}`;
 
   return (
     <div className="page">
@@ -224,47 +340,51 @@ function App() {
         {s.repo ? <span className="repo">{s.repo}</span> : null}
         {lost ? <span className="lost">{w.lost}</span> : null}
         <span className="spacer" />
-        {selected || manual ? (
+        {selected || manual || t.pos != null ? (
           <button
             type="button"
             onClick={() => {
               setSelected(null);
               setManual(false);
+              t.setPlaying(false);
+              t.setPos(null);
             }}
           >
             {w.follow}
           </button>
         ) : null}
-        {sessions?.length ? (
-          <label>
-            {w.session}{" "}
-            <select value={chosen ? key(chosen) : ""} onChange={(e) => setPicked(sessions.find((x) => key(x) === e.target.value) ?? null)}>
-              {sessions.map((x) => (
-                <option key={key(x)} value={key(x)}>
-                  {x.name ?? repoName(x.repo)} · {time(x.updatedAt)} · {x.session.slice(0, 8)}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : null}
       </header>
       <main>
-        <div className="graph">
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            fitView
-            fitViewOptions={FIT}
-            onNodesChange={onNodesChange}
-            onMove={(e) => e && setManual(true)}
-            nodesDraggable={false}
-            nodesConnectable={false}
-            onNodeClick={(_, n) => n.id !== "claude" && setSelected(n.id)}
-            proOptions={{ hideAttribution: true }}
-          >
-            <Background gap={24} />
-            <Fit ids={ids} manual={manual} />
-          </ReactFlow>
+        {/* Drawn before the list arrives: the graph's width must not change under its first fit. */}
+        <Sessions
+          sessions={sessions ?? []}
+          chosen={chosen}
+          pick={(x) => {
+            setPicked({ repo: x.repo, session: x.session });
+            setSelected(null);
+            setManual(false);
+          }}
+        />
+        <div className="stage">
+          <div className="graph">
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              fitView
+              fitViewOptions={FIT}
+              onNodesChange={onNodesChange}
+              onMove={(e) => e && setManual(true)}
+              nodesDraggable={false}
+              nodesConnectable={false}
+              onNodeClick={(_, n) => n.id !== "claude" && setSelected(n.id)}
+              proOptions={{ hideAttribution: true }}
+            >
+              <Background gap={24} />
+              <Fit ids={ids} manual={manual} />
+            </ReactFlow>
+          </div>
+          {/* Drawn with no lines too: the graph's height must not change under its first fit. */}
+          <Timeline events={events} t={t} />
         </div>
         <Feed s={s} id={shown} />
       </main>

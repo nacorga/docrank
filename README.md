@@ -123,13 +123,21 @@ pushes made outside Claude Code; `init` offers it.
 ## Watch: the session, live, in plain words
 
 For someone who does not read a terminal: a browser tab that shows what a
-session is doing. At the top, its state: *working*, *waiting for your
+session is doing, and what past sessions did. At the top, its state: *working*, *waiting for your
 permission*, *waiting for your answer* or *done*. Below, a graph of Claude,
 the tasks it is working on (the current one highlighted) and the helpers it
 dispatched, each under the task it was sent from. Clicking a node shows its
 actions as sentences ("Run the tests — it failed", "Tried to send the work to
 the shared repository (push); a safety rule stopped it"), the exact command or
 path folded behind *detail*. English or Spanish.
+
+On the left, the sessions on record, grouped by repository, live ones first,
+each with its start, its state and how many tasks it had; the tab follows the
+newest until one is picked. Under the graph, a timeline: a past session opens
+at its end, and the slider moves through it line by line, the graph and the
+feeds drawn as they stood at that point; *Play* replays it from the start,
+*Pause* stops it. A live session can be moved through the same way, and
+*Follow the activity* brings it back to now.
 
 Switch it on with `"watch": { "enabled": true }` in `.claude/docrank.json`
 ([docs/config.md](docs/config.md#watch)). The next session starts one server
@@ -151,7 +159,9 @@ search pattern, a URL, a task's subject, a helper's errand. Secrets in them
 (tokens, passwords, `Authorization` headers, credentials in URLs, values
 written to an env file) are replaced with `[redacted]`. No tool output, no
 prompt and no file content is kept. The page is served to `127.0.0.1` only,
-with a random token in its address. Old sessions are not deleted yet.
+with a random token in its address. A session is kept for 30 days after its
+last line (`watch.retentionDays`): the server deletes older ones when it
+starts and once a day, and never one that wrote within the last 30 minutes.
 
 ## Requirements
 
@@ -190,7 +200,7 @@ gate run inside the gates helper, and the guard's refusal of a push as a
 plain warning with its command folded; `SessionEnd` from the plugin was
 recorded on leaving. Its three defects, a graph framed on part of its nodes,
 a forked skill's helper with no errand and the session list naming another
-repository than the header, are fixed in 0.3.1. Not proved for watch: the
+repository than the header, are fixed in 0.4.0. Not proved for watch: the
 tab opening by itself, a person reading the page, Linux. Not yet exercised
 live, though tested on stubbed input: the
 closing line rule, and the memory link, which is experimental: off by default,

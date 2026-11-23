@@ -568,7 +568,7 @@ a headless Chrome over the DevTools protocol, not by a person.
   repositorio compartido (push); una regla de seguridad lo impidió", the
   command and the `BLOCKED` message folded behind "detalle".
 
-Fixed in 0.3.1, each found here:
+Fixed in 0.4.0 (0.3.1 was never released), each found here:
 
 - The graph was framed on part of the nodes, or none, on some loads, and the
   Claude node and its edges were missing. The page rebuilt its nodes on every

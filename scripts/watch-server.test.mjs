@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { appendFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, statSync, utimesSync, writeFileSync } from "node:fs";
 import { get, request } from "node:http";
 import { createServer } from "node:net";
 import path from "node:path";
@@ -31,8 +31,8 @@ async function until(check, ms = 5000) {
 }
 
 /** Starts a server on a free port in the sandbox HOME; resolves to its server.json. */
-async function start(env = {}) {
-  const child = spawn(process.execPath, [SERVER, "--port", "0"], { stdio: "ignore", env: { ...process.env, HOME: home, ...env } });
+async function start(env = {}, args = []) {
+  const child = spawn(process.execPath, [SERVER, "--port", "0", ...args], { stdio: "ignore", env: { ...process.env, HOME: home, ...env } });
   pids.push(child.pid);
   expect(await until(() => existsSync(path.join(watch(), "server.json")) && state().pid === child.pid)).toBe(true);
   return { ...state(), child };
@@ -142,9 +142,40 @@ describe("watch-server.mjs", () => {
       expect.objectContaining({ repo: "shop-1234abcd", session: "s1", name: null }),
       expect.objectContaining({ repo: "shop-1234abcd", session: "s2", name: "shop-tracking" }),
     ]);
+    // What the sessions list shows of each: its start, its state and its task count.
+    expect(listed[1]).toEqual(expect.objectContaining({ startedAt: 1, state: "done", tasks: 0 }));
+    expect(listed[0]).toEqual(expect.objectContaining({ startedAt: null, state: "answer", tasks: 0 }));
     expect(await until(async () => (await version(s))?.tabs === 1)).toBe(true);
     out.req.destroy();
     expect(await until(async () => (await version(s))?.tabs === 0)).toBe(true);
+  });
+
+  it("deletes on start the session logs older than its retention", async () => {
+    const dir = path.join(watch(), "shop-1234abcd");
+    mkdirSync(dir, { recursive: true });
+    for (const [name, days] of [["old", 8], ["kept", 6]]) {
+      writeFileSync(path.join(dir, `${name}.jsonl`), "{}\n");
+      const t = Date.now() / 1000 - days * 86400;
+      utimesSync(path.join(dir, `${name}.jsonl`), t, t);
+    }
+    await start({}, ["--retention-days", "7"]);
+    expect(await until(() => !existsSync(path.join(dir, "old.jsonl")))).toBe(true);
+    expect(existsSync(path.join(dir, "kept.jsonl"))).toBe(true);
+  });
+
+  it("sends the list again when a session's state changes", async () => {
+    const file = path.join(watch(), "shop-1234abcd", "s1.jsonl");
+    mkdirSync(path.dirname(file), { recursive: true });
+    const now = Date.now();
+    writeFileSync(file, `${JSON.stringify({ time: now, event: "SessionStart" })}\n${JSON.stringify({ time: now, event: "UserPromptSubmit" })}\n`);
+    const s = await start();
+    const out = stream(s, "/api/sessions");
+    expect(await until(() => out.events.length === 1)).toBe(true);
+    expect(out.events[0][1][0]).toEqual(expect.objectContaining({ state: "working", startedAt: now }));
+    appendFileSync(file, `${JSON.stringify({ time: now + 1, event: "SessionEnd" })}\n`);
+    expect(await until(() => out.events.length === 2)).toBe(true);
+    expect(out.events[1][1][0].state).toBe("done");
+    out.req.destroy();
   });
 
   it("stops itself when no session has written for the idle timeout", async () => {
@@ -171,6 +202,17 @@ describe("ensureServer", () => {
     const b = await ensureServer(0);
     expect(b).toEqual(a);
     expect(pageUrl(a, { lang: "es", repo: "r", session: "s" })).toBe(`http://127.0.0.1:${a.port}/?token=${a.token}&lang=es&repo=r&session=s`);
+  });
+
+  it("hands the retention to the server it starts", async () => {
+    const file = path.join(watch(), "shop-1234abcd", "old.jsonl");
+    mkdirSync(path.dirname(file), { recursive: true });
+    writeFileSync(file, "{}\n");
+    const t = Date.now() / 1000 - 8 * 86400;
+    utimesSync(file, t, t);
+    await ensureServer(0, { retentionDays: 7 });
+    pids.push(state().pid);
+    expect(await until(() => !existsSync(file))).toBe(true);
   });
 
   it("replaces a server of another protocol", async () => {

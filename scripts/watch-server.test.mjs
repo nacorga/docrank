@@ -142,6 +142,9 @@ describe("watch-server.mjs", () => {
       expect.objectContaining({ repo: "shop-1234abcd", session: "s1", name: null }),
       expect.objectContaining({ repo: "shop-1234abcd", session: "s2", name: "shop-tracking" }),
     ]);
+    // What the sessions list shows of each: its start, its state and its task count.
+    expect(listed[1]).toEqual(expect.objectContaining({ startedAt: 1, state: "done", tasks: 0 }));
+    expect(listed[0]).toEqual(expect.objectContaining({ startedAt: null, state: "answer", tasks: 0 }));
     expect(await until(async () => (await version(s))?.tabs === 1)).toBe(true);
     out.req.destroy();
     expect(await until(async () => (await version(s))?.tabs === 0)).toBe(true);
@@ -158,6 +161,21 @@ describe("watch-server.mjs", () => {
     await start({}, ["--retention-days", "7"]);
     expect(await until(() => !existsSync(path.join(dir, "old.jsonl")))).toBe(true);
     expect(existsSync(path.join(dir, "kept.jsonl"))).toBe(true);
+  });
+
+  it("sends the list again when a session's state changes", async () => {
+    const file = path.join(watch(), "shop-1234abcd", "s1.jsonl");
+    mkdirSync(path.dirname(file), { recursive: true });
+    const now = Date.now();
+    writeFileSync(file, `${JSON.stringify({ time: now, event: "SessionStart" })}\n${JSON.stringify({ time: now, event: "UserPromptSubmit" })}\n`);
+    const s = await start();
+    const out = stream(s, "/api/sessions");
+    expect(await until(() => out.events.length === 1)).toBe(true);
+    expect(out.events[0][1][0]).toEqual(expect.objectContaining({ state: "working", startedAt: now }));
+    appendFileSync(file, `${JSON.stringify({ time: now + 1, event: "SessionEnd" })}\n`);
+    expect(await until(() => out.events.length === 2)).toBe(true);
+    expect(out.events[1][1][0].state).toBe("done");
+    out.req.destroy();
   });
 
   it("stops itself when no session has written for the idle timeout", async () => {

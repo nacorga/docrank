@@ -1,7 +1,8 @@
 /**
- * The watch page: the session's state in plain words, a graph of Claude, its
- * tasks and its helpers, and the feed of the selected node. Every view comes
- * from `reduce` over the session's lines, as the server streams them.
+ * The watch page: the sessions on record, grouped by repository; the chosen
+ * session's state in plain words, a graph of Claude, its tasks and its
+ * helpers, and the feed of the selected node. Every view comes from `reduce`
+ * over the session's lines, as the server streams them.
  */
 import { Background, ReactFlow, useReactFlow } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
@@ -64,6 +65,55 @@ function useNow(ms) {
 
 const time = (t) => (t ? new Date(t).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "");
 const repoName = (key) => key.replace(/-[0-9a-f]{8}$/u, "");
+const sameDay = (a, b) => new Date(a).toDateString() === new Date(b).toDateString();
+/** A start as the list shows it: the time today, the day and time before. */
+const when = (t) =>
+  !t ? "" : sameDay(t, Date.now()) ? time(t) : new Date(t).toLocaleString(lang, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+
+const live = (x) => x.state !== "done";
+const byLive = (a, b) => live(b) - live(a) || b.updatedAt - a.updatedAt;
+
+/** The sessions by repository: repositories with a live session first, then the latest; in each, live ones first. */
+function groups(sessions) {
+  const by = new Map();
+  for (const x of sessions) {
+    if (!by.has(x.repo)) by.set(x.repo, []);
+    by.get(x.repo).push(x);
+  }
+  const out = [...by].map(([repo, list]) => ({ repo, list: list.sort(byLive) }));
+  return out.sort((a, b) => byLive(a.list[0], b.list[0]));
+}
+
+function Sessions({ sessions, chosen, pick }) {
+  const key = (x) => `${x.repo}/${x.session}`;
+  return (
+    <nav className="sessions">
+      <h2>{w.sessions}</h2>
+      {groups(sessions).map((g) => (
+        <section key={g.repo}>
+          <h3>{repoName(g.repo)}</h3>
+          <ul>
+            {g.list.map((x) => (
+              <li key={key(x)}>
+                <button type="button" className={chosen && key(chosen) === key(x) ? "chosen" : ""} onClick={() => pick(x)}>
+                  <span className="top">
+                    <span className="start">{when(x.startedAt ?? x.updatedAt)}</span>
+                    {x.name && x.name !== repoName(g.repo) ? <span className="checkout">{x.name}</span> : null}
+                  </span>
+                  <span className={`state ${x.state}`}>
+                    <span className="dot" />
+                    {w.state[x.state]}
+                  </span>
+                  <span className="tasks">{x.tasks ? w.tasks(x.tasks) : w.noTasks}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
+    </nav>
+  );
+}
 
 /** Claude on top, tasks in a row under it, each task's helpers stacked under it. */
 function layout(s, selected) {
@@ -212,7 +262,6 @@ function App() {
   const ids = nodes.map((n) => n.id).join(" ");
   // Panned or zoomed by hand: the view stays put until the observer follows again.
   const [manual, setManual] = useState(false);
-  const key = (x) => `${x.repo}/${x.session}`;
 
   return (
     <div className="page">
@@ -235,20 +284,18 @@ function App() {
             {w.follow}
           </button>
         ) : null}
-        {sessions?.length ? (
-          <label>
-            {w.session}{" "}
-            <select value={chosen ? key(chosen) : ""} onChange={(e) => setPicked(sessions.find((x) => key(x) === e.target.value) ?? null)}>
-              {sessions.map((x) => (
-                <option key={key(x)} value={key(x)}>
-                  {x.name ?? repoName(x.repo)} · {time(x.updatedAt)} · {x.session.slice(0, 8)}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : null}
       </header>
       <main>
+        {/* Drawn before the list arrives: the graph's width must not change under its first fit. */}
+        <Sessions
+          sessions={sessions ?? []}
+          chosen={chosen}
+          pick={(x) => {
+            setPicked({ repo: x.repo, session: x.session });
+            setSelected(null);
+            setManual(false);
+          }}
+        />
         <div className="graph">
           <ReactFlow
             nodes={nodes}

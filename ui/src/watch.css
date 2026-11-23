@@ -19,16 +19,29 @@ header { display: flex; align-items: center; gap: 14px; padding: 12px 20px; bord
 header .spacer { flex: 1; }
 header .repo { color: var(--muted); }
 header .lost { color: var(--bad); }
-header select, header button { font: inherit; padding: 4px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); }
+header button { font: inherit; padding: 4px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); }
 header button { cursor: pointer; }
 .state { display: inline-flex; align-items: center; gap: 8px; font-size: 19px; font-weight: 600; }
 .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); flex: none; }
 .state.working .dot { background: var(--accent); animation: pulse 1.4s infinite; }
 .state.permission .dot { background: var(--warn); }
 .state.answer .dot { background: var(--ok); }
+.state.done .dot { background: var(--muted); }
 @keyframes pulse { 50% { opacity: 0.3; } }
 main { flex: 1; display: flex; min-height: 0; }
 .graph { flex: 1; min-width: 0; }
+.sessions { width: 250px; flex: none; border-right: 1px solid var(--line); background: var(--card); overflow-y: auto; padding: 16px 12px; }
+.sessions h2 { font-size: 16px; margin: 0 8px 8px; }
+.sessions h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 14px 8px 4px; }
+.sessions ul { list-style: none; margin: 0; padding: 0; }
+.sessions button { display: flex; flex-direction: column; gap: 2px; width: 100%; font: inherit; text-align: left; padding: 8px; border: 1px solid transparent; border-radius: 8px; background: none; cursor: pointer; color: inherit; }
+.sessions button:hover { background: var(--bg); }
+.sessions button.chosen { border-color: var(--accent); background: #eef3fc; }
+.sessions .top { display: flex; justify-content: space-between; gap: 8px; }
+.sessions .start { font-weight: 600; }
+.sessions .checkout, .sessions .tasks { color: var(--muted); font-size: 12px; }
+.sessions .state { font-size: 13px; font-weight: 400; gap: 6px; }
+.sessions .state .dot { width: 8px; height: 8px; }
 .feed { width: 400px; border-left: 1px solid var(--line); background: var(--card); overflow-y: auto; padding: 16px 20px; }
 .feed h2 { font-size: 16px; margin: 0 0 12px; }
 .feed .empty { color: var(--muted); }

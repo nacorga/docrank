@@ -24,7 +24,7 @@ import { closeSync, existsSync, mkdirSync, openSync, readdirSync, readFileSync, 
 import { createServer } from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { DAY_MS, prune } from "../lib/watch/history.mjs";
+import { DAY_MS, prune, stateAt, summarize } from "../lib/watch/history.mjs";
 import { IDLE_MS, PROTOCOL, statePath, validRepo, validSession } from "../lib/watch/launch.mjs";
 import { watchHome } from "../lib/watch/record.mjs";
 
@@ -49,7 +49,10 @@ const names = new Map(); // a log's path → its checkout's name, once its first
 
 /** Applies the retention: deletes the logs older than `retentionDays`. */
 function sweep() {
-  for (const file of prune(home, retentionDays, { idleMs })) names.delete(file);
+  for (const file of prune(home, retentionDays, { idleMs })) {
+    names.delete(file);
+    summaries.delete(file);
+  }
 }
 
 /**
@@ -82,7 +85,27 @@ function nameOf(file) {
   return name;
 }
 
-/** Every session log, newest first. */
+const summaries = new Map(); // a log's path → { size, mtimeMs, summary }, read again when it changes
+
+/** `summarize` of a log, read again only when its size or mtime moved. */
+function summaryOf(file, st) {
+  const known = summaries.get(file);
+  if (known && known.size === st.size && known.mtimeMs === st.mtimeMs) return known.summary;
+  let summary;
+  try {
+    summary = summarize(file);
+    summary.lastAt ??= st.mtimeMs; // a log with no timed line yet: judged by its file
+  } catch {
+    summary = { startedAt: null, lastAt: null, state: "done", tasks: 0 };
+  }
+  summaries.set(file, { size: st.size, mtimeMs: st.mtimeMs, summary });
+  return summary;
+}
+
+/**
+ * Every session log, newest first, each with what the sessions list shows:
+ * its start, its state and its task count.
+ */
 function sessions() {
   const out = [];
   let repos = [];
@@ -98,7 +121,16 @@ function sessions() {
       try {
         const file = path.join(home, r.name, f);
         const st = statSync(file);
-        out.push({ repo: r.name, session: f.slice(0, -6), name: nameOf(file), updatedAt: st.mtimeMs, size: st.size });
+        const sum = summaryOf(file, st);
+        out.push({
+          repo: r.name,
+          session: f.slice(0, -6),
+          name: nameOf(file),
+          updatedAt: st.mtimeMs,
+          startedAt: sum.startedAt,
+          state: stateAt(sum, Date.now(), idleMs),
+          tasks: sum.tasks,
+        });
       } catch {}
     }
   }
@@ -145,7 +177,7 @@ function list(req, res) {
   sse(res);
   let last = "";
   const send = () => {
-    const now = JSON.stringify(sessions().map(({ size, ...s }) => s));
+    const now = JSON.stringify(sessions());
     if (now !== last) res.write(`event: sessions\ndata: ${now}\n\n`);
     last = now;
   };

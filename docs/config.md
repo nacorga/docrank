@@ -152,6 +152,15 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 |---|---|---|---|
 | `memory.link` | boolean | `false` | memory link (experimental): links the Claude projects directory holding the session's transcript (`transcript_path`; the directory's naming is not documented, so it is not computed) to the repository's tracked `.claude/memory`, and refuses a transcript outside `<...>/.claude/projects/`; set it only when the repository tracks that directory |
 
+## `watch`
+
+| Key | Type | Default | Read by |
+|---|---|---|---|
+| `watch.enabled` | boolean | `false` | watch hook: records the session's events for the live view, and its `SessionStart` starts the server and opens the tab. Off, the hook exits at once |
+| `watch.port` | integer from 1025 to 65535 | `47173` | watch server and `docrank watch`: the port on `127.0.0.1` that one server, shared by every session of the machine, listens on |
+| `watch.language` | `en`, `es` | `"en"` | watch view: the language of its sentences and labels |
+| `watch.retentionDays` | integer >= 1 | `30` | watch server: days a recorded session is kept; not applied yet, the history slice deletes older ones |
+
 ## `messages`
 
 | Key | Type | Default | Read by |

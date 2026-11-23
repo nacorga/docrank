@@ -1,12 +1,18 @@
 {
   "name": "docrank",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "private": true,
   "description": "Claude Code plugin: guard hooks, judges, gates and docs that outrank code.",
   "license": "MIT",
   "type": "module",
   "bin": { "docrank": "bin/docrank.mjs" },
   "engines": { "node": ">=20" },
-  "scripts": { "test": "vitest run" },
-  "devDependencies": { "vitest": "^3.2.4" }
+  "scripts": { "test": "vitest run", "build:ui": "node ui/build.mjs" },
+  "devDependencies": {
+    "@xyflow/react": "12.12.1",
+    "esbuild": "0.28.2",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "vitest": "^3.2.4"
+  }
 }

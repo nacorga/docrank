@@ -4,13 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-docrank is a Claude Code **plugin** (not an npm library): guard hooks, two read-only judge agents, skills, a gates runner and a small CLI, all adapted per target repository by one file, `.claude/docrank.json`. Plain Node ESM (`.mjs`), Node ≥ 20, macOS and Linux only. **No run-time npm dependency** — vitest is the only dev dependency, and config validation is hand-written for that reason. Keep it that way.
+docrank is a Claude Code **plugin** (not an npm library): guard hooks, two read-only judge agents, skills, a gates runner and a small CLI, all adapted per target repository by one file, `.claude/docrank.json`. Plain Node ESM (`.mjs`), Node ≥ 20, macOS and Linux only. **No run-time npm dependency** on the Node side (hooks, `lib/`, `scripts/`, `bin/` import Node built-ins only), and config validation is hand-written for that reason. Keep it that way. The dev dependencies are vitest, plus React, `@xyflow/react` and esbuild for the watch page, whose built bundle `ui/dist/` is committed so the plugin still runs with no install.
 
 ## Commands
 
 ```sh
 npm ci                                   # install (vitest only)
 npm test                                 # vitest run — the whole suite (CI: ubuntu+macos × Node 20, 24)
+npm run build:ui                         # rebuild ui/dist from ui/src; commit the result (a test fails on a stale bundle)
 npx vitest run hooks/guard-bash.test.mjs # one file
 npx vitest run -t "a push needs the gates"   # tests whose name matches
 node bin/docrank.mjs config              # resolved config of the cwd's repo, or each error + exit 1
@@ -18,7 +19,7 @@ node bin/docrank.mjs check sections      # also: check drift-pairs, judges [<ran
 claude --plugin-dir .                    # try the plugin from this checkout without installing
 ```
 
-There is no build, lint or formatter step configured.
+The only build is `build:ui`; there is no lint or formatter step configured.
 
 ## Architecture
 
@@ -30,6 +31,7 @@ There is no build, lint or formatter step configured.
 - **`scripts/`** are run by skills via `allowed-tools`: `run-gates.mjs` (runs `gates.run`, records the passing HEAD that the Bash guard and `templates/pre-push` check before a push), `watch-pr.mjs`, `prune-worktrees.mjs`, `last-report.mjs`, and `demo.mjs` (the `demo` skill: builds a bare remote, a main checkout on `main` and a worktree on `demo/tracking` from `examples/consent`, and prints the `--plugin-dir` session command per `docs/harness-facts.md` fact 16).
 - **`examples/consent/`** is a tiny repository of its own (spec, module, `node --test` test, `.claude/docrank.json`) and `changes/*.patch`, the tracking change that breaks the spec and its fix. `vitest.config.mjs` excludes `examples/` so its tests are not collected as the plugin's; `scripts/demo.test.mjs` runs them through the demo.
 - **`skills/`** (`init`, `gates`, `ship`, `doc-lint`, `demo`, `judge-protocol`, `dispatch-guardrails`) and **`agents/`** (`spec-arbiter`, `surface-reviewer`) are Markdown with frontmatter. `test/agents.test.mjs` asserts the agents' frontmatter (tools must stay read-only; browser tools only the page-reading ones from `.mcp.json`'s `browser` server, named `mcp__plugin_docrank_browser__<tool>`).
+- **Watch** (`watch.enabled`): `hooks/watch-event.mjs` is an async, fail-open observer (always exit 0, never a decision) that appends one redacted line per hook event to `~/.claude/docrank/watch/<repo key>/<session>.jsonl` (`lib/watch/record.mjs`, `redact.mjs`); a docrank guard's refusal fires no event, so `deny()` and `guard-bash` append their own. At `SessionStart` it starts `scripts/watch-server.mjs` detached through `lib/watch/launch.mjs` (one server per machine, token + `Host` check, SSE tailing the logs). `lib/watch/reduce.mjs` (events → graph) and `phrases.mjs` (actions → `en`/`es` sentences) are pure and shared with the page, `ui/src/main.jsx`, which esbuild (`ui/build.mjs`) bundles into the committed `ui/dist/`.
 - **`principles/principles.md`** is injected at session start by `hooks/principles.mjs`.
 
 ## Tests

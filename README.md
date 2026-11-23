@@ -110,14 +110,51 @@ The CLI is `node <plugin>/bin/docrank.mjs <command>`:
   references and to a pair for every code unit (`docs.scanRoots`, `docs.unitRoots`).
 - `judges [<range>]` names the judges a diff needs (`judges.routes`).
 
+- `watch [--no-open]` starts the watch server when none runs, prints the
+  page's address and opens it.
+
 `templates/pre-push` is an optional git hook with the same gates check, for
 pushes made outside Claude Code; `init` offers it.
+
+## Watch: the session, live, in plain words
+
+For someone who does not read a terminal: a browser tab that shows what a
+session is doing. At the top, its state: *working*, *waiting for your
+permission*, *waiting for your answer* or *done*. Below, a graph of Claude,
+the tasks it is working on (the current one highlighted) and the helpers it
+dispatched, each under the task it was sent from. Clicking a node shows its
+actions as sentences ("Run the tests — it failed", "Tried to send the work to
+the shared repository (push); a safety rule stopped it"), the exact command or
+path folded behind *detail*. English or Spanish.
+
+Switch it on with `"watch": { "enabled": true }` in `.claude/docrank.json`
+([docs/config.md](docs/config.md#watch)). The next session starts one server
+for the whole machine on `127.0.0.1:47173` (`watch.port`) and opens the tab,
+unless one is already open, which then follows the new session; under `CI` or
+over SSH no tab opens. `docrank watch` opens it any time. The server stops
+itself after 30 minutes without activity.
+
+Tasks come from Claude Code's task tools, which are off by default on models
+newer than Opus 4.7, Sonnet 4.6 and Haiku 4.5 ([harness fact 22](docs/harness-facts.md)).
+Without them every action lands in *work without a list*; to get the list,
+start Claude Code with `CLAUDE_CODE_ENABLE_TODO_TOOLS=1`.
+
+What is stored: one JSON line per hook event in
+`~/.claude/docrank/watch/<repository>-<hash>/<session id>.jsonl` (directory
+0700, file 0600), outside every repository. A line keeps the tool's name and
+only the fields its sentence names: a command and its description, a path, a
+search pattern, a URL, a task's subject, a helper's errand. Secrets in them
+(tokens, passwords, `Authorization` headers, credentials in URLs, values
+written to an env file) are replaced with `[redacted]`. No tool output, no
+prompt and no file content is kept. The page is served to `127.0.0.1` only,
+with a random token in its address. Old sessions are not deleted yet.
 
 ## Requirements
 
 Node 20 or later, git, and `gh` for the pull request features. macOS and Linux;
 Windows is not supported. The plugin has no run-time npm dependency, and the
-browser server of `surface-reviewer` needs `npx` and Chrome.
+browser server of `surface-reviewer` needs `npx` and Chrome. The watch page is
+a prebuilt bundle in `ui/dist`, so it needs only a browser.
 
 ## What is proved live, and what is not
 
@@ -141,7 +178,9 @@ hook reads the `.claude/docrank.json` of the worktree a session is started
 in; and saw `init` read with Read and one command per Bash call, offer
 `src/**` ahead of the named file for the ground and pair `src/` for doc drift,
 proving its wording changed after the third, then, on the 0.2.2 branch, run
-with no error. Not yet exercised live, though tested on stubbed input: the
+with no error. Not yet exercised live, though tested on stubbed input: watch, whose page
+was checked only in a headless Chrome against a session recorded through its
+hook; the
 closing line rule, and the memory link, which is experimental: off by default,
 its directory rule undocumented by Claude Code.
 

@@ -20,6 +20,10 @@ Fact 16 was read on 2026-11-20 from
 [settings]=https://code.claude.com/docs/en/settings.md,
 [permissions]=https://code.claude.com/docs/en/permissions.md,
 [worktrees]=https://code.claude.com/docs/en/worktrees.md and [hooks].
+Facts 17 to 23 (docrank watch) were read on 2026-11-23 from [hooks], [tools],
+[components],
+[sdk-todo]=https://code.claude.com/docs/en/agent-sdk/todo-tracking.md and
+[sdk-ts]=https://code.claude.com/docs/en/agent-sdk/typescript.md.
 
 | # | Fact | Status |
 |---|---|---|
@@ -38,6 +42,13 @@ Fact 16 was read on 2026-11-20 from
 | 13 | PreToolUse `updatedInput` and `additionalContext`; the Agent tool's `name` and `effort` | VERIFIED |
 | 14 | Hook matcher syntax, plugin hooks included | VERIFIED |
 | 16 | Where an installed plugin is on; `--plugin-dir` beside an install; a session started in a worktree | VERIFIED; that a hook's `cwd` is the launch directory, NOT DOCUMENTED; PROVED LIVE |
+| 17 | The events watch reads and their inputs | VERIFIED; `SessionEnd` from a plugin as fact 3 |
+| 18 | `Notification` types: the two waiting states | VERIFIED, with their delays |
+| 19 | `async: true` on a command hook, from a plugin | VERIFIED; for a plugin, by its shape only |
+| 20 | A hook that fails or times out does not block | VERIFIED |
+| 21 | A `PreToolUse` hook's refusal fires no other event | VERIFIED |
+| 22 | The task tool sets and their shapes | VERIFIED; off by default on newer models |
+| 23 | A helper's errand; a non-interactive session in the hook input | errand by order; an id match and the `-p` signal NOT DOCUMENTED |
 
 ## 1. `${CLAUDE_PLUGIN_ROOT}` in hook commands: VERIFIED
 
@@ -572,3 +583,174 @@ file. PROVED LIVE on 2026-11-21 (§ 15), still not documented: with
 `docDrift.entries` in the worktree's `.claude/docrank.json` only, doc drift
 fired on `Stop` in a session started in the worktree, so the hook read the
 configuration of the worktree the session was started in.
+
+## 17. The events watch reads and their inputs: VERIFIED
+
+[hooks] § Hook lifecycle lists, among others: "`PreToolUse` | Before a tool
+call executes", "`PermissionRequest` | When a tool call needs a permission
+decision", "`PermissionDenied` | When auto mode denies a tool call",
+"`PostToolUse` | After a tool call succeeds", "`PostToolUseFailure` | After a
+tool call fails", "`Notification` | When Claude Code sends a notification",
+"`SubagentStart` | When a subagent is spawned", "`SubagentStop` | When a
+subagent finishes", "`TaskCreated` | When a task is being created via
+`TaskCreate`", "`Stop` | When Claude finishes responding", "`SessionStart` |
+When a session begins or resumes", "`UserPromptSubmit` | When a prompt is
+submitted, before Claude processes it" and "`SessionEnd` | When a session
+terminates".
+
+Inputs, each besides the common fields (`session_id`, `cwd`,
+`hook_event_name`, …):
+
+- `PreToolUse`: "receive `tool_name`, `tool_input`, and `tool_use_id`". For
+  `Agent`, `tool_input` holds `prompt`, `description`, `subagent_type`,
+  `model`.
+- `PostToolUse`: "both `tool_input`, the arguments sent to the tool, and
+  `tool_response`, the result it returned", with `tool_use_id` in the
+  example. [sdk-ts] § `PostToolBatchHookInput`: its `tool_response` "differs
+  from `PostToolUseHookInput`'s structured `Output` object", so
+  `PostToolUse` carries the tool's structured output (fact 22 for
+  `TaskCreate`).
+- `PostToolUseFailure`: "the same `tool_name` and `tool_input` fields as
+  PostToolUse, along with error information as top-level fields", `error`
+  and `is_interrupt`, `tool_use_id` in the example. It "doesn't fire for tool
+  calls rejected before execution ... Permission denials fire `PreToolUse`
+  but not this event".
+- `PermissionRequest`: "`tool_name` and `tool_input` fields like PreToolUse
+  hooks, but without `tool_use_id`". "Use this event when you need a signal
+  the moment Claude asks for permission to use a tool."
+- `PermissionDenied`: "`tool_name`, `tool_input`, `tool_use_id`, and
+  `reason`".
+- `SubagentStart`: "`agent_id` with the unique identifier for the subagent
+  and `agent_type`". It fires "when Claude spawns a subagent with the Agent
+  tool, when Claude resumes a subagent, and each time an in-process agent
+  team teammate handles a new message".
+- `SubagentStop`: "`stop_hook_active`, `agent_id`, `agent_type`,
+  `agent_transcript_path`, and `last_assistant_message`"; it also fires for
+  Claude Code's internal agents, whose `agent_type` can be "an empty string".
+- `TaskCreated`: "`task_id`, `task_subject`, and optionally
+  `task_description`"; "In a session without the Task tools, this event
+  doesn't fire."
+- `Stop`: "Does not run if the stoppage occurred due to a user interrupt."
+- `UserPromptSubmit`: "the `prompt` field containing the submitted text";
+  it also fires for scheduled tasks and "A background subagent reporting
+  back to the session that started it".
+- `SessionEnd`: a `reason` field.
+- Inside a subagent: "tool events such as `PreToolUse` and `PostToolUse` fire
+  the same configured hooks as in the main conversation, and the input
+  carries the `agent_id` and `agent_type` common input fields that identify
+  the subagent" (§ Hook locations).
+
+The match-all matcher is fact 14: "`"*"`, `""`, or omitted | Match all".
+`PostToolUse` § says the same for the event: "To run a hook after any tool
+completes successfully, omit the `matcher` or set it to `"*"`".
+
+That a plugin may wire `SessionEnd` is NOT DOCUMENTED per event, as fact 3.
+Watch wires it and keeps an idle timeout for a session that sends none.
+
+## 18. `Notification` types, the two waiting states: VERIFIED, with their delays
+
+[hooks] § Notification input: "`message` with the notification text, an
+optional `title`, and `notification_type` indicating which type fired". Its
+values include "`permission_prompt` | Claude needs you to approve a tool use
+... and the prompt has waited about six seconds" and "`idle_prompt` | Claude
+finished responding about 60 seconds ago and you haven't typed since". In a
+terminal the six seconds are reset by typing: "Expect `permission_prompt`
+once you haven't typed for about six seconds"; and `idle_prompt` comes "only
+if you haven't typed since and no background agent ... is still running".
+For sessions hosted through `canUseTool`, "Before v2.1.233,
+`permission_prompt` didn't fire in these sessions."
+
+So `permission_prompt` is late by design; `PermissionRequest` (fact 17) is
+the immediate signal, and watch reads both. *Waiting for an answer* starts
+on `Stop`, which comes at once, and `idle_prompt` only confirms it.
+
+## 19. `async: true` on a command hook, from a plugin: VERIFIED; for a plugin, by its shape only
+
+[hooks] § Command hook fields: "`async` | no | If `true`, runs in the
+background without blocking". § Run hooks in the background: "Async hooks
+can't block or control Claude's behavior: response fields like `decision`,
+`permissionDecision`, and `continue` have no effect"; "Once an async hook is
+running in the background, Claude Code doesn't enforce `timeout` on it";
+"Each execution creates a separate background process"; and "In
+non-interactive mode with the `-p` flag, Claude Code kills any async hook
+still running at teardown ... If your hook's work must outlive a `claude -p`
+session, start a fully detached process from it".
+
+For a plugin: [components] § Hooks, plugin hooks go in `hooks/hooks.json`
+"in the same shape as the `hooks` object in `settings.json`" (fact 3), and
+[components] points to [hooks] "For every event and its payload". No page
+names `async` for a plugin hook, and none excludes it. Without it the hook
+would run synchronously; it still exits 0 at once when watch is off, so the
+cost is one short Node process per event.
+
+Separate processes mean no order between them: a fast tool's `PostToolUse`
+line can be written before its `PreToolUse` line. The reducer pairs by
+`tool_use_id` and accepts either order.
+
+## 20. A hook that fails or times out does not block: VERIFIED
+
+[hooks] § Exit code output: "**Non-blocking error**: your hook exits with any
+other code, or fails in some other way, such as not starting or printing
+invalid JSON. The action goes ahead, except for hooks whose failure blocks the
+action, for example a hook with `onFailure` set to `"block"`". § Timeouts:
+"On `PreToolUse`, a timed-out `command`, `http`, or `mcp_tool` hook doesn't
+block the tool call, except for hooks whose failure blocks the action".
+§ Block the action when a hook fails: `onFailure` "has no effect on ...
+**Background command hooks**: command hooks that set `async` or
+`asyncRewake`". Fail-open is the default, and an async hook cannot be made to
+fail closed.
+
+## 21. A `PreToolUse` hook's refusal fires no other event: VERIFIED
+
+[hooks] § PermissionDenied: it "Runs when the auto mode classifier denies a
+tool call" and "The hook doesn't run when you deny a permission dialog, when
+a `PreToolUse` hook blocks a call, or when a `deny` rule matches".
+§ PostToolUseFailure: "Permission denials fire `PreToolUse` but not this
+event". Hooks of one event run in parallel (§ Hook handler fields: "When an
+event fires, its matching hooks run in parallel"), so the watch hook cannot
+see what a guard decided. A docrank guard that refuses writes the refusal to
+the watch log itself; a refusal by any other hook, a deny rule or the user
+leaves an action with no outcome.
+
+## 22. The task tool sets and their shapes: VERIFIED; off by default on newer models
+
+[tools]: "`TodoWrite` | Manages the session task checklist. Disabled by
+default in favor of `TaskCreate`, `TaskGet`, `TaskList`, and `TaskUpdate`.
+Set `CLAUDE_CODE_ENABLE_TASKS=0` to re-enable it". § Task tool availability:
+"The task-tracking tools ... are available by default only on Opus 4.7,
+Sonnet 4.6, Haiku 4.5, and earlier models" and "On every other model, Claude
+Code leaves the tools out unless you opt in", among others by "Export
+`CLAUDE_CODE_ENABLE_TODO_TOOLS=1` before you start Claude Code". "A subagent
+has the task-tracking tools only when your session has them".
+
+Shapes, [sdk-ts] § Tool Input Types and Tool Output Types:
+`TaskCreateInput = { subject: string; description: string; activeForm?:
+string; metadata?: ... }`; `TaskUpdateInput = { taskId: string; status?:
+"pending" | "in_progress" | "completed" | "deleted"; subject?: string; ...
+activeForm?: string; ... }`; `TaskCreateOutput = { task: { id: string;
+subject: string; }; }`; `TodoWriteInput = { todos: Array<{ content: string;
+status: "pending" | "in_progress" | "completed"; activeForm: string; }>; }`.
+[sdk-todo]: "Claude Code repairs some close-but-incorrect key names before
+execution, mapping `id` or `task_id` to `taskId` and `active_form` to
+`activeForm`, but that repair is not reflected in the stream. Read
+`TaskUpdate` input fields defensively". `TaskCreated` (fact 17) carries
+`task_id` and `task_subject` as well.
+
+So on the models without the tools, the default today, a session has no task
+list and watch shows its work under "work without a list".
+
+## 23. A helper's errand; a non-interactive session: errand by order, the rest NOT DOCUMENTED
+
+`SubagentStart` carries no description (fact 17). The errand is the
+`description` of the `Agent` call that spawned it, matched by order: the
+oldest `Agent` call of the same `subagent_type` that no helper has taken yet,
+else the oldest of any type. `SubagentStart`'s `agent_id` is the new
+helper's own, so which agent spawned it is not known either. An id match is NOT DOCUMENTED: the `Agent` response's
+`agentId` example is `"a4d2c8f1e0b3a297"`, the `SubagentStart` example's
+`agent_id` is `"agent-abc123"` (fact 12), and a foreground `Agent` call's
+`PostToolUse` arrives only when the helper has finished.
+
+No hook input field says the session is non-interactive (`-p`): [hooks]
+§ Common input fields lists none, and § SessionStart input has `source`,
+`model`, `agent_type` and `session_title` only. Watch opens no tab under `CI`
+or `SSH_CONNECTION` and does not tell a `-p` run apart.

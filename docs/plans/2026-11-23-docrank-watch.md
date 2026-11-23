@@ -171,7 +171,8 @@ first written from:
   guard refusal, a permission wait. Recorded in harness-facts § 15 and the
   README «What is proved live».
   Done: `docrank--v0.3.0` released on `8dd9971`; the trial run by the
-  orchestrator, its fixes landing as 0.3.1.
+  orchestrator. Its fixes ship in 0.4.0: 0.3.1 was never released, and the
+  plan ends in one release.
 
 ### [ ] 2 · History and timeline — branch `feat/watch-history`
 
@@ -182,7 +183,8 @@ first written from:
 - [x] **2c · Timeline.** A past session opens in its final state with a
   slider over its events and a play button; the graph at any point is the
   reducer over the events up to it. Tests on the reducer's prefixes.
-- [ ] **2d · Documents and version 0.4.0**, PR, CI green.
+- [ ] **2d · Documents and version 0.4.0**, PR, CI green. The 0.4.0 notes
+  cover slice 1's trial fixes too, and what else landed since 0.3.0.
 - [ ] **2e · Release and live trial (user)**: an observer replays a session
   of slice 1's trial. Recorded as in 1m; this plan leaves the tree in the
   same PR.

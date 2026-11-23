@@ -200,8 +200,15 @@ gate run inside the gates helper, and the guard's refusal of a push as a
 plain warning with its command folded; `SessionEnd` from the plugin was
 recorded on leaving. Its three defects, a graph framed on part of its nodes,
 a forked skill's helper with no errand and the session list naming another
-repository than the header, are fixed in 0.4.0. Not proved for watch: the
-tab opening by itself, a person reading the page, Linux. Not yet exercised
+repository than the header, are fixed in 0.4.0. A seventh, with 0.4.0, proved
+watch's history: the sessions list showed the live session first and the
+sixth's below it, each with its state and task count; scrubbing the live
+session's timeline drew the graph as it stood at that step while the log
+grew; and the sixth's session replayed with "Play". Its defect, a session
+read as waiting for an answer while a helper still worked after the turn
+ended, is fixed in 0.4.1. Not proved for watch: the tab opening by itself, a
+person reading the page, an older server replaced live, the daily retention
+sweep, Linux. Not yet exercised
 live, though tested on stubbed input: the
 closing line rule, and the memory link, which is experimental: off by default,
 its directory rule undocumented by Claude Code.

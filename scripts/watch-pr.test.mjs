@@ -50,6 +50,21 @@ describe("watch-pr.mjs checks", () => {
     });
   });
 
+  it("ends on the pull request's state while no check has registered", () => {
+    // GitHub runs no check on a conflicting pull request: the wait must not outlast it.
+    const noChecks = (box) => ({ box, env: { GH_STUB_FIRST_EMPTY: path.join(box.dir, "no", "such", "dir", "first") } });
+    const gone = (fields) => {
+      const box = sandbox({ config: { branches: { integration: "develop" } } });
+      const { env, ...rest } = noChecks(box);
+      return watch(["2"], { ...rest, env: { ...env, GH_STUB_VIEW: view(fields) } });
+    };
+    expect(gone({ mergeable: "CONFLICTING" })).toMatchObject({ status: 1, out: ["CONFLICTING"] });
+    expect(gone({ state: "MERGED", mergeCommit: { oid: "m3rge" } })).toMatchObject({ status: 0, out: ["MERGED m3rge"] });
+    expect(gone({ state: "CLOSED" })).toMatchObject({ status: 1, out: ["CLOSED"] });
+    // UNKNOWN and a merely conflicting pull request that is not OPEN count for nothing: it keeps waiting, to its limit.
+    expect(gone({ mergeable: "UNKNOWN" })).toMatchObject({ status: 1, out: ["RED no check registered in time"] });
+  });
+
   it("reports NO CI for a base outside pr.ciBases, and follows pr.ciBases when it names one", () => {
     expect(watch(["3"])).toMatchObject({ status: 0, out: ["NO CI on a pull request into batch/demo-walk"] });
     const config = { branches: { integration: "develop" }, pr: { ciBases: ["develop", "batch/*"] } };
@@ -63,6 +78,18 @@ describe("watch-pr.mjs checks", () => {
 });
 
 describe("watch-pr.mjs merged", () => {
+  it("is RED, naming the failed and cancelled checks, when one fails while it waits for the merge", () => {
+    const failed = JSON.stringify([
+      { name: "lint", bucket: "fail", link: "http://x/1" },
+      { name: "e2e", bucket: "cancel", link: "http://x/2" },
+      { name: "build", bucket: "pass", link: "http://x/3" },
+    ]);
+    expect(watch(["2", "merged"], { env: { GH_STUB_VIEW: view({}), GH_STUB_FAILED: failed } })).toMatchObject({
+      status: 1,
+      out: ["RED", "lint\tfail\thttp://x/1", "e2e\tcancel\thttp://x/2"],
+    });
+  });
+
   it("is MERGED with the merge commit, once the branch tip on the remote is the merged head", () => {
     const box = sandbox();
     const remote = path.join(box.dir, "origin.git");

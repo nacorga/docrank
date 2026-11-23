@@ -5,18 +5,23 @@
  * first thing the session must act on, and the exit is what wakes the session.
  *
  *   watch-pr.mjs <n>          GREEN when every check passed, NO CI when its base
- *                             is not one of `pr.ciBases`, or RED and the failed
- *                             or cancelled checks at the first failure
+ *                             is not one of `pr.ciBases`, RED and the failed or
+ *                             cancelled checks at the first failure, MERGED and
+ *                             the merge commit, CLOSED or CONFLICTING (also
+ *                             while no check has registered yet)
  *   watch-pr.mjs <n> merged   MERGED and the merge commit, CLOSED, CONFLICTING
- *                             when another merge left it so, or ORPHANED when
- *                             its branch moved past the merge
+ *                             when another merge left it so, ORPHANED when its
+ *                             branch moved past the merge, or RED and the failed
+ *                             or cancelled checks when one fails while it waits
  *
- * Two holes of a bare `gh pr checks --watch` are closed here: before the first
- * run registers it exits at once with "no checks reported", and without
- * --fail-fast it waits for the slowest job before reporting a failure GitHub
- * already shows. GitHub answers UNKNOWN while it recomputes a pull request's
- * mergeability, so only CONFLICTING itself counts. Exit 0 on GREEN, NO CI and
- * MERGED, 1 otherwise.
+ * Three holes of a bare `gh pr checks --watch` are closed here: before the first
+ * run registers it exits at once with "no checks reported"; without --fail-fast
+ * it waits for the slowest job before reporting a failure GitHub already shows;
+ * and GitHub runs no check on a conflicting pull request, so a wait for the
+ * first one reads the pull request's state too, or it would end after 15 minutes
+ * in a RED that names no check. GitHub answers UNKNOWN while it recomputes a
+ * pull request's mergeability, so only CONFLICTING itself counts. Exit 0 on
+ * GREEN, NO CI and MERGED, 1 otherwise.
  */
 import { spawnSync } from "node:child_process";
 import { setTimeout as sleep } from "node:timers/promises";
@@ -46,6 +51,20 @@ const done = (line, code) => {
   process.exit(code);
 };
 
+// gh exits non-zero on "no checks reported" and on failed checks: read what it
+// says, not its status.
+const ghRaw = (...args) => spawnSync("gh", args, { cwd: config.root, encoding: "utf8" });
+/** The failed and cancelled checks, one per line: name, bucket, link. */
+const failedChecks = () => {
+  const checks = JSON.parse(ghRaw("pr", "checks", n, "--json", "name,bucket,link").stdout.trim() || "[]");
+  return checks.filter((c) => c.bucket === "fail" || c.bucket === "cancel").map((c) => `${c.name}\t${c.bucket}\t${c.link}`);
+};
+/** CLOSED, or CONFLICTING on an open pull request: the ends both modes share. */
+const gone = (view) => {
+  if (view.state === "CLOSED") done("CLOSED", 1);
+  if (view.state === "OPEN" && view.mergeable === "CONFLICTING") done("CONFLICTING", 1);
+};
+
 if (mode === "merged") {
   for (;;) {
     const view = JSON.parse(gh("pr", "view", n, "--json", "state,mergeable,headRefName,headRefOid,mergeCommit") || "{}");
@@ -56,8 +75,9 @@ if (mode === "merged") {
       if (tip && tip !== view.headRefOid) done(`ORPHANED origin/${view.headRefName} is at ${tip}, past the merged head ${view.headRefOid}`, 1);
       done(`MERGED ${view.mergeCommit?.oid ?? ""}`.trim(), 0);
     }
-    if (view.state === "CLOSED") done("CLOSED", 1);
-    if (view.state === "OPEN" && view.mergeable === "CONFLICTING") done("CONFLICTING", 1);
+    gone(view);
+    const failed = failedChecks();
+    if (failed.length) done(["RED", ...failed].join("\n"), 1);
     await sleep(2 * poll);
   }
 }
@@ -66,21 +86,19 @@ const base = gh("pr", "view", n, "--json", "baseRefName", "-q", ".baseRefName");
 if (!base) done(`could not read the base of pull request ${n}`, 1);
 if (!config.pr.ciBases.map(glob).some((g) => g.test(base))) done(`NO CI on a pull request into ${base}`, 0);
 
-// gh exits non-zero on "no checks reported" and on failed checks: read what it
-// says, not its status.
-const ghRaw = (...args) => spawnSync("gh", args, { cwd: config.root, encoding: "utf8" });
 const registered = () => {
   const r = ghRaw("pr", "checks", n);
   return !/no checks reported/.test(r.stderr + r.stdout);
 };
-for (let waited = 0; !registered(); waited += poll) {
+for (let waited = 0; ; waited += poll) {
+  const view = JSON.parse(gh("pr", "view", n, "--json", "state,mergeable,mergeCommit") || "{}");
+  if (view.state === "MERGED") done(`MERGED ${view.mergeCommit?.oid ?? ""}`.trim(), 0);
+  gone(view);
+  if (registered()) break;
   if (waited >= registerLimit) done("RED no check registered in time", 1);
   await sleep(poll);
 }
 
 const watched = ghRaw("pr", "checks", n, "--watch", "--fail-fast", "--interval", String(Math.max(1, Math.round(poll / 1000))));
 if (watched.status === 0) done("GREEN", 0);
-console.log("RED");
-const failed = JSON.parse(ghRaw("pr", "checks", n, "--json", "name,bucket,link").stdout || "[]");
-for (const c of failed.filter((c) => c.bucket === "fail" || c.bucket === "cancel")) console.log(`${c.name}\t${c.bucket}\t${c.link}`);
-process.exit(1);
+done(["RED", ...failedChecks()].join("\n"), 1);

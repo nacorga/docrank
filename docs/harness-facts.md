@@ -53,7 +53,7 @@ Fact 25 was read on 2026-11-23 from [settings], [tools],
 | 22 | The task tool sets and their shapes | VERIFIED; off by default on newer models |
 | 23 | A helper's errand; a non-interactive session in the hook input | errand by order; an id match and the `-p` signal NOT DOCUMENTED |
 | 24 | `transcript_path` in the hook input, and the shape of a transcript line | path VERIFIED; the line shape NOT DOCUMENTED, so a fallback |
-| 25 | `CLAUDE_CODE_ENABLE_TODO_TOOLS` in the `env` of a repository's `.claude/settings.json` | the `env` reaching the session VERIFIED, after workspace trust; that the task tools follow it from that file NOT DOCUMENTED, not proved live |
+| 25 | `CLAUDE_CODE_ENABLE_TODO_TOOLS` in the `env` of a repository's `.claude/settings.json` | the `env` reaching the session VERIFIED, after workspace trust; that the task tools follow it from that file NOT DOCUMENTED; PROVED LIVE in `-p` mode, an interactive session after trust not proved |
 
 ## 1. `${CLAUDE_PLUGIN_ROOT}` in hook commands: VERIFIED
 
@@ -900,7 +900,7 @@ read the file and finds a line it understands, and a transcript that is
 absent, unreadable, holds a line that is not JSON, or holds no user prompt
 makes it fall back to refusing once per input, as without the key.
 
-## 25. `CLAUDE_CODE_ENABLE_TODO_TOOLS` in a repository's `env`: the `env` VERIFIED; the task tools from it NOT DOCUMENTED
+## 25. `CLAUDE_CODE_ENABLE_TODO_TOOLS` in a repository's `env`: the `env` VERIFIED; the task tools from it NOT DOCUMENTED, PROVED LIVE in `-p` mode
 
 `init` offers to turn the task tools (fact 22) on for a repository by writing
 the variable into the `env` of its `.claude/settings.json`.
@@ -934,7 +934,15 @@ settings `env` block: "start your session by running `claude --settings
 Not documented: whether the variable is one Claude Code "classifies as safe"
 and applies at startup from a project file, and whether the session's tool
 set, chosen at its start, follows a value applied only once the workspace is
-trusted. Not proved live. So `init` says the setting is unproved from a
-repository file, that it takes effect from the next session started in the
-repository, and that exporting the variable before `claude` is the
-documented way.
+trusted.
+
+Proved live on 2026-11-23 with Claude Code 2.1.330 in `-p` mode, in a
+trusted demo repository, `CLAUDE_CODE_ENABLE_TODO_TOOLS` unset in the shell:
+with `.claude/settings.json` holding
+`{"env":{"CLAUDE_CODE_ENABLE_TODO_TOOLS":"1"}}`, asked whether a `TaskCreate`
+tool was available, the model answered "Sí"; with the file removed it
+answered "No". So in `-p` mode the task tools follow the variable from a
+repository's settings file. An interactive session after trust is not
+proved. So `init` says the setting was proved in `-p` mode only, that it
+takes effect from the next session started in the repository, and that
+exporting the variable before `claude` is the documented way.

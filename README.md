@@ -159,8 +159,10 @@ no turn when it comes within seconds of that subagent's end (a guess: no prompt
 text is stored). To get the list,
 start Claude Code with `CLAUDE_CODE_ENABLE_TODO_TOOLS=1`. `init`, when it turns
 watch on, offers to write that variable into the `env` of the repository's
-`.claude/settings.json`, and writes nothing without a yes; that the task tools
-follow it from there is not documented nor proved yet ([harness fact 25](docs/harness-facts.md)).
+`.claude/settings.json`, and writes nothing without a yes. That the task tools
+follow it from there is not documented; it was proved in `-p` mode, not yet in an
+interactive session ([harness fact 25](docs/harness-facts.md)). It takes effect
+from the next session started in the repository.
 
 What is stored: one JSON line per hook event in
 `~/.claude/docrank/watch/<repository>-<hash>/<session id>.jsonl` (directory

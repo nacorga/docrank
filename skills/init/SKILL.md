@@ -155,7 +155,8 @@ answer, leaves the repository as step 3 left it.
   `env` entry kept, and say so when it already sets the variable, offering
   nothing. Write only after a yes. Say, from fact 25, that a repository's
   `env` applies once the folder is trusted, that the task tools following it
-  from that file is not documented nor proved, that it needs Claude Code
+  from that file is not documented and was proved in `-p` mode only, not in
+  an interactive session, that it needs Claude Code
   2.1.233 or later and takes effect from the next session started in the
   repository, and that exporting the variable before `claude` is the
   documented way.

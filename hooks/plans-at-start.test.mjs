@@ -26,6 +26,12 @@ describe("plans-at-start.mjs", () => {
     expect(out.additionalContext).toBe("Plans in progress:\n- `work/plans/c.md` · no checklist");
   });
 
+  it("counts no box and no heading inside a fenced code block, and skips the directory's README", async () => {
+    const fenced = "# D\n\n- [x] real\n\n```md\n- [ ] example\n## Handoff\n```\n\n~~~~\n- [x] also an example\n~~~~\n- [ ] real too\n";
+    const out = await run({ ".claude/docrank.json": on(), "docs/plans/d.md": fenced, "docs/plans/README.md": "- [ ] how to write one\n" });
+    expect(out.additionalContext).toBe("Plans in progress:\n- `docs/plans/d.md` · 1/2");
+  });
+
   it("lists them again after a compaction", async () => {
     const files = { ".claude/docrank.json": on(), "docs/plans/a.md": half };
     expect((await run(files, "compact")).additionalContext).toContain("`docs/plans/a.md` · 2/4");

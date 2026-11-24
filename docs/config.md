@@ -187,7 +187,7 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 
 | Key | Type | Default | Read by |
 |---|---|---|---|
-| `plans.atStart` | boolean | `false` | plans at session start, on every source, `compact` included: each `*.md` of the checkout's `ship.plansDir`, by name, with its checked items over all of them (`- [x]` over `- [ ]` and `- [x]`; "no checklist" when it has none) and `§ Handoff` when it has a heading named Handoff. Nothing when the directory holds no plan |
+| `plans.atStart` | boolean | `false` | plans at session start, on every source, `compact` included: each `*.md` of the checkout's `ship.plansDir` but its `README.md`, by name, with its checked items over all of them (`- [x]` over `- [ ]` and `- [x]`; "no checklist" when it has none) and `§ Handoff` when it has a heading named Handoff; a box or a heading inside a fenced code block is not counted. Nothing when the directory holds no plan |
 
 ## Example: guarding a local database
 

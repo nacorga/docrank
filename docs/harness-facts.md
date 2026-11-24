@@ -28,7 +28,7 @@ Fact 25 was read on 2026-11-23 from [settings], [tools],
 [env-vars]=https://code.claude.com/docs/en/env-vars.md and
 [settings-ref]=https://code.claude.com/docs/en/settings-reference.md.
 Fact 26 was read on 2026-11-23 from [hooks].
-Fact 27 was read on 2026-11-24 from [hooks].
+Facts 27 and 28 were read on 2026-11-24 from [hooks] and [env-vars].
 
 | # | Fact | Status |
 |---|---|---|
@@ -58,6 +58,7 @@ Fact 27 was read on 2026-11-24 from [hooks].
 | 25 | `CLAUDE_CODE_ENABLE_TODO_TOOLS` in the `env` of a repository's `.claude/settings.json` | the `env` reaching the session VERIFIED, after workspace trust; that the task tools follow it from that file NOT DOCUMENTED; PROVED LIVE in `-p` mode, an interactive session after trust not proved |
 | 26 | A failed tool call and a shell command's exit code in the hook input | VERIFIED; that every non-zero exit fires `PostToolUseFailure` NOT DOCUMENTED as a rule, PROVED LIVE in `-p` mode (exit 1 and 3) |
 | 27 | A `UserPromptSubmit` hook adds context beside the prompt | VERIFIED |
+| 28 | `CLAUDE_PID` in a session's subprocesses; `SessionStart` sources; `SessionEnd` reasons and its 1.5-second budget | VERIFIED |
 
 ## 1. `${CLAUDE_PLUGIN_ROOT}` in hook commands: VERIFIED
 
@@ -1055,3 +1056,33 @@ pattern anchored at the prompt's start answers what a person opens with.
 A failure, a timeout or invalid JSON does not block the prompt (fact 20);
 the hook exits 0 and prints nothing on any failure, so it never reaches
 `"decision": "block"`.
+
+## 28. `CLAUDE_PID`, `SessionStart` sources, the `SessionEnd` budget: VERIFIED
+
+The reaper (`reap.*`) tells a session's processes apart by `CLAUDE_PID`, and
+runs at both ends of a session.
+
+[env-vars]: "`CLAUDE_PID` | Claude Code sets this to its own process ID in
+the subprocesses it spawns: Bash and PowerShell tool commands and hook
+commands", "Read it from your own scripts to identify or signal the parent
+Claude Code process deliberately. Requires Claude Code v2.1.214 or later". A
+child of such a command inherits it, so a server a session started carries
+the session's pid; that inheritance is the operating system's, not a Claude
+Code statement. With an older Claude Code no process carries it, and the
+reaper stops nothing.
+
+[hooks] § SessionStart input: "`source` | How the session started:
+`"startup"` for new sessions, `"resume"` for resumed sessions, `"clear"`
+after `/clear`, `"compact"` after compaction, or `"fork"` for a new session
+forked from an existing one". A plugin's hook in `hooks/hooks.json` without
+a matcher runs on each (fact 14), so a docrank `SessionStart` hook is written
+to be right on every source.
+
+[hooks] § SessionEnd: "`clear` | Session cleared with `/clear` command",
+"`resume` | Session switched via interactive `/resume`", then `logout`,
+`prompt_input_exit` and `other`. On `clear` and `resume` the Claude Code
+process goes on, so `CLAUDE_PID` still names a live process. And: "SessionEnd
+hooks have a default timeout of 1.5 seconds", raised by a per-hook `timeout`,
+but "Timeouts set on plugin-provided hooks don't raise the budget". A plugin's
+`SessionEnd` work that may take longer starts a detached process and returns,
+as fact 19 says for work that must outlive a `-p` session.

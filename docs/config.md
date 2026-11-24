@@ -176,6 +176,13 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 |---|---|---|---|
 | `prompts.context` | `{match: regex, file: path}[]` | `[]` | prompt context: when a submitted prompt matches `match`, tried with the flags `i` and `u` against the whole prompt, the text of `file` (relative to the repository root) is added as context beside it; several matches add each file once, in order. A file that cannot be read adds nothing, and an invalid config, nothing at all: it never blocks a prompt. The hook also fires for a background agent reporting back, so anchor `match` at the start of the prompt (`^`) to answer only what a person opens with. Empty means off |
 
+## `reap`
+
+| Key | Type | Default | Read by |
+|---|---|---|---|
+| `reap.enabled` | boolean | `false` | reaper, at session start and end: stops the process groups sessions left running in the repository. At start, a group goes only when a member's working directory is in one of the repository's checkouts or in a removed `<main>-<name>` beside the main one, every such member carries a `CLAUDE_PID` naming a session no longer alive, and its leader is gone or adopted by PID 1. At end (unless the reason is `clear` or `resume`), every group a member of which carries the ending session's `CLAUDE_PID` goes, held or not. A process started outside Claude Code, or whose environment cannot be read, is never stopped; neither is docrank's watch server nor a group holding the hook itself. SIGTERM, then SIGKILL after five seconds. Reads `ps`; on macOS also `lsof` and `python3`, without which nothing is stopped |
+| `reap.keep` | regex[] | `[]` | reaper: a group with a member whose command line matches one, tried with the flag `u`, is never stopped, at start or at end: a development server a person keeps running across sessions, an environment held for a reviewer |
+
 ## Example: guarding a local database
 
 `guard.extraDeny` is where a repository states what is irreversible for it. This

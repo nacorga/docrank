@@ -86,7 +86,11 @@ experimental).
 Off until configured, for the session's own hygiene: a file of the repository
 added as context to a prompt that matches a pattern, such as a protocol a
 session should follow whenever a prompt opens with a given word
-(`prompts.context`).
+(`prompts.context`); and the reaper, which stops the servers sessions left
+running in the repository's checkouts once nobody holds them: at session
+start, those of sessions that are gone, at session end, the ending
+session's own, never a process started outside Claude Code nor one matching
+`reap.keep` (`reap.*`).
 
 An invalid `.claude/docrank.json` refuses every guarded call and names each
 problem; the optional pre-push hook refuses a push on a file it cannot read or
@@ -199,7 +203,9 @@ starts and once a day, and never one that wrote within the last 30 minutes.
 Node 20 or later, git, and `gh` for the pull request features. macOS and Linux;
 Windows is not supported. The plugin has no run-time npm dependency, and the
 browser server of `surface-reviewer` needs `npx` and Chrome. The watch page is
-a prebuilt bundle in `ui/dist`, so it needs only a browser.
+a prebuilt bundle in `ui/dist`, so it needs only a browser. The reaper reads
+`ps`, and on macOS `lsof` and `python3` (to read another process's
+environment); without them it stops nothing.
 
 ## What is proved live, and what is not
 

@@ -81,6 +81,7 @@
         "hooks": [
           { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/principles.mjs\"" },
           { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/link-memory.mjs\"", "timeout": 10 },
+          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/reap.mjs\"", "timeout": 20 },
           { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/watch-event.mjs\"", "async": true }
         ]
       }
@@ -95,7 +96,12 @@
       }
     ],
     "SessionEnd": [
-      { "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/watch-event.mjs\"", "async": true }] }
+      {
+        "hooks": [
+          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/reap.mjs\"", "timeout": 20 },
+          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/watch-event.mjs\"", "async": true }
+        ]
+      }
     ]
   }
 }

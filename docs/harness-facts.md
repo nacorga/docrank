@@ -955,6 +955,21 @@ read the file and finds a line it understands, and a transcript that is
 absent, unreadable, holds a line that is not JSON, or holds no user prompt
 makes it fall back to refusing once per input, as without the key.
 
+A second reader of a transcript is `hooks/guard-recheck.mjs`, which asks
+whether an agent that can edit has compacted before a `SendMessage` resumes it.
+It reads the agent's own transcript, which [claude-dir] and [sub-agents] place
+at `<session>/subagents/agent-<agentId>.jsonl` beside the session's (`<session>`
+being the stem of `transcript_path`, which is an inference from "Each
+transcript is stored as `agent-{agentId}.jsonl`" and the directory listing, not
+a stated rule), and looks for the text `"subtype":"compact_boundary"`. That
+record is NOT DOCUMENTED: it was observed, as `{"type":"system","subtype":
+"compact_boundary",...}`, in session transcripts of Claude Code 2.1.x on
+2026-11-24; its presence in a subagent transcript, which "the same format as
+the session transcript" implies, was not read here. The text is matched with its quotes unescaped, so a record
+quoted inside another line's string does not count. An agent with no ID in the
+dispatch record, a transcript that cannot be found or read, and one with no such
+record hold nothing: the guard never refuses on what it could not read.
+
 ## 25. `CLAUDE_CODE_ENABLE_TODO_TOOLS` in a repository's `env`: the `env` VERIFIED; the task tools from it NOT DOCUMENTED, PROVED LIVE in `-p` mode
 
 `init` offers to turn the task tools (fact 22) on for a repository by writing

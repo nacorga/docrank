@@ -68,7 +68,7 @@ Every key is documented once, with its default, in [docs/config.md](docs/config.
 | Bash | any command that matches a pattern the repository adds, with the case or line flags it names | `guard.extraDeny` |
 | Bash | a write or a command that runs, from a read-only agent | `judges.skill` |
 | Agent | a fork dispatch; a `general-purpose` Opus dispatch with no `Heavy:` line; completes a dispatch with the guardrails block, and sets the default model and effort | `dispatch.*` |
-| SendMessage | a message to a judge past its re-check limit, once | `judges.maxRechecks` |
+| SendMessage | a message to a judge past its re-check limit, once; a message to an agent that can edit and whose transcript shows a compaction, once, asking for a fresh one | `judges.maxRechecks`; the compaction is always on |
 | Edit, Write | `.env*` except `.env.example`, lockfiles, and the repository's own rules | `paths.builtIns`, `paths.rules` |
 | ExitPlanMode | a plan without a required heading | `plan.requiredHeadings` |
 | `gh pr create` | one whose diff touches product or surface paths, with the handover checklist: once per branch, or, with `pr.requiredLines`, every time its body lacks one of the lines | `pr.*`, `surface.paths` |

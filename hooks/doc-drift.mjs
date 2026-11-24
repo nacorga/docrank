@@ -13,6 +13,7 @@ import { existsSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { readInput } from "../lib/hook.mjs";
+import { writeErr } from "../lib/stdio.mjs";
 import { loadConfig } from "../lib/config.mjs";
 
 const input = await readInput();
@@ -45,7 +46,7 @@ const stale = docDrift.entries.filter((entry) => touches(entry.code) && !touches
 if (stale.length === 0) process.exit(0);
 
 writeFileSync(marker, "");
-process.stderr.write(
+writeErr(
   [
     "Code a document states changed, and the document did not:",
     ...stale.map((entry) => `- ${entry.code.join(", ")} changed; ${entry.docs.join(", ")} did not`),

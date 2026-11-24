@@ -27,6 +27,7 @@ import { spawnSync } from "node:child_process";
 import { setTimeout as sleep } from "node:timers/promises";
 import { ConfigError, loadConfig } from "../lib/config.mjs";
 import { glob, run } from "../lib/git.mjs";
+import { writeOut } from "../lib/stdio.mjs";
 
 const [n, mode] = process.argv.slice(2);
 if (!/^\d+$/.test(n ?? "") || (mode && mode !== "merged")) {
@@ -47,7 +48,7 @@ const poll = Number(process.env.DOCRANK_POLL_MS) || 15000;
 const registerLimit = Number(process.env.DOCRANK_REGISTER_MS) || 900000; // 15 minutes
 const gh = (...args) => run("gh", args, config.root);
 const done = (line, code) => {
-  console.log(line);
+  writeOut(`${line}\n`);
   process.exit(code);
 };
 

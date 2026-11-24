@@ -52,6 +52,14 @@ describe("guard-pr.mjs", () => {
     expect(await decision(dir, OPEN, session())).toBe("Read it against the site.");
   });
 
+  it("answers in full, parsed whole, when the answer is far over a pipe's buffer (64 KB and more)", async () => {
+    const checklist = "long checklist ".repeat(20000);
+    const dir = branchChanging("src/a.ts", { ...config, pr: { ...config.pr, checklist } });
+    const reason = await decision(dir, OPEN, session());
+    expect(checklist.length).toBeGreaterThan(256 * 1024);
+    expect(reason).toBe(checklist);
+  });
+
   it("reads the branch a `cd` goes into", async () => {
     const dir = branchChanging("src/a.ts");
     expect(await decision(tmpdir(), `cd ${dir} && ${OPEN}`, session(), dir)).toBe("Read it against the site.");

@@ -21,11 +21,12 @@ import { appendFileSync, closeSync, mkdtempSync, openSync, readFileSync } from "
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { ConfigError, findRoot, loadConfig } from "../lib/config.mjs";
+import { writeErr, writeOut } from "../lib/stdio.mjs";
 
 const TAIL_LINES = 40;
-const out = (s = "") => process.stdout.write(`${s}\n`);
+const out = (s = "") => writeOut(`${s}\n`);
 const die = (message, code = 1) => {
-  process.stderr.write(`${message}\n`);
+  writeErr(`${message}\n`);
   process.exit(code);
 };
 const git = (root, ...args) => {

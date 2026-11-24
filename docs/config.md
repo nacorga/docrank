@@ -174,7 +174,7 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 
 | Key | Type | Default | Read by |
 |---|---|---|---|
-| `prompts.context` | `{match: regex, file: path}[]` | `[]` | prompt context: when a submitted prompt matches `match`, tried with the flags `i` and `u` against the whole prompt, the text of `file` (relative to the repository root) is added as context beside it; several matches add each file once, in order. A file that cannot be read adds nothing, and an invalid config, nothing at all: it never blocks a prompt. The hook also fires for a background agent reporting back, so anchor `match` at the start of the prompt (`^`) to answer only what a person opens with. Empty means off |
+| `prompts.context` | `{match: regex, file: path}[]` | `[]` | prompt context: when a submitted prompt matches `match`, tried with the flags `i` and `u` against the whole prompt, the text of `file` is added as context beside it. `file` is relative to the repository root and stays inside it: the loader refuses an absolute path or one above the root, and a file that resolves outside it through a link is skipped; several matches add each file once, in order. A file that cannot be read adds nothing, and an invalid config, nothing at all: it never blocks a prompt. The hook also fires for a background agent reporting back, so anchor `match` at the start of the prompt (`^`) to answer only what a person opens with. Empty means off |
 
 ## `reap`
 

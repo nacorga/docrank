@@ -1,3 +1,5 @@
+import { symlinkSync } from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { project, runExit } from "../lib/testing.mjs";
 
@@ -47,6 +49,22 @@ describe("prompt-context.mjs", () => {
       "here.md": "here",
     };
     expect((await prompt(files, "x")).context.additionalContext).toBe("here");
+  });
+
+  it("reads no file outside the repository: a path above it is refused, a link out of it skipped", async () => {
+    expect(await prompt({ ".claude/docrank.json": config([{ match: "x", file: "../out.md" }]) }, "x")).toEqual({ status: 0, context: null });
+    const outside = project({ "secret.md": "secret" });
+    const files = {
+      ".claude/docrank.json": config([
+        { match: "x", file: "link.md" },
+        { match: "x", file: "here.md" },
+      ]),
+      "here.md": "here",
+    };
+    const dir = project(files);
+    symlinkSync(path.join(outside, "secret.md"), path.join(dir, "link.md"));
+    const { stdout } = await runExit("prompt-context.mjs", { prompt: "x" }, dir);
+    expect(JSON.parse(stdout).hookSpecificOutput.additionalContext).toBe("here");
   });
 
   it("is silent and exits 0 with no key, on an invalid config and on input it cannot parse", async () => {

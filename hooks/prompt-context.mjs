@@ -11,7 +11,7 @@
  *
  * Shapes: harness fact 27 (`prompt` in, `additionalContext` out).
  */
-import { readFileSync } from "node:fs";
+import { readFileSync, realpathSync } from "node:fs";
 import path from "node:path";
 import { loadConfig } from "../lib/config.mjs";
 
@@ -25,9 +25,14 @@ try {
     if (!new RegExp(match, "iu").test(input.prompt) || files.includes(file)) continue;
     files.push(file);
   }
+  // The loader refuses a path outside the repository; a symbolic link out of
+  // it is caught here, on the resolved path.
+  const top = realpathSync(root);
   const texts = files.flatMap((file) => {
     try {
-      const text = readFileSync(path.resolve(root, file), "utf8").trim();
+      const real = realpathSync(path.resolve(root, file));
+      if (!real.startsWith(`${top}${path.sep}`)) return [];
+      const text = readFileSync(real, "utf8").trim();
       return text ? [text] : [];
     } catch {
       return [];

@@ -100,6 +100,12 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 | `worktree.copy` | string[] | `[".env", ".mcp.json"]` | worktree creation: paths relative to the main checkout, copied into the new worktree when present. A plugin's `WorktreeCreate` hook replaces Claude Code's default, so `.worktreeinclude` is not read |
 | `worktree.install` | string | `null` | worktree creation: shell command run in the new worktree, its output sent to stderr; a failure is reported and does not fail the creation. null means none |
 
+A worktree is cut from `origin/<integration>` unless it is given a base. Slices
+that build on a shared branch pass it: `docrank worktree <branch> <base>` fetches
+`origin/<base>` (and fails if it cannot) and cuts from it, and the `WorktreeCreate`
+input may carry a `base`, a ref that is cut from as it stands with nothing
+fetched. A branch that already exists is checked out as it is.
+
 ## `pr`
 
 | Key | Type | Default | Read by |

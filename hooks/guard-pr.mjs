@@ -7,10 +7,12 @@
  *
  * What passes it is evidence when `pr.requiredLines` is set: the body, read
  * from the command (`--body`, `-b`, `--body-file`, `-F`), holds a line for
- * each entry, and a body that lacks one is refused every time, naming the
- * missing. Without `pr.requiredLines` a refusal proves nothing the retry
- * does not, so the first `gh pr create` of a branch in a session is refused
- * once and the same branch again passes.
+ * each entry that applies, and a body that lacks one is refused every time,
+ * naming the missing. A bare entry applies to every diff the guard reads; an
+ * entry with `paths` applies when the diff touches one of them, and a diff
+ * that touches only those paths is read too. Without `pr.requiredLines` a
+ * refusal proves nothing the retry does not, so the first `gh pr create` of a
+ * branch in a session is refused once and the same branch again passes.
  *
  * It stays out of the way for a pull request into a base other than
  * `branches.integration` (a slice into a shared base is read once, at its
@@ -30,7 +32,8 @@ const create = new RegExp(`${POSITION}gh\\s+pr\\s+create\\b[^|&;]*`, "u").exec(c
 if (!create) process.exit(0);
 
 const { branches, pr, surface } = configFor(input);
-if (pr.productPaths.length === 0 && surface.paths.length === 0) process.exit(0);
+const lines = pr.requiredLines.map((entry) => (typeof entry === "string" ? { pattern: entry, paths: null } : entry));
+if (pr.productPaths.length === 0 && surface.paths.length === 0 && lines.every((entry) => !entry.paths)) process.exit(0);
 
 const base = /(?:--base|-B)[\s=]+(\S+)/u.exec(create[0])?.[1]?.replace(/["']/gu, "");
 if (base && base !== branches.integration) process.exit(0);
@@ -48,14 +51,15 @@ const files = changed.split("\n");
 const touches = (prefixes) => files.some((file) => prefixes.some((p) => file.startsWith(p)));
 const product = touches(pr.productPaths);
 const drawn = touches(surface.paths);
-if (!product && !drawn) process.exit(0);
+const owed = lines.filter((entry) => (entry.paths ? touches(entry.paths) : product || drawn));
+if (!product && !drawn && owed.length === 0) process.exit(0);
 
-if (pr.requiredLines.length > 0) {
+if (lines.length > 0) {
   const body = bodyOf(command.slice(create.index + create[0].search(/gh\s+pr\s+create/u)), dir);
-  const lines = body === null ? [] : body.split(/\r?\n/u);
-  const missing = pr.requiredLines.filter((entry) => !lines.some((line) => new RegExp(entry, "ium").test(line)));
+  const bodyLines = body === null ? [] : body.split(/\r?\n/u);
+  const missing = owed.filter(({ pattern }) => !bodyLines.some((line) => new RegExp(pattern, "ium").test(line)));
   if (missing.length === 0) process.exit(0);
-  const list = missing.map((entry) => `/${entry}/`).join(", ");
+  const list = missing.map(({ pattern }) => `/${pattern}/`).join(", ");
   deny(
     [
       drawn && surface.criterion && `This pull request draws screens: each must meet the delivery criterion — ${surface.criterion} — read rendered.`,

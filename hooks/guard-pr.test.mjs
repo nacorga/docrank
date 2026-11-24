@@ -147,6 +147,29 @@ describe("guard-pr.mjs", () => {
       }
     });
 
+    it("owes a line with paths only to a diff that touches one of them", async () => {
+      const scoped = {
+        ...config,
+        pr: { ...config.pr, requiredLines: ["^Gates: passed$", { pattern: "^Surface review: done$", paths: ["ui/"] }] },
+      };
+      const bare = `--body "Gates: passed"`;
+      const both = `--body "Gates: passed\nSurface review: done"`;
+      // A product diff outside the paths owes only the bare line.
+      expect(await decision(branchChanging("src/a.ts", scoped), open(bare), session())).toBeNull();
+      // A diff inside them owes both, and names the one missing.
+      const drawing = branchChanging("ui/a.tsx", scoped);
+      expect(await decision(drawing, open(bare), session())).toContain("/^Surface review: done$/");
+      expect(await decision(drawing, open(both), session())).toBeNull();
+    });
+
+    it("reads a diff that touches only an entry's paths, with neither list set", async () => {
+      const only = { branches: { integration: "develop" }, pr: { requiredLines: [{ pattern: "^Surface review: done$", paths: ["ui/"] }] } };
+      const dir = branchChanging("ui/a.tsx", only);
+      expect(await decision(dir, open(`--body "x"`), session())).toContain("/^Surface review: done$/");
+      expect(await decision(dir, open(`--body "Surface review: done"`), session())).toBeNull();
+      expect(await decision(branchChanging("docs/a.md", only), open("--fill"), session())).toBeNull();
+    });
+
     it("still leaves a diff that touches neither list, and another base, alone", async () => {
       expect(await decision(branchChanging("docs/a.md", evidence), open("--fill"), session())).toBeNull();
       expect(await decision(branchChanging("src/a.ts", evidence), "gh pr create -B batch/x --fill", session())).toBeNull();

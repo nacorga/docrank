@@ -62,8 +62,8 @@ plugin lists each key with its default. Read the file once before stage 1.
    for the push check), push the branch and
    `gh pr create --base <integration>`. The handover guard may refuse it with
    the repository's checklist (`pr.checklist`). With `pr.requiredLines` set, a
-   body that carries a line for each entry passes at the first attempt and
-   one that lacks an entry is refused every time, naming it: write the line,
+   body that carries a line for each entry the diff owes passes at the first attempt and
+   one that lacks an entry owed is refused every time, naming it: write the line,
    then run the command again. Without it, answering the checklist and
    running the same command again passes.
 6. **CI.** `node "${CLAUDE_PLUGIN_ROOT}/scripts/watch-pr.mjs" <n>` in the

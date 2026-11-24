@@ -21,7 +21,13 @@ The install asks for a scope. User scope turns the principles and the default
 guards on in every repository on the machine; local or project scope keeps
 them to the repository you configure. Auto-update is off for a third-party
 marketplace: update with `claude plugin update docrank@docrank`, or turn
-auto-update on in the `/plugin` Marketplaces tab.
+auto-update on in the `/plugin` Marketplaces tab. A project-scope install
+is recorded in `.claude/settings.json`, but each clone still runs
+`claude plugin install docrank@docrank` once. A cloud session loads only
+the plugins installed on the claude.ai account, not those a repository
+names. A repository that needs a key of a later release sets `requires`
+([docs/config.md](docs/config.md)), and an older docrank then refuses its
+configuration instead of misreading it.
 
 To try it from a checkout without installing: `claude --plugin-dir <path to this repository>`.
 

@@ -162,6 +162,17 @@ describe("guard-pr.mjs", () => {
       expect(await decision(drawing, open(both), session())).toBeNull();
     });
 
+    it("falls back to the once-per-branch checklist when the diff is product but no entry is owed", async () => {
+      const scopedOnly = {
+        ...config,
+        pr: { ...config.pr, requiredLines: [{ pattern: "^Surface review: done$", paths: ["ui/"] }] },
+      };
+      const dir = branchChanging("src/a.ts", scopedOnly);
+      const id = session();
+      expect(await decision(dir, open(`--body "x"`), id)).toBe("Read it against the site.");
+      expect(await decision(dir, open(`--body "x"`), id)).toBeNull();
+    });
+
     it("reads a diff that touches only an entry's paths, with neither list set", async () => {
       const only = { branches: { integration: "develop" }, pr: { requiredLines: [{ pattern: "^Surface review: done$", paths: ["ui/"] }] } };
       const dir = branchChanging("ui/a.tsx", only);

@@ -10,9 +10,11 @@
  * each entry that applies, and a body that lacks one is refused every time,
  * naming the missing. A bare entry applies to every diff the guard reads; an
  * entry with `paths` applies when the diff touches one of them, and a diff
- * that touches only those paths is read too. Without `pr.requiredLines` a
- * refusal proves nothing the retry does not, so the first `gh pr create` of a
- * branch in a session is refused once and the same branch again passes.
+ * that touches only those paths is read too. Without `pr.requiredLines`, or
+ * when the diff touches product or surface paths but no entry is owed (every
+ * entry has `paths` and none is touched), a refusal proves nothing the retry
+ * does not, so the first `gh pr create` of a branch in a session is refused
+ * once and the same branch again passes.
  *
  * It stays out of the way for a pull request into a base other than
  * `branches.integration` (a slice into a shared base is read once, at its
@@ -54,7 +56,7 @@ const drawn = touches(surface.paths);
 const owed = lines.filter((entry) => (entry.paths ? touches(entry.paths) : product || drawn));
 if (!product && !drawn && owed.length === 0) process.exit(0);
 
-if (lines.length > 0) {
+if (owed.length > 0) {
   const body = bodyOf(command.slice(create.index + create[0].search(/gh\s+pr\s+create/u)), dir);
   const bodyLines = body === null ? [] : body.split(/\r?\n/u);
   const missing = owed.filter(({ pattern }) => !bodyLines.some((line) => new RegExp(pattern, "ium").test(line)));

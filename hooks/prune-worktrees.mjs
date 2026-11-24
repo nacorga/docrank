@@ -28,6 +28,8 @@
  * the limit and its ten-second timeout: a worktree merged before the last 200
  * is for a hand to remove (`scripts/prune-worktrees.mjs`). Without `gh`,
  * offline or past the timeout, it does nothing, and it never fails the session.
+ * `DOCRANK_GH_TIMEOUT_MS` exists only for tests: it shortens that timeout, and
+ * unset or non-numeric means ten seconds.
  */
 import path from "node:path";
 import { loadConfig } from "../lib/config.mjs";

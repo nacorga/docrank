@@ -2,7 +2,7 @@
 name: init
 description: Read this repository (branches, package manager, scripts, formatter, docs tree, ignored env files) and propose a complete `.claude/stickler.json` for the user to confirm, then write it, prove it loads, and offer the optional git pre-push hook and, with watch on, the task tools' variable. Use when adopting stickler in a repository, or to revisit its configuration.
 disable-model-invocation: true
-allowed-tools: Bash(node ${CLAUDE_PLUGIN_ROOT}/bin/stickler.mjs *) Bash(git branch *) Bash(git remote *) Bash(git ls-files *) Bash(git status *) Bash(git rev-parse *) Read Grep Glob
+allowed-tools: Bash(node ${CLAUDE_PLUGIN_ROOT}/cli/stickler.mjs *) Bash(git branch *) Bash(git remote *) Bash(git ls-files *) Bash(git status *) Bash(git rev-parse *) Read Grep Glob
 ---
 
 Propose `.claude/stickler.json` for this repository. Every key and default is in
@@ -111,13 +111,13 @@ Nothing is written before the user confirms the proposal.
 1. If `.claude/stickler.json` exists, show the diff against the proposal and ask
    before replacing it. Never overwrite it unseen.
 2. Write the file.
-3. Prove it: `node ${CLAUDE_PLUGIN_ROOT}/bin/stickler.mjs config` prints the
+3. Prove it: `node ${CLAUDE_PLUGIN_ROOT}/cli/stickler.mjs config` prints the
    resolved config, or one error per problem naming the key and exits 1; fix
    and run again until it prints. Where `docs.scanRoots` or `docs.unitRoots` is
    set, also run `stickler check sections` or `stickler check drift-pairs` and
    report what they find, without editing the documents. Where
    `judges.routes` is set, also run
-   `node ${CLAUDE_PLUGIN_ROOT}/bin/stickler.mjs judges` and report the judge it
+   `node ${CLAUDE_PLUGIN_ROOT}/cli/stickler.mjs judges` and report the judge it
    names. It reads the working tree too, so the file just written is a change:
    a ground that covers `.claude/stickler.json` shows the judge as `launch`,
    one that does not as `skip`, and both prove the route, as does

@@ -144,7 +144,7 @@ fetched. A branch that already exists is checked out as it is.
 
 | Key | Type | Default | Read by |
 |---|---|---|---|
-| `ship.plansDir` | path | `"docs/plans"` | ship skill: where the plan of the work is written |
+| `ship.plansDir` | path | `"docs/plans"` | ship skill: where the plan of the work is written; plans at session start (`plans.atStart`): where the plans are listed from |
 | `ship.pathJobs` | `{paths: path prefix[], jobs: string[]}[]` | `[]` | ship skill: jobs to run, through the gates skill, for a diff touching one of the entry's paths; each job is a key of `gates.jobs` (the loader refuses any other) |
 
 ## `principles`
@@ -185,6 +185,25 @@ fetched. A branch that already exists is checked out as it is.
 | `messages.tools` | regex[] | `[]` | external-message guard: tool names whose call is refused with `checklist` (the first with a given input only, unless `evidenceHeader` decides it), each tested unanchored against the name; only MCP tools (`mcp__*`) reach the hook, because a plugin's hook matcher is static; empty means off |
 | `messages.evidenceHeader` | regex | `""` | external-message guard: what passes it is evidence. A regular expression, tried with the flags `i` and `u` against the header row of a Markdown table (a line starting `\|` with its `---` row under it). When an assistant text since the last user prompt of the session's transcript (`transcript_path`) holds one, the call passes at the first attempt; a transcript that is read and holds none refuses every time, with `checklist` and what is missing. A transcript that is absent, unreadable or not in the shape of harness fact 24 falls back to the once-per-input refusal. Empty means that refusal |
 | `messages.checklist` | string | a generic claims check | external-message guard: the text of that refusal |
+
+## `prompts`
+
+| Key | Type | Default | Read by |
+|---|---|---|---|
+| `prompts.context` | `{match: regex, file: path}[]` | `[]` | prompt context: when a submitted prompt matches `match`, tried with the flags `i` and `u` against the whole prompt, the text of `file` is added as context beside it. `file` is relative to the repository root and stays inside it: the loader refuses an absolute path or one above the root, and a file that resolves outside it through a link is skipped; several matches add each file once, in order. A file that cannot be read adds nothing, and an invalid config, nothing at all: it never blocks a prompt. The hook also fires for a background agent reporting back, so anchor `match` at the start of the prompt (`^`) to answer only what a person opens with. Empty means off |
+
+## `reap`
+
+| Key | Type | Default | Read by |
+|---|---|---|---|
+| `reap.enabled` | boolean | `false` | reaper, at session start and end: stops the process groups sessions left running in the repository. At start, a group goes only when a member's working directory is in one of the repository's checkouts or in a removed `<main>-<name>` beside the main one, every such member carries a `CLAUDE_PID` naming a session no longer alive, and its leader is gone or adopted by PID 1. At end (unless the reason is `clear` or `resume`), every group a member of which carries the ending session's `CLAUDE_PID` goes, held or not. A process with no `CLAUDE_PID`, or whose environment cannot be read, is never stopped; neither is docrank's watch server, nor a group holding the hook, the ending session's own process or an ancestor of either. `CLAUDE_PID` is inherited: anything launched from a session's shell carries it, a tmux server, a build daemon or an editor started there included, and is stopped like a server once its session is gone; `reap.keep` is what protects it. SIGTERM, then SIGKILL after five seconds to a group still there. Reads `ps`, and on macOS `lsof` and `python3` (not run when `xcode-select -p` fails, where `python3` is only the installer's stub), each given five seconds: a read missing or out of time stops nothing |
+| `reap.keep` | regex[] | `[]` | reaper: a group with a member whose command line matches one, tried with the flag `u`, is never stopped, at start or at end. The protection for what a session launched on purpose to outlive it: a development server kept across sessions, an environment held for a reviewer, a tmux server, a build daemon, an editor |
+
+## `plans`
+
+| Key | Type | Default | Read by |
+|---|---|---|---|
+| `plans.atStart` | boolean | `false` | plans at session start, on every source, `compact` included: each `*.md` of the checkout's `ship.plansDir` but its `README.md`, by name, with its checked items over all of them (`- [x]` over `- [ ]` and `- [x]`; "no checklist" when it has none) and `§ Handoff` when it has a heading named Handoff; a box or a heading inside a fenced code block is not counted. Nothing when the directory holds no plan |
 
 ## Example: guarding a local database
 

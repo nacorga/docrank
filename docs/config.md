@@ -170,6 +170,12 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 | `messages.evidenceHeader` | regex | `""` | external-message guard: what passes it is evidence. A regular expression, tried with the flags `i` and `u` against the header row of a Markdown table (a line starting `\|` with its `---` row under it). When an assistant text since the last user prompt of the session's transcript (`transcript_path`) holds one, the call passes at the first attempt; a transcript that is read and holds none refuses every time, with `checklist` and what is missing. A transcript that is absent, unreadable or not in the shape of harness fact 24 falls back to the once-per-input refusal. Empty means that refusal |
 | `messages.checklist` | string | a generic claims check | external-message guard: the text of that refusal |
 
+## `prompts`
+
+| Key | Type | Default | Read by |
+|---|---|---|---|
+| `prompts.context` | `{match: regex, file: path}[]` | `[]` | prompt context: when a submitted prompt matches `match`, tried with the flags `i` and `u` against the whole prompt, the text of `file` (relative to the repository root) is added as context beside it; several matches add each file once, in order. A file that cannot be read adds nothing, and an invalid config, nothing at all: it never blocks a prompt. The hook also fires for a background agent reporting back, so anchor `match` at the start of the prompt (`^`) to answer only what a person opens with. Empty means off |
+
 ## Example: guarding a local database
 
 `guard.extraDeny` is where a repository states what is irreversible for it. This

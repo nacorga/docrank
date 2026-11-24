@@ -83,6 +83,11 @@ context grows past a threshold (`handoff.*`), and an optional link between
 Claude Code's memory and the repository's tracked `.claude/memory` (`memory.link`,
 experimental).
 
+Off until configured, for the session's own hygiene: a file of the repository
+added as context to a prompt that matches a pattern, such as a protocol a
+session should follow whenever a prompt opens with a given word
+(`prompts.context`).
+
 An invalid `.claude/docrank.json` refuses every guarded call and names each
 problem; the optional pre-push hook refuses a push on a file it cannot read or
 parse, or whose keys it reads have the wrong type. A guard stops accidents, not

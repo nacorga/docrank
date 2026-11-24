@@ -28,6 +28,7 @@ Fact 25 was read on 2026-11-23 from [settings], [tools],
 [env-vars]=https://code.claude.com/docs/en/env-vars.md and
 [settings-ref]=https://code.claude.com/docs/en/settings-reference.md.
 Fact 26 was read on 2026-11-23 from [hooks].
+Fact 27 was read on 2026-11-24 from [hooks].
 
 | # | Fact | Status |
 |---|---|---|
@@ -56,6 +57,7 @@ Fact 26 was read on 2026-11-23 from [hooks].
 | 24 | `transcript_path` in the hook input, and the shape of a transcript line | path VERIFIED; the line shape NOT DOCUMENTED, so a fallback |
 | 25 | `CLAUDE_CODE_ENABLE_TODO_TOOLS` in the `env` of a repository's `.claude/settings.json` | the `env` reaching the session VERIFIED, after workspace trust; that the task tools follow it from that file NOT DOCUMENTED; PROVED LIVE in `-p` mode, an interactive session after trust not proved |
 | 26 | A failed tool call and a shell command's exit code in the hook input | VERIFIED; that every non-zero exit fires `PostToolUseFailure` NOT DOCUMENTED as a rule, PROVED LIVE in `-p` mode (exit 1 and 3) |
+| 27 | A `UserPromptSubmit` hook adds context beside the prompt | VERIFIED |
 
 ## 1. `${CLAUDE_PLUGIN_ROOT}` in hook commands: VERIFIED
 
@@ -1036,3 +1038,20 @@ exiting non-zero always fires `PostToolUseFailure` rather than `PostToolUse`
 is shown by the example, not stated as a rule: NOT DOCUMENTED. PROVED LIVE
 in `-p` (§ 15, 0.5.0): a command exiting 1 and one exiting 3 each fired
 `PostToolUseFailure` with an `Exit code N` first line, and no `PostToolUse`.
+
+## 27. `UserPromptSubmit` `additionalContext`: VERIFIED
+
+`prompts.context` adds a file's text beside a prompt that matches.
+
+[hooks] § UserPromptSubmit decision control: "`UserPromptSubmit` hooks can
+control whether a submitted prompt is processed and add context. All JSON
+output fields are available", and its table: "`additionalContext` | String
+added to Claude's context alongside the submitted prompt". The example output
+carries it under `hookSpecificOutput` with `"hookEventName":
+"UserPromptSubmit"`, the shape the hook prints. The input is "the `prompt`
+field containing the submitted text" (fact 17), which also fires for "A
+background subagent reporting back to the session that started it", so a
+pattern anchored at the prompt's start answers what a person opens with.
+A failure, a timeout or invalid JSON does not block the prompt (fact 20);
+the hook exits 0 and prints nothing on any failure, so it never reaches
+`"decision": "block"`.

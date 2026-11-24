@@ -82,7 +82,7 @@ const jobs = Object.keys(gates.jobs)
   .filter((name) => asked.has(name) && !gateNames.includes(name))
   .map((name) => ({ name, command: gates.jobs[name] }));
 
-const logdir = mkdtempSync(path.join(tmpdir(), "docrank-gates-"));
+const logdir = mkdtempSync(path.join(tmpdir(), "stickler-gates-"));
 out(`logs in ${logdir}\n`);
 
 /**

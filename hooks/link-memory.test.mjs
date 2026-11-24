@@ -13,7 +13,7 @@ const run = (hook, input, dir) =>
 
 /** A repository tracking `.claude/memory`, and a fake Claude home holding a project directory. */
 function setup(config = { memory: { link: true } }) {
-  const repo = project({ ".claude/docrank.json": JSON.stringify(config), ".claude/memory/MEMORY.md": "index" });
+  const repo = project({ ".claude/stickler.json": JSON.stringify(config), ".claude/memory/MEMORY.md": "index" });
   execFileSync("git", ["-C", repo, "init", "-q"]);
   const home = project({});
   const projectDir = path.join(home, ".claude", "projects", "slug");

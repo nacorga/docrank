@@ -44,8 +44,8 @@ try {
   process.exit(2);
 }
 
-const poll = Number(process.env.DOCRANK_POLL_MS) || 15000;
-const registerLimit = Number(process.env.DOCRANK_REGISTER_MS) || 900000; // 15 minutes
+const poll = Number(process.env.STICKLER_POLL_MS) || 15000;
+const registerLimit = Number(process.env.STICKLER_REGISTER_MS) || 900000; // 15 minutes
 const gh = (...args) => run("gh", args, config.root);
 const done = (line, code) => {
   writeOut(`${line}\n`);

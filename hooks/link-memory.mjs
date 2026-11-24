@@ -25,7 +25,7 @@ try {
 }
 if (!config.memory.link) process.exit(0);
 
-const say = (message) => process.stdout.write(`docrank memory: ${message}\n`);
+const say = (message) => process.stdout.write(`stickler memory: ${message}\n`);
 
 const projectDir = input.transcript_path ? path.dirname(input.transcript_path) : "";
 const parent = path.dirname(projectDir);

@@ -10,13 +10,13 @@ const sessions = [];
 let counter = 0;
 
 afterEach(() => {
-  for (const session of sessions.splice(0)) rmSync(path.join(tmpdir(), `docrank-drift-${session}`), { force: true });
+  for (const session of sessions.splice(0)) rmSync(path.join(tmpdir(), `stickler-drift-${session}`), { force: true });
 });
 
 const git = (cwd, ...args) => execFileSync("git", ["-c", "user.name=t", "-c", "user.email=t@t", "-C", cwd, ...args], { stdio: "ignore" });
 /** A repository whose `origin/main` is its first commit. */
 function repo(extra = config, base = true) {
-  const dir = project({ ".claude/docrank.json": JSON.stringify(extra) });
+  const dir = project({ ".claude/stickler.json": JSON.stringify(extra) });
   git(dir, "init", "-q", "-b", "main");
   git(dir, "add", ".");
   git(dir, "commit", "-qm", "base");
@@ -84,7 +84,7 @@ describe("doc-drift.mjs", () => {
     const dir = repo(config, false);
     write(dir, "src/rates/rate.js");
     expect((await stop(dir, session())).status).toBe(0);
-    expect((await stop(project({ ".claude/docrank.json": JSON.stringify(config) }), session())).status).toBe(0);
+    expect((await stop(project({ ".claude/stickler.json": JSON.stringify(config) }), session())).status).toBe(0);
   });
 
   it("is off when docDrift.entries is empty", async () => {

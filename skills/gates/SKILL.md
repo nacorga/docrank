@@ -2,7 +2,7 @@
 name: gates
 model: sonnet
 effort: low
-description: Run the repository's gates (`gates.run` in `.claude/docrank.json`) from its root in order, in a forked context, and report pass/fail per gate with only the first failure's relevant output. Named, it also runs jobs from `gates.jobs`, which no gate runs. Use before claiming anything passes, before closing a piece of work, and before a push, which is refused until the gates have passed on the commit.
+description: Run the repository's gates (`gates.run` in `.claude/stickler.json`) from its root in order, in a forked context, and report pass/fail per gate with only the first failure's relevant output. Named, it also runs jobs from `gates.jobs`, which no gate runs. Use before claiming anything passes, before closing a piece of work, and before a push, which is refused until the gates have passed on the commit.
 argument-hint: "[-C <dir>] [gate|job ...]  e.g. `-C ../worktree lint test`, `e2e` — default: this tree, every gate"
 context: fork
 allowed-tools: Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/run-gates.mjs *) Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/run-gates.mjs) Read Grep

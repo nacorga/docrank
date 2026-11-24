@@ -67,7 +67,7 @@ if (!isReadOnlyType(type, configFor(input).root)) process.exit(0);
 const refusal = judge(input.tool_input?.command ?? "");
 if (refusal) {
   deny(
-    `${type} is a read-only agent type (docrank, lib/agent-types.mjs): ${refusal} It may run git ${[...gitReads].join("/")}, ${[...reads].filter((r) => r !== "git").join(", ")} — with no redirect into a file, a \`$(…)\` only around reads and never a backtick, a \`$name\` or \`$(…)\` only as a word of ${[...expandable].join(", ")}, gh and curl only to read (curl's -o only to /dev/null), and awk only with -F and -v and a one-line program that runs nothing, calls no getline and writes nothing. A \`for … in …; do <reads>; done\` and a lone \`name=value\` are allowed. What needs more is the caller's to run: say so in your report.`,
+    `${type} is a read-only agent type (stickler, lib/agent-types.mjs): ${refusal} It may run git ${[...gitReads].join("/")}, ${[...reads].filter((r) => r !== "git").join(", ")} — with no redirect into a file, a \`$(…)\` only around reads and never a backtick, a \`$name\` or \`$(…)\` only as a word of ${[...expandable].join(", ")}, gh and curl only to read (curl's -o only to /dev/null), and awk only with -F and -v and a one-line program that runs nothing, calls no getline and writes nothing. A \`for … in …; do <reads>; done\` and a lone \`name=value\` are allowed. What needs more is the caller's to run: say so in your report.`,
   );
 }
 

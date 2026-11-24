@@ -6,7 +6,7 @@ user-invocable: false
 
 One copy of the rules a review keeps, so a judge and the session that
 launches it never read two versions of a round. An agent is a judge because
-its definition preloads this skill (`judges.skill` in `.claude/docrank.json`
+its definition preloads this skill (`judges.skill` in `.claude/stickler.json`
 names it, `judge-protocol` by default).
 
 ## The judge
@@ -20,7 +20,7 @@ names it, `judge-protocol` by default).
   `git range-diff <base> <judged> HEAD`: judge what it shows changed.
   Anything else you notice goes under `## Late`, one line each, never as a
   finding. Do not walk the rest again.
-- **Bash runs reads only.** docrank's read-only guard refuses anything else
+- **Bash runs reads only.** stickler's read-only guard refuses anything else
   to an agent that cannot edit; what needs more is the caller's to run, and
   your report says so.
 - **Your report is your answer**, however you were started. Dispatched as a
@@ -45,7 +45,7 @@ names it, `judge-protocol` by default).
   answered with `range-diff`.
 - **Dispatch without `name`**: the final message is the report. When it does
   not arrive, `node "${CLAUDE_PLUGIN_ROOT}/scripts/last-report.mjs" <transcript>`
-  reads it back. docrank refuses a named dispatch of an agent without
+  reads it back. stickler refuses a named dispatch of an agent without
   `SendMessage`, which could never answer.
 - **A round** waits for every judge launched in it and sends their findings
   as one fix.
@@ -66,5 +66,5 @@ names it, `judge-protocol` by default).
   the last, and anything that changes the judge's ground after it, is the
   session's: it fixes it and proves it by its own measurement, or drops it
   with its reason in the commit body. No further re-check is dispatched, and
-  docrank's re-check guard refuses the message that would be one; the same
+  stickler's re-check guard refuses the message that would be one; the same
   message sent again goes through, for one that is no re-check.

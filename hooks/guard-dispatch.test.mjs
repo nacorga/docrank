@@ -65,7 +65,7 @@ describe("guard-dispatch.mjs", () => {
 
   it("takes the default model and effort from the config", async () => {
     const configured = project({
-      ".claude/docrank.json": JSON.stringify({
+      ".claude/stickler.json": JSON.stringify({
         dispatch: { defaultModel: "haiku", defaultEffort: "low", heavyMarker: false },
       }),
     });
@@ -100,7 +100,7 @@ describe("guard-dispatch.mjs", () => {
 
   it("appends the repository's own guardrails after the default block", async () => {
     const extended = project({
-      ".claude/docrank.json": JSON.stringify({ dispatch: { guardrailsFile: "docs/guardrails.md" } }),
+      ".claude/stickler.json": JSON.stringify({ dispatch: { guardrailsFile: "docs/guardrails.md" } }),
       "docs/guardrails.md": "- **Never run the migrations.** They hold production.\n",
     });
     const whole = `${block}\n\n- **Never run the migrations.** They hold production.`;
@@ -109,7 +109,7 @@ describe("guard-dispatch.mjs", () => {
     expect(await dispatchDecision(dispatched(whole), undefined, named, extended)).toBeNull();
 
     const missing = project({
-      ".claude/docrank.json": JSON.stringify({ dispatch: { guardrailsFile: "docs/absent.md" } }),
+      ".claude/stickler.json": JSON.stringify({ dispatch: { guardrailsFile: "docs/absent.md" } }),
     });
     const refused = await dispatch({ prompt: task }, missing);
     expect(refused.permissionDecision).toBe("deny");
@@ -168,12 +168,12 @@ describe("guard-dispatch.mjs", () => {
       expect(output.permissionDecision).toBe("deny");
       expect(output.permissionDecisionReason).toContain("general-purpose");
     }
-    const allowed = project({ ".claude/docrank.json": JSON.stringify({ dispatch: { forkBan: false } }) });
+    const allowed = project({ ".claude/stickler.json": JSON.stringify({ dispatch: { forkBan: false } }) });
     expect(await dispatchDecision(dispatched(block), "fork", {}, allowed)).toBeNull();
   });
 
   it("refuses every dispatch while the config does not validate, naming the key", async () => {
-    const broken = project({ ".claude/docrank.json": JSON.stringify({ dispatch: { forkBan: "yes" } }) });
+    const broken = project({ ".claude/stickler.json": JSON.stringify({ dispatch: { forkBan: "yes" } }) });
     const output = await dispatch({ prompt: task }, broken);
     expect(output.permissionDecision).toBe("deny");
     expect(output.permissionDecisionReason).toContain("dispatch.forkBan");

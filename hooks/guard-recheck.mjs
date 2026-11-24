@@ -62,7 +62,7 @@ function hasCompacted(id, transcript) {
 
 const input = await readInput();
 const session = String(input.session_id ?? "none").replace(/[^\w-]/gu, "");
-const stateFile = path.join(tmpdir(), `docrank-recheck-${session}`);
+const stateFile = path.join(tmpdir(), `stickler-recheck-${session}`);
 const word = (value) => (/^[\w:.-]+$/u.test(String(value ?? "")) ? String(value) : undefined);
 const tool = input.tool_input ?? {};
 
@@ -102,7 +102,7 @@ const sent = state.filter((line) => line === `sent ${agent}`).length;
 if (sent >= limit && !state.includes(`refused ${digest}`)) {
   appendFileSync(stateFile, `refused ${digest}\n`);
   deny(
-    `${to} (${type}) has had ${limit} messages since its dispatch, and ${limit} re-checks close a judge's review (docrank \`judges.maxRechecks\`): no further re-check is dispatched (judge-protocol § The caller). A finding still open, and anything that changed the judge's ground since, a rebase included, is this session's: fix it and prove it by its own measurement, or drop it with its reason in the commit body. If this message is no re-check, or fewer than ${limit} of those were, send it again unchanged.`,
+    `${to} (${type}) has had ${limit} messages since its dispatch, and ${limit} re-checks close a judge's review (stickler \`judges.maxRechecks\`): no further re-check is dispatched (judge-protocol § The caller). A finding still open, and anything that changed the judge's ground since, a rebase included, is this session's: fix it and prove it by its own measurement, or drop it with its reason in the commit body. If this message is no re-check, or fewer than ${limit} of those were, send it again unchanged.`,
   );
 }
 appendFileSync(stateFile, `sent ${agent}\n`);

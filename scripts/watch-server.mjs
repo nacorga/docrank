@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * docrank watch's server: one per machine, shared by every session with
+ * stickler watch's server: one per machine, shared by every session with
  * `watch.enabled` on. It serves the page and its bundle and streams each
  * session's watch log to it as server-sent events, tailing the JSONL files the
  * observer hook appends to. Node built-ins only.
@@ -16,7 +16,7 @@
  * wrote to `server.json` (0600, in the watch home), and its `Host` must be
  * 127.0.0.1 or localhost on the bound port, which a DNS-rebinding page cannot
  * send. It stops itself once no session has written for the idle timeout
- * (`DOCRANK_WATCH_IDLE_MS`, default 30 minutes), and on `POST /api/stop`, the
+ * (`STICKLER_WATCH_IDLE_MS`, default 30 minutes), and on `POST /api/stop`, the
  * way a session of a newer protocol replaces it (`lib/watch/launch.mjs`).
  */
 import { randomBytes } from "node:crypto";
@@ -37,9 +37,9 @@ const arg = (name) => {
 };
 const port = Number(arg("--port") ?? 47173);
 const retentionDays = Number(arg("--retention-days")) || 30;
-const idleMs = Number(process.env.DOCRANK_WATCH_IDLE_MS) || IDLE_MS;
+const idleMs = Number(process.env.STICKLER_WATCH_IDLE_MS) || IDLE_MS;
 // A test stands for an older server with this; nothing else sets it.
-const protocol = Number(process.env.DOCRANK_WATCH_PROTOCOL_OVERRIDE) || PROTOCOL;
+const protocol = Number(process.env.STICKLER_WATCH_PROTOCOL_OVERRIDE) || PROTOCOL;
 const token = randomBytes(24).toString("hex");
 const started = Date.now();
 const home = watchHome();
@@ -192,7 +192,7 @@ function list(req, res) {
 
 const page = (lang) => `<!doctype html>
 <html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>docrank watch</title><link rel="stylesheet" href="watch.css?token=${token}"></head>
+<title>stickler watch</title><link rel="stylesheet" href="watch.css?token=${token}"></head>
 <body><div id="root"></div><script src="watch.js?token=${token}"></script></body></html>`;
 
 function file(res, name, type) {

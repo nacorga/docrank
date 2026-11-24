@@ -40,7 +40,7 @@ if (written === false) {
 
 const digest = createHash("sha256").update(JSON.stringify(input.tool_input ?? {})).digest("hex");
 const session = String(input.session_id ?? "none").replace(/[^\w-]/gu, "");
-const seenFile = path.join(tmpdir(), `docrank-message-${session}`);
+const seenFile = path.join(tmpdir(), `stickler-message-${session}`);
 
 let seen = "";
 try {

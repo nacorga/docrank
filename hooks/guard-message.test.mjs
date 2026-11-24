@@ -6,11 +6,11 @@ import { afterEach, describe, expect, it } from "vitest";
 import { project, runHook } from "../lib/testing.mjs";
 
 const checklist = "Prove each claim.";
-const dir = project({ ".claude/docrank.json": JSON.stringify({ messages: { tools: ["^mcp__mail__(send|reply)$"], checklist } }) });
+const dir = project({ ".claude/stickler.json": JSON.stringify({ messages: { tools: ["^mcp__mail__(send|reply)$"], checklist } }) });
 const sessions = [];
 
 afterEach(() => {
-  for (const session of sessions.splice(0)) rmSync(path.join(tmpdir(), `docrank-message-${session}`), { force: true });
+  for (const session of sessions.splice(0)) rmSync(path.join(tmpdir(), `stickler-message-${session}`), { force: true });
 });
 
 /** The deny reason for a call, or null. */
@@ -54,7 +54,7 @@ describe("guard-message.mjs", () => {
 
   describe("with messages.evidenceHeader", () => {
     const evidenceDir = project({
-      ".claude/docrank.json": JSON.stringify({
+      ".claude/stickler.json": JSON.stringify({
         messages: { tools: ["^mcp__mail__(send|reply)$"], checklist, evidenceHeader: "^\\|\\s*(Claim|Afirmaci)" },
       }),
     });
@@ -64,7 +64,7 @@ describe("guard-message.mjs", () => {
     const toolCall = { type: "assistant", message: { role: "assistant", content: [{ type: "tool_use", id: "t1", name: "mcp__mail__send", input: {} }] } };
     const toolResult = { type: "user", message: { role: "user", content: [{ type: "tool_result", tool_use_id: "t1", content: "ok" }] } };
     const transcript = (entries, raw = null) => {
-      const file = path.join(mkdtempSync(path.join(tmpdir(), "docrank-transcript-")), "t.jsonl");
+      const file = path.join(mkdtempSync(path.join(tmpdir(), "stickler-transcript-")), "t.jsonl");
       writeFileSync(file, raw ?? entries.map((e) => JSON.stringify(e)).join("\n") + "\n");
       return file;
     };

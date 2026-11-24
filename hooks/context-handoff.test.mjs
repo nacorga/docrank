@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { project, runJson } from "../lib/testing.mjs";
 
 // The hook keeps its state under the home directory; the tests give it their own.
-process.env.HOME = mkdtempSync(path.join(tmpdir(), "docrank-home-"));
+process.env.HOME = mkdtempSync(path.join(tmpdir(), "stickler-home-"));
 
 let counter = 0;
 const turn = (tokens, extra = {}) =>
@@ -13,7 +13,7 @@ const turn = (tokens, extra = {}) =>
 
 /** A session; each call is a stop whose transcript ends on the next size, a sidechain turn after it. */
 function session(config, ...sizes) {
-  const dir = project(config ? { ".claude/docrank.json": JSON.stringify(config) } : {});
+  const dir = project(config ? { ".claude/stickler.json": JSON.stringify(config) } : {});
   const id = `s-${process.pid}-${counter++}`;
   const transcript = path.join(dir, "t.jsonl");
   return (extra = {}) => {

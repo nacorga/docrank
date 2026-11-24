@@ -30,6 +30,6 @@ const heading = new RegExp(`^#{1,6}[ \\t]*(?:${config.requiredHeadings.map(escap
 if (!heading.test(plan)) {
   const names = config.requiredHeadings.map((h) => `\`${h}\``).join(" or ");
   deny(
-    `The plan has no section headed ${names} (docrank \`plan.requiredHeadings\`). Add it before the plan reaches the user, then call ExitPlanMode again.`,
+    `The plan has no section headed ${names} (stickler \`plan.requiredHeadings\`). Add it before the plan reaches the user, then call ExitPlanMode again.`,
   );
 }

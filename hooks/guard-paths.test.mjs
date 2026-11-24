@@ -11,7 +11,7 @@ const config = {
     ],
   },
 };
-const dir = project({ ".claude/docrank.json": JSON.stringify(config), [tracked]: "", "src/app.js": "" });
+const dir = project({ ".claude/stickler.json": JSON.stringify(config), [tracked]: "", "src/app.js": "" });
 const git = (...args) => execFileSync("git", ["-c", "user.name=t", "-c", "user.email=t@t", "-C", dir, ...args]);
 git("init", "-q");
 git("add", tracked);
@@ -47,7 +47,7 @@ describe("guard-paths.mjs", () => {
   });
 
   it("turns the built-ins off with paths.builtIns", async () => {
-    const off = project({ ".claude/docrank.json": JSON.stringify({ paths: { builtIns: false } }) });
+    const off = project({ ".claude/stickler.json": JSON.stringify({ paths: { builtIns: false } }) });
     expect(await decide(`${off}/.env`, off)).toBeNull();
   });
 
@@ -61,7 +61,7 @@ describe("guard-paths.mjs", () => {
   });
 
   it("refuses the call when the config is invalid", async () => {
-    const bad = project({ ".claude/docrank.json": '{"paths":{"builtIns":"yes"}}' });
+    const bad = project({ ".claude/stickler.json": '{"paths":{"builtIns":"yes"}}' });
     expect(await decide(`${bad}/src/a.js`, bad)).toContain("paths.builtIns");
   });
 });

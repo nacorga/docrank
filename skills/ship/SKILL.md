@@ -3,7 +3,7 @@ name: ship
 description: Carry one piece of work from the ask to a green pull request — its own worktree cut from the integration branch, a plan, the gates and the jobs its diff can break, the judges, the pull request watched until CI is green — and, once it merges, clean up. Invoking it is the user's approval for the branch, the push and the pull request; never for the merge.
 argument-hint: "<what to do>"
 disable-model-invocation: true
-allowed-tools: Bash(node ${CLAUDE_PLUGIN_ROOT}/bin/docrank.mjs *) Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/watch-pr.mjs *) Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/prune-worktrees.mjs *)
+allowed-tools: Bash(node ${CLAUDE_PLUGIN_ROOT}/bin/stickler.mjs *) Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/watch-pr.mjs *) Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/prune-worktrees.mjs *)
 ---
 
 The work: $ARGUMENTS
@@ -14,7 +14,7 @@ against the integration branch. Do not ask for them again. It approves nothing
 else: the merge is the user's, and so is anything with an effect outside the
 repository.
 
-Every setting below is in `.claude/docrank.json`; `docs/config.md` of the
+Every setting below is in `.claude/stickler.json`; `docs/config.md` of the
 plugin lists each key with its default. Read the file once before stage 1.
 
 ## In order
@@ -26,7 +26,7 @@ plugin lists each key with its default. Read the file once before stage 1.
    fetched `origin/<integration>` in `../<repo>-<slug>`, copies
    `worktree.copy` and runs `worktree.install`. If the harness did not run it
    (`--worktree --tmux`, or Claude Code older than v2.1.300), run
-   `node "${CLAUDE_PLUGIN_ROOT}/bin/docrank.mjs" worktree <name>`: it makes
+   `node "${CLAUDE_PLUGIN_ROOT}/bin/stickler.mjs" worktree <name>`: it makes
    the same worktree, and prints its path. A bare `git worktree add` skips
    the copy and the install. From then on every edit and command is the
    worktree's; the main checkout belongs to other sessions.
@@ -53,7 +53,7 @@ plugin lists each key with its default. Read the file once before stage 1.
    `ship.pathJobs` maps to the paths the diff touches: for each entry whose
    `paths` a changed file starts with, run its `jobs` by name through the same
    skill; no entry matches, no job. Then the judges:
-   `node "${CLAUDE_PLUGIN_ROOT}/bin/docrank.mjs" judges` in the worktree names
+   `node "${CLAUDE_PLUGIN_ROOT}/bin/stickler.mjs" judges` in the worktree names
    which the diff launches, from `judges.routes`, and prints how a round runs;
    with a fix's range (`judges <judged>..HEAD`) it names which judges the
    fix's re-check owes.

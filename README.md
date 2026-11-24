@@ -1,41 +1,47 @@
-# docrank
+# stickler
 
 A Claude Code plugin that enforces a working method instead of asking for it.
 Guard hooks refuse what cannot be taken back; read-only judges review a change
 against the repository's documents; the repository's gates must pass before a
 push; documents outrank code when the two disagree; a short set of working
 principles starts every session. One file per repository,
-`.claude/docrank.json`, adapts all of it, and the `init` skill proposes that
+`.claude/stickler.json`, adapts all of it, and the `init` skill proposes that
 file by reading the repository.
+
+stickler was named docrank until 0.6.0; the tags `docrank--v*` stay.
 
 ## Install
 
 ```
-/plugin marketplace add nacorga/docrank
-/plugin install docrank@docrank
+/plugin marketplace add nacorga/stickler
+/plugin install stickler@stickler
 ```
 
-On Claude Code 2.1.275 or later, one step: `/plugin install docrank --marketplace nacorga/docrank`.
+On Claude Code 2.1.275 or later, one step: `/plugin install stickler --marketplace nacorga/stickler`.
 
 The install asks for a scope. User scope turns the principles and the default
 guards on in every repository on the machine; local or project scope keeps
 them to the repository you configure. Auto-update is off for a third-party
-marketplace: update with `claude plugin update docrank@docrank`, or turn
+marketplace: update with `claude plugin update stickler@stickler`, or turn
 auto-update on in the `/plugin` Marketplaces tab. A project-scope install
 is recorded in `.claude/settings.json`, but each clone still runs
-`claude plugin install docrank@docrank` once. A cloud session loads only
+`claude plugin install stickler@stickler` once. A cloud session loads only
 the plugins installed on the claude.ai account, not those a repository
 names. A repository that needs a key of a later release sets `requires`
-([docs/config.md](docs/config.md)), and an older docrank then refuses its
+([docs/config.md](docs/config.md)), and an older stickler then refuses its
 configuration instead of misreading it.
+
+Coming from docrank: run `claude plugin uninstall docrank@docrank`, install
+`stickler@stickler` as above, and rename `.claude/docrank.json` to
+`.claude/stickler.json`. A `DOCRANK_*` environment variable becomes `STICKLER_*`.
 
 To try it from a checkout without installing: `claude --plugin-dir <path to this repository>`.
 
 ## Quick start
 
-In the repository you want to guard, run `/docrank:init`. It reads the
+In the repository you want to guard, run `/stickler:init`. It reads the
 branches, the package manager, the scripts, the formatter and the docs tree,
-proposes a complete `.claude/docrank.json` with a reason for each key it sets,
+proposes a complete `.claude/stickler.json` with a reason for each key it sets,
 and writes nothing until you confirm. Without that file every guard runs on its
 defaults and the features that need a setting stay off.
 
@@ -43,18 +49,18 @@ The spec arbiter needs two keys: `docs.precedence`, the document that binds,
 and `judges.routes`, the code it governs. `init` takes a document that says it
 binds, or asks which one does (none is an answer), then asks what code it
 governs, `**` by default, and proposes both; without them the arbiter is off and a change gets the gates and guards
-only. To see what is on, run `/docrank:init` again: on a configured repository
+only. To see what is on, run `/stickler:init` again: on a configured repository
 it keeps your keys and lists what stays at its default and what is off.
-`node <plugin>/bin/docrank.mjs config` prints the resolved configuration.
+`node <plugin>/bin/stickler.mjs config` prints the resolved configuration.
 
 ### Try it
 
-`/docrank:demo [<dir>]` builds a throwaway repository, in a new temporary
+`/stickler:demo [<dir>]` builds a throwaway repository, in a new temporary
 directory unless you name one that does not exist: a checkout module whose
 spec forbids analytics before consent and with the email, and a branch adding
 tracking that passes its test and breaks both rules. It prints the command
 that opens a session in that branch's worktree with `--plugin-dir`, so the
-demo runs whatever scope docrank is installed at, and the three steps to type
+demo runs whatever scope stickler is installed at, and the three steps to type
 there: the gates, the spec arbiter on the branch, and its re-check of the fix.
 Each step is a line of its own, to paste as it is; what each should show is
 printed apart, after them, so the judge is not told what to find.
@@ -102,7 +108,7 @@ session's `CLAUDE_PID`, which is inherited: a tmux server, a build daemon or an
 editor launched from a session's shell carries it too, and `reap.keep` is what
 keeps such a process running.
 
-An invalid `.claude/docrank.json` refuses every guarded call and names each
+An invalid `.claude/stickler.json` refuses every guarded call and names each
 problem; the optional pre-push hook refuses a push on a file it cannot read or
 parse, or whose keys it reads have the wrong type. A guard stops accidents, not
 a determined attempt: every Bash refusal is also logged to
@@ -122,7 +128,7 @@ Agents, both read-only: `spec-arbiter` (a diff against the documents by
 `surface-reviewer` (opens the rendered pages in a headless Chrome, which the
 plugin starts through `chrome-devtools-mcp`, at `surface.widths`).
 
-The CLI is `node <plugin>/bin/docrank.mjs <command>`:
+The CLI is `node <plugin>/bin/stickler.mjs <command>`:
 
 - `config` prints the resolved configuration, or each error and exit 1.
 - `check sections` and `check drift-pairs` hold the documents to their
@@ -148,7 +154,7 @@ the tasks it is working on (the current one highlighted), or its turns when it
 keeps no task list, and the subagents it
 dispatched, each under the task or turn it was sent from, with its type
 (`Explore`, `general-purpose`) and the skill it was forked for
-(`docrank:gates`) as small chips. Clicking a node shows its
+(`stickler:gates`) as small chips. Clicking a node shows its
 actions as sentences ("Run the tests — failed", "Tried to send the work to
 the shared repository (push); a safety rule stopped it"), each with chips
 naming its tool (`Bash`, `Read`, `mcp__browser__browser_snapshot`), the gate
@@ -174,11 +180,11 @@ feeds drawn as they stood at that point; *Play* replays it from the start,
 *Pause* stops it. A live session can be moved through the same way, and
 *Follow the activity* brings it back to now.
 
-Switch it on with `"watch": { "enabled": true }` in `.claude/docrank.json`
+Switch it on with `"watch": { "enabled": true }` in `.claude/stickler.json`
 ([docs/config.md](docs/config.md#watch)). The next session starts one server
 for the whole machine on `127.0.0.1:47173` (`watch.port`) and opens the tab,
 unless one is already open, which then follows the new session; under `CI` or
-over SSH no tab opens. `docrank watch` opens it any time. The server stops
+over SSH no tab opens. `stickler watch` opens it any time. The server stops
 itself after 30 minutes without activity.
 
 Tasks come from Claude Code's task tools, which are off by default on models
@@ -195,7 +201,7 @@ interactive session ([harness fact 25](docs/harness-facts.md)). It takes effect
 from the next session started in the repository.
 
 What is stored: one JSON line per hook event in
-`~/.claude/docrank/watch/<repository>-<hash>/<session id>.jsonl` (directory
+`~/.claude/stickler/watch/<repository>-<hash>/<session id>.jsonl` (directory
 0700, file 0600), outside every repository. A line keeps the tool's name and
 only the fields its sentence names: a command and its description, a path, a
 search pattern, a URL, a task's subject, a subagent's errand. Secrets in them
@@ -203,7 +209,7 @@ search pattern, a URL, a task's subject, a subagent's errand. Secrets in them
 written to an env file) are replaced with `[redacted]`. No tool output, no
 prompt and no file content is kept: of a result, only whether the call
 failed and, for a command, its exit code; of a prompt, only the name of the
-slash command it opens with, such as `docrank:gates`. The page is served to `127.0.0.1` only,
+slash command it opens with, such as `stickler:gates`. The page is served to `127.0.0.1` only,
 with a random token in its address. A session is kept for 30 days after its
 last line (`watch.retentionDays`): the server deletes older ones when it
 starts and once a day, and never one that wrote within the last 30 minutes.
@@ -226,16 +232,16 @@ session-start principles, a judge review and its re-check count, doc drift on
 ([docs/harness-facts.md](docs/harness-facts.md) § 15). The plan, pull-request and
 message guards, the context hand-off and the judges' preloaded protocol ran
 live too. A third trial, with Claude Code 2.1.329, walked the demo from
-`/docrank:demo` to the arbiter's `code defect` and its re-check on the fix in
+`/stickler:demo` to the arbiter's `code defect` and its re-check on the fix in
 9 min 07 s, and saw `init` propose the arbiter and install the pre-push. A
 fourth installed 0.2.0 from the marketplace at project scope, on a machine
-without docrank and with no other configuration, and walked the demo to the
+without stickler and with no other configuration, and walked the demo to the
 same finding and its re-check in 5 min 14 s, proving the example's changes
 made after the third. A fifth, with Claude Code 2.1.330 and every session
 driven by Claude rather than read by a person, updated that install to 0.2.1
 and walked the demo, each printed step typed alone, to the finding and its
 clean re-check in 3 min 56 s, proving the demo's step output; proved that a
-hook reads the `.claude/docrank.json` of the worktree a session is started
+hook reads the `.claude/stickler.json` of the worktree a session is started
 in; and saw `init` read with Read and one command per Bash call, offer
 `src/**` ahead of the named file for the ground and pair `src/` for doc drift,
 proving its wording changed after the third, then, on the 0.2.2 branch, run

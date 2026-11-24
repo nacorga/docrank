@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { PLUGIN_ROOT } from "../lib/agent-types.mjs";
 import { project, runHook } from "../lib/testing.mjs";
 
-const run = (config) => runHook("principles.mjs", {}, project(config ? { ".claude/docrank.json": JSON.stringify(config) } : {}));
+const run = (config) => runHook("principles.mjs", {}, project(config ? { ".claude/stickler.json": JSON.stringify(config) } : {}));
 
 describe("principles.mjs", () => {
   it("injects the principles and the report language by default", async () => {

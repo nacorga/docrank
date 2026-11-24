@@ -35,7 +35,7 @@ const type = tool.subagent_type ?? "general-purpose";
 
 if (type === "fork" && dispatch.forkBan) {
   deny(
-    "A fork re-reads this session's whole context on every turn (docrank `dispatch.forkBan`). Dispatch a fresh `general-purpose` subagent briefed from the plan; a fix round resumes it with SendMessage.",
+    "A fork re-reads this session's whole context on every turn (stickler `dispatch.forkBan`). Dispatch a fresh `general-purpose` subagent briefed from the plan; a fix round resumes it with SendMessage.",
   );
 }
 
@@ -57,7 +57,7 @@ if (
   !markedHeavy(tool.prompt ?? "")
 ) {
   deny(
-    `A general-purpose dispatch on Opus needs a line \`Heavy: <path>\` naming the plan that marks this slice heavy (docrank \`dispatch.heavyMarker\`). Without one, dispatch it with no model: it runs on ${dispatch.defaultModel}.`,
+    `A general-purpose dispatch on Opus needs a line \`Heavy: <path>\` naming the plan that marks this slice heavy (stickler \`dispatch.heavyMarker\`). Without one, dispatch it with no model: it runs on ${dispatch.defaultModel}.`,
   );
 }
 
@@ -77,15 +77,15 @@ if (!missing && !defaulted) process.exit(0);
 const reasons = [];
 const context = [];
 if (missing) {
-  reasons.push(`docrank completed the guardrails block (missing: "${missing}").`);
+  reasons.push(`stickler completed the guardrails block (missing: "${missing}").`);
   context.push(
-    `docrank added the guardrails block to this ${type} dispatch (missing: "${missing}"). Its final message is its report; if that message does not arrive, \`node ${path.join(PLUGIN_ROOT, "scripts", "last-report.mjs")} <the output file the dispatch names>\` prints the last thing it said.`,
+    `stickler added the guardrails block to this ${type} dispatch (missing: "${missing}"). Its final message is its report; if that message does not arrive, \`node ${path.join(PLUGIN_ROOT, "scripts", "last-report.mjs")} <the output file the dispatch names>\` prints the last thing it said.`,
   );
 }
 if (defaulted) {
-  reasons.push(`docrank set this ${type} dispatch to ${defaulted.model} at ${defaulted.effort} effort.`);
+  reasons.push(`stickler set this ${type} dispatch to ${defaulted.model} at ${defaulted.effort} effort.`);
   context.push(
-    `docrank runs this ${type} dispatch on ${defaulted.model} at ${defaulted.effort} effort, because it named no model (\`dispatch.defaultModel\`).${dispatch.heavyMarker ? ' A slice the plan marks heavy is dispatched with `model: "opus"` and a line `Heavy: <path>` naming that plan.' : ""}`,
+    `stickler runs this ${type} dispatch on ${defaulted.model} at ${defaulted.effort} effort, because it named no model (\`dispatch.defaultModel\`).${dispatch.heavyMarker ? ' A slice the plan marks heavy is dispatched with `model: "opus"` and a line `Heavy: <path>` naming that plan.' : ""}`,
   );
 }
 decide({
@@ -108,7 +108,7 @@ function guardrails() {
     return `${own}\n\n${readFileSync(path.resolve(root, dispatch.guardrailsFile), "utf8").trim()}`;
   } catch {
     return deny(
-      `docrank \`dispatch.guardrailsFile\` names ${dispatch.guardrailsFile}, which cannot be read from ${root}: fix the file or the key, then dispatch again.`,
+      `stickler \`dispatch.guardrailsFile\` names ${dispatch.guardrailsFile}, which cannot be read from ${root}: fix the file or the key, then dispatch again.`,
     );
   }
 }

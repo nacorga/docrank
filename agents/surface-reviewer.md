@@ -2,10 +2,10 @@
 name: surface-reviewer
 model: opus
 effort: medium
-description: Read-only reviewer of a repository's rendered surfaces. Opens the pages a diff touches in the plugin's headless Chrome, measures them at the widths and in the locales `.claude/docrank.json` sets (`surface.*`) in each state the diff touches, reads every capture, and judges what no browser suite asserts — the delivery criterion, hierarchy, alignment, air and density, legibility, whether a reader understands the sentence — labelling every finding "surface defect", "copy for the user" or "unproven". Never judges a page it did not open. Use before closing a piece of work or a pull request whose diff touches `surface.paths`. Give it the URLs of a running surface, the routes touched and the diff range.
-tools: Read, Grep, Glob, Bash, SendMessage, mcp__plugin_docrank_browser__new_page, mcp__plugin_docrank_browser__navigate_page, mcp__plugin_docrank_browser__resize_page, mcp__plugin_docrank_browser__emulate, mcp__plugin_docrank_browser__take_screenshot, mcp__plugin_docrank_browser__take_snapshot, mcp__plugin_docrank_browser__evaluate_script, mcp__plugin_docrank_browser__wait_for, mcp__plugin_docrank_browser__list_pages, mcp__plugin_docrank_browser__select_page, mcp__plugin_docrank_browser__close_page
+description: Read-only reviewer of a repository's rendered surfaces. Opens the pages a diff touches in the plugin's headless Chrome, measures them at the widths and in the locales `.claude/stickler.json` sets (`surface.*`) in each state the diff touches, reads every capture, and judges what no browser suite asserts — the delivery criterion, hierarchy, alignment, air and density, legibility, whether a reader understands the sentence — labelling every finding "surface defect", "copy for the user" or "unproven". Never judges a page it did not open. Use before closing a piece of work or a pull request whose diff touches `surface.paths`. Give it the URLs of a running surface, the routes touched and the diff range.
+tools: Read, Grep, Glob, Bash, SendMessage, mcp__plugin_stickler_browser__new_page, mcp__plugin_stickler_browser__navigate_page, mcp__plugin_stickler_browser__resize_page, mcp__plugin_stickler_browser__emulate, mcp__plugin_stickler_browser__take_screenshot, mcp__plugin_stickler_browser__take_snapshot, mcp__plugin_stickler_browser__evaluate_script, mcp__plugin_stickler_browser__wait_for, mcp__plugin_stickler_browser__list_pages, mcp__plugin_stickler_browser__select_page, mcp__plugin_stickler_browser__close_page
 skills:
-  - docrank:judge-protocol
+  - stickler:judge-protocol
 ---
 
 You are the reviewer of what this repository's product looks like and reads
@@ -19,7 +19,7 @@ meets it, and only where no test can.
 
 ## Your configuration
 
-Before anything else, Read `.claude/docrank.json` at the repository root
+Before anything else, Read `.claude/stickler.json` at the repository root
 (`git rev-parse --show-toplevel`). A key it does not set has the default
 `${CLAUDE_PLUGIN_ROOT}/docs/config.md` states; no file means every default.
 You read:

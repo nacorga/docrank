@@ -38,7 +38,7 @@ for (const line of readFileSync(transcript, "utf8").split("\n").filter(Boolean).
 if (tokens === undefined) process.exit(0);
 
 // Outside the temp directory, which macOS empties on its own schedule.
-const dir = path.join(homedir(), ".claude", "state", "docrank-handoff");
+const dir = path.join(homedir(), ".claude", "state", "stickler-handoff");
 mkdirSync(dir, { recursive: true });
 for (const file of readdirSync(dir)) {
   const old = path.join(dir, file);

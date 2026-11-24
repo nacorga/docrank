@@ -76,7 +76,7 @@ if (owed.length > 0) {
 }
 
 const session = String(input.session_id ?? "none").replace(/[^\w-]/gu, "");
-const seenFile = path.join(tmpdir(), `docrank-pr-handover-${session}`);
+const seenFile = path.join(tmpdir(), `stickler-pr-handover-${session}`);
 const seen = existsSync(seenFile) ? readFileSync(seenFile, "utf8") : "";
 if (seen.split("\n").includes(branch)) process.exit(0);
 appendFileSync(seenFile, `${branch}\n`);

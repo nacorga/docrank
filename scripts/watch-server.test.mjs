@@ -10,7 +10,7 @@ import { project, runExit } from "../lib/testing.mjs";
 
 let home;
 let pids = [];
-const watch = () => path.join(home, ".claude", "docrank", "watch");
+const watch = () => path.join(home, ".claude", "stickler", "watch");
 const state = () => JSON.parse(readFileSync(path.join(watch(), "server.json"), "utf8"));
 const alive = (pid) => {
   try {
@@ -179,7 +179,7 @@ describe("watch-server.mjs", () => {
   });
 
   it("stops itself when no session has written for the idle timeout", async () => {
-    const s = await start({ DOCRANK_WATCH_IDLE_MS: "300" });
+    const s = await start({ STICKLER_WATCH_IDLE_MS: "300" });
     expect(await until(() => !alive(s.pid), 5000)).toBe(true);
     expect(existsSync(path.join(watch(), "server.json"))).toBe(false);
   });
@@ -216,7 +216,7 @@ describe("ensureServer", () => {
   });
 
   it("replaces a server of another protocol", async () => {
-    const old = await start({ DOCRANK_WATCH_PROTOCOL_OVERRIDE: String(PROTOCOL + 1) });
+    const old = await start({ STICKLER_WATCH_PROTOCOL_OVERRIDE: String(PROTOCOL + 1) });
     const s = await ensureServer(0);
     pids.push(state().pid);
     expect(await until(() => !alive(old.pid))).toBe(true);
@@ -238,8 +238,8 @@ describe("the observer at SessionStart", () => {
     await new Promise((r) => free.once("listening", r));
     const port = free.address().port;
     free.close();
-    const dir = project({ ".claude/docrank.json": JSON.stringify({ watch: { enabled: true, port } }) });
-    const out = await runExit("watch-event.mjs", { hook_event_name: "SessionStart", session_id: "s1", source: "startup" }, dir, { HOME: home, DOCRANK_WATCH_NO_OPEN: "1" });
+    const dir = project({ ".claude/stickler.json": JSON.stringify({ watch: { enabled: true, port } }) });
+    const out = await runExit("watch-event.mjs", { hook_event_name: "SessionStart", session_id: "s1", source: "startup" }, dir, { HOME: home, STICKLER_WATCH_NO_OPEN: "1" });
     expect(out).toEqual({ status: 0, stdout: "", stderr: "" });
     expect(existsSync(path.join(watch(), "server.json"))).toBe(true);
     const s = state();

@@ -14,7 +14,7 @@ function watch(args, { env = {}, config = { branches: { integration: "develop" }
     cwd: box.repo,
     encoding: "utf8",
     timeout: 20000,
-    env: { ...process.env, PATH: `${STUBS}:${process.env.PATH}`, DOCRANK_POLL_MS: "20", DOCRANK_REGISTER_MS: "200", ...env },
+    env: { ...process.env, PATH: `${STUBS}:${process.env.PATH}`, STICKLER_POLL_MS: "20", STICKLER_REGISTER_MS: "200", ...env },
   });
   return { status: r.status, out: r.stdout.trim().split("\n"), box };
 }
@@ -113,7 +113,7 @@ describe("watch-pr.mjs merged", () => {
       cwd: sandbox().repo,
       encoding: "utf8",
       timeout: 300,
-      env: { ...process.env, PATH: `${STUBS}:${process.env.PATH}`, DOCRANK_POLL_MS: "20", GH_STUB_VIEW: view({ mergeable: "UNKNOWN" }) },
+      env: { ...process.env, PATH: `${STUBS}:${process.env.PATH}`, STICKLER_POLL_MS: "20", GH_STUB_VIEW: view({ mergeable: "UNKNOWN" }) },
     });
     expect(r.stdout).toBe("");
     expect(r.error?.code).toBe("ETIMEDOUT");

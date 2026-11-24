@@ -35,7 +35,7 @@ function refuse(reason, message) {
     mkdirSync(path.dirname(log), { recursive: true });
     appendFileSync(log, `[${new Date().toISOString()}] ${reason}\n  cmd: ${command}\n`);
   } catch {}
-  // No hook event reports this refusal (harness fact 21): docrank watch hears it here.
+  // No hook event reports this refusal (harness fact 21): stickler watch hears it here.
   recordRefusal(input, config, message, "guard-bash");
   writeErr(`${message}\n`);
   process.exit(2);
@@ -45,7 +45,7 @@ try {
   config = loadConfig({ cwd: process.cwd() });
 } catch (e) {
   // Failing open would turn a typo in the config into a silent bypass.
-  refuse("config", `BLOCKED: the docrank configuration is unusable, so no command is checked. Fix it first (Edit tool); the problems:\n${e.message}`);
+  refuse("config", `BLOCKED: the stickler configuration is unusable, so no command is checked. Fix it first (Edit tool); the problems:\n${e.message}`);
 }
 const { branches, guard, gates } = config;
 
@@ -230,7 +230,7 @@ function switchesBranch(dir) {
 if (has(String.raw`${GIT}(?:switch|checkout)\b|${GH}pr${S}+checkout\b`)) {
   const dir = targetDir();
   if (isMainCheckout(dir) && switchesBranch(dir)) {
-    refuse("main-checkout", `BLOCKED: this moves the main checkout off ${integration}, under every session working in it. Branch work goes in a worktree: node "${process.env.CLAUDE_PLUGIN_ROOT ?? "<plugin>"}/bin/docrank.mjs" worktree <branch> cuts one from origin/${integration}, with worktree.copy and worktree.install. Going back to ${integration} is allowed.`);
+    refuse("main-checkout", `BLOCKED: this moves the main checkout off ${integration}, under every session working in it. Branch work goes in a worktree: node "${process.env.CLAUDE_PLUGIN_ROOT ?? "<plugin>"}/bin/stickler.mjs" worktree <branch> cuts one from origin/${integration}, with worktree.copy and worktree.install. Going back to ${integration} is allowed.`);
   }
 }
 

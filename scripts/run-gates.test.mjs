@@ -14,15 +14,15 @@ afterAll(() => dirs.forEach((d) => rmSync(d, { recursive: true, force: true })))
 
 const gitIn = (dir, ...args) => execFileSync("git", ["-C", dir, ...args], { encoding: "utf8" }).trim();
 
-/** A committed repository with `.claude/docrank.json` holding `gates`. */
+/** A committed repository with `.claude/stickler.json` holding `gates`. */
 function repo(gates) {
-  const dir = realpathSync(mkdtempSync(path.join(tmpdir(), "docrank-gates-test-")));
+  const dir = realpathSync(mkdtempSync(path.join(tmpdir(), "stickler-gates-test-")));
   dirs.push(dir);
   gitIn(dir, "init", "-q", "-b", "main");
   gitIn(dir, "config", "user.email", "test@example.com");
   gitIn(dir, "config", "user.name", "test");
   mkdirSync(path.join(dir, ".claude"));
-  writeFileSync(path.join(dir, ".claude", "docrank.json"), JSON.stringify({ gates }));
+  writeFileSync(path.join(dir, ".claude", "stickler.json"), JSON.stringify({ gates }));
   gitIn(dir, "add", "-A");
   gitIn(dir, "commit", "-qm", "seed");
   return dir;
@@ -34,7 +34,7 @@ const run = (args, cwd, env = {}) => {
   return { status: r.status, stdout: r.stdout, stderr: r.stderr };
 };
 const verdicts = (stdout) => stdout.split("\n").filter((l) => /^(PASS|FAIL) /.test(l));
-const record = (dir, name = "docrank-gates-passed") => {
+const record = (dir, name = "stickler-gates-passed") => {
   const file = path.join(gitIn(dir, "rev-parse", "--path-format=absolute", "--git-common-dir"), name);
   return existsSync(file) ? readFileSync(file, "utf8").split("\n").filter(Boolean) : [];
 };
@@ -244,7 +244,7 @@ describe("run-gates", () => {
 
     it("CLAUDE_PROJECT_DIR is the last resort", () => {
       const project = repo({ run: [gate("here")] });
-      const outside = realpathSync(mkdtempSync(path.join(tmpdir(), "docrank-nogit-")));
+      const outside = realpathSync(mkdtempSync(path.join(tmpdir(), "stickler-nogit-")));
       dirs.push(outside);
       expect(run([], outside, { CLAUDE_PROJECT_DIR: project }).stdout.startsWith(`tree ${project} @ `)).toBe(true);
     });
@@ -256,7 +256,7 @@ describe("run-gates", () => {
     });
 
     it("-C outside any git work tree exits 1 rather than gating another tree", () => {
-      const outside = realpathSync(mkdtempSync(path.join(tmpdir(), "docrank-nogit-")));
+      const outside = realpathSync(mkdtempSync(path.join(tmpdir(), "stickler-nogit-")));
       dirs.push(outside);
       const r = run(["-C", outside], repo({ run: [gate("a")] }));
       expect(r.status).toBe(1);
@@ -344,9 +344,9 @@ describe("templates/pre-push", () => {
 
   it("reads the record's name and the integration branch from the config", () => {
     const dir = repo({ run: [gate("lint")], record: "elsewhere" });
-    const config = JSON.parse(readFileSync(path.join(dir, ".claude", "docrank.json"), "utf8"));
+    const config = JSON.parse(readFileSync(path.join(dir, ".claude", "stickler.json"), "utf8"));
     config.branches = { integration: "develop" };
-    writeFileSync(path.join(dir, ".claude", "docrank.json"), JSON.stringify(config));
+    writeFileSync(path.join(dir, ".claude", "stickler.json"), JSON.stringify(config));
     gitIn(dir, "commit", "-qam", "develop");
     const held = head(dir);
     gitIn(dir, "update-ref", "refs/remotes/origin/develop", held);
@@ -380,8 +380,8 @@ describe("templates/pre-push", () => {
     expect(attempt().status).toBe(0);
   });
 
-  const configure = (dir, text) => writeFileSync(path.join(dir, ".claude", "docrank.json"), text);
-  const refusal = /^docrank pre-push: \.claude\/docrank\.json is not valid, so the push is refused:\n/mu;
+  const configure = (dir, text) => writeFileSync(path.join(dir, ".claude", "stickler.json"), text);
+  const refusal = /^stickler pre-push: \.claude\/stickler\.json is not valid, so the push is refused:\n/mu;
 
   it("refuses a push when the config is not JSON, naming the file, the problem and the ways out", () => {
     const dir = repo({ run: [gate("lint")] });
@@ -390,7 +390,7 @@ describe("templates/pre-push", () => {
     expect(r.status).toBe(1);
     expect(r.stderr).toMatch(refusal);
     expect(r.stderr).toContain("expected valid JSON");
-    expect(r.stderr).toContain("bin/docrank.mjs config");
+    expect(r.stderr).toContain("bin/stickler.mjs config");
     expect(r.stderr).toContain("git push --no-verify");
   });
 
@@ -415,7 +415,7 @@ describe("templates/pre-push", () => {
 
   it("applies the defaults when the config file is missing: no gates.run, no check", () => {
     const dir = repo({ run: [gate("lint")] });
-    rmSync(path.join(dir, ".claude", "docrank.json"));
+    rmSync(path.join(dir, ".claude", "stickler.json"));
     expect(push(dir, line(commit(dir, "more"))).status).toBe(0);
   });
 

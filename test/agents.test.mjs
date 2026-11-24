@@ -33,7 +33,7 @@ const agents = readdirSync(path.join(PLUGIN_ROOT, "agents"))
 
 /** The browser tools a reviewer may hold: those that open, size, read and close a page, never one that acts on it. */
 const browserReads = ["new_page", "navigate_page", "resize_page", "emulate", "take_screenshot", "take_snapshot", "evaluate_script", "wait_for", "list_pages", "select_page", "close_page"]
-  .flatMap((tool) => Object.keys(mcp).map((server) => `mcp__plugin_docrank_${server}__${tool}`));
+  .flatMap((tool) => Object.keys(mcp).map((server) => `mcp__plugin_stickler_${server}__${tool}`));
 const judgeTools = new Set(["Read", "Grep", "Glob", "Bash", "SendMessage", ...browserReads]);
 
 describe("the plugin's agents", () => {
@@ -42,7 +42,7 @@ describe("the plugin's agents", () => {
   });
 
   it.each(agents.map((a) => [a.file, a]))("%s parses, is a read-only judge and names only tools a judge may hold", (_file, { front }) => {
-    const type = `docrank:${front.name}`;
+    const type = `stickler:${front.name}`;
     expect(front.description.length).toBeGreaterThan(0);
     expect(front.mcpServers, "ignored for plugin agents (harness-facts § 6)").toBeUndefined();
     const tools = front.tools.split(",").map((t) => t.trim());
@@ -54,7 +54,7 @@ describe("the plugin's agents", () => {
 
   it.each(agents.map((a) => [a.file, a]))("%s has its Bash held to reads by the read-only guard", async (_file, { front }) => {
     const decide = async (command) =>
-      (await runHook("guard-read-only.mjs", { tool_name: "Bash", tool_input: { command }, agent_type: `docrank:${front.name}` }, repo))
+      (await runHook("guard-read-only.mjs", { tool_name: "Bash", tool_input: { command }, agent_type: `stickler:${front.name}` }, repo))
         ?.permissionDecision ?? null;
     expect(await decide("git diff main...HEAD")).toBeNull();
     expect(await decide("git rev-parse --show-toplevel")).toBeNull();

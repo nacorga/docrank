@@ -16,7 +16,7 @@ const boxes = [];
 const sessions = [];
 afterEach(() => {
   boxes.splice(0).forEach((b) => b.cleanup());
-  sessions.splice(0).forEach((s) => rmSync(path.join(tmpdir(), `docrank-pr-handover-${s}`), { force: true }));
+  sessions.splice(0).forEach((s) => rmSync(path.join(tmpdir(), `stickler-pr-handover-${s}`), { force: true }));
 });
 
 /** A repository whose branch changes `file` against its origin/develop. */

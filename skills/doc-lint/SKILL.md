@@ -1,6 +1,6 @@
 ---
 name: doc-lint
-description: Read the repository's documentation, group by group (`docs.groups` in `.claude/docrank.json`), for what no test catches — two governing passages that state incompatible facts, a claim the tree shows is no longer true, a fact restated away from its owner — confirm each against the tree, fix what is confirmed, and carry it to a pull request against the integration branch. Use when a documentation sweep is wanted, by hand or from a scheduled routine.
+description: Read the repository's documentation, group by group (`docs.groups` in `.claude/stickler.json`), for what no test catches — two governing passages that state incompatible facts, a claim the tree shows is no longer true, a fact restated away from its owner — confirm each against the tree, fix what is confirmed, and carry it to a pull request against the integration branch. Use when a documentation sweep is wanted, by hand or from a scheduled routine.
 argument-hint: "[group ...] — default: every group in docs.groups"
 ---
 
@@ -17,7 +17,7 @@ catches that on the diff that causes it, and this is the backstop.
 
 ## In order
 
-1. **Configuration.** Read `.claude/docrank.json` and, for a key it does not
+1. **Configuration.** Read `.claude/stickler.json` and, for a key it does not
    set, the default `${CLAUDE_PLUGIN_ROOT}/docs/config.md` states. You need
    `docs.groups`, `docs.precedence`, `docs.historyRoots`, `docs.registry` and
    `branches.integration`. With no group configured, or none of the groups
@@ -50,7 +50,7 @@ catches that on the diff that causes it, and this is the backstop.
      happened.
 6. **Verify.** Commit the fixes in one conventional commit whose body lists
    each fix by document and its evidence, then run the `gates` skill, then
-   the `docrank:spec-arbiter` agent over the branch. A fix of its findings is
+   the `stickler:spec-arbiter` agent over the branch. A fix of its findings is
    a new commit, passes the gates and gets a re-check of its range, as the
    `judge-protocol` skill sets out.
 7. **Pull request.** Push the branch and open the pull request against

@@ -12,7 +12,7 @@ async function prompt(files, text) {
 }
 
 const protocol = {
-  ".claude/docrank.json": config([{ match: "^\\s*/?(?:ideas|brainstorm)\\b", file: ".claude/ideas.md" }]),
+  ".claude/stickler.json": config([{ match: "^\\s*/?(?:ideas|brainstorm)\\b", file: ".claude/ideas.md" }]),
   ".claude/ideas.md": "One question at a time.\n",
 };
 
@@ -29,7 +29,7 @@ describe("prompt-context.mjs", () => {
 
   it("adds each matching file once, in the order of the entries", async () => {
     const files = {
-      ".claude/docrank.json": config([
+      ".claude/stickler.json": config([
         { match: "deploy", file: "a.md" },
         { match: "release", file: "b.md" },
         { match: "deploy", file: "a.md" },
@@ -42,7 +42,7 @@ describe("prompt-context.mjs", () => {
 
   it("skips a file that cannot be read and keeps the others", async () => {
     const files = {
-      ".claude/docrank.json": config([
+      ".claude/stickler.json": config([
         { match: "x", file: "missing.md" },
         { match: "x", file: "here.md" },
       ]),
@@ -52,10 +52,10 @@ describe("prompt-context.mjs", () => {
   });
 
   it("reads no file outside the repository: a path above it is refused, a link out of it skipped", async () => {
-    expect(await prompt({ ".claude/docrank.json": config([{ match: "x", file: "../out.md" }]) }, "x")).toEqual({ status: 0, context: null });
+    expect(await prompt({ ".claude/stickler.json": config([{ match: "x", file: "../out.md" }]) }, "x")).toEqual({ status: 0, context: null });
     const outside = project({ "secret.md": "secret" });
     const files = {
-      ".claude/docrank.json": config([
+      ".claude/stickler.json": config([
         { match: "x", file: "link.md" },
         { match: "x", file: "here.md" },
       ]),
@@ -69,11 +69,11 @@ describe("prompt-context.mjs", () => {
 
   it("is silent and exits 0 with no key, on an invalid config and on input it cannot parse", async () => {
     expect(await prompt({}, "brainstorm")).toEqual({ status: 0, context: null });
-    expect(await prompt({ ".claude/docrank.json": config([{ match: "(", file: "a.md" }]) }, "(")).toEqual({
+    expect(await prompt({ ".claude/stickler.json": config([{ match: "(", file: "a.md" }]) }, "(")).toEqual({
       status: 0,
       context: null,
     });
-    expect(await prompt({ ".claude/docrank.json": "{" }, "brainstorm")).toEqual({ status: 0, context: null });
+    expect(await prompt({ ".claude/stickler.json": "{" }, "brainstorm")).toEqual({ status: 0, context: null });
     expect(await prompt(protocol, 42)).toEqual({ status: 0, context: null });
   });
 });

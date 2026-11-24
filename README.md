@@ -86,13 +86,15 @@ experimental).
 Off until configured, for the session's own hygiene: a file of the repository
 added as context to a prompt that matches a pattern, such as a protocol a
 session should follow whenever a prompt opens with a given word
-(`prompts.context`); and the reaper, which stops the servers sessions left
-running in the repository's checkouts once nobody holds them: at session
-start, those of sessions that are gone, at session end, the ending
-session's own, never a process started outside Claude Code nor one matching
-`reap.keep` (`reap.*`); and, at session start and after each compaction, the
-plans in `ship.plansDir` with their checked items over all of them and
-whether each has a hand-off section (`plans.atStart`).
+(`prompts.context`); at session start and after each compaction, the plans in
+`ship.plansDir` with their checked items over all of them and whether each has
+a hand-off section (`plans.atStart`); and the reaper, which stops the servers
+sessions left running in the repository's checkouts once nobody holds them: at
+session start, those of sessions that are gone, at session end, the ending
+session's own (`reap.*`). The reaper reaches only processes carrying a
+session's `CLAUDE_PID`, which is inherited: a tmux server, a build daemon or an
+editor launched from a session's shell carries it too, and `reap.keep` is what
+keeps such a process running.
 
 An invalid `.claude/docrank.json` refuses every guarded call and names each
 problem; the optional pre-push hook refuses a push on a file it cannot read or

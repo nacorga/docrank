@@ -6,7 +6,8 @@
  * left is stopped by the test afterwards.
  */
 import { execFileSync, spawn, spawnSync } from "node:child_process";
-import { rmSync } from "node:fs";
+import { chmodSync, rmSync } from "node:fs";
+import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { project, runExit } from "../lib/testing.mjs";
 
@@ -134,6 +135,26 @@ describe("reap.mjs at session start", { timeout: 30000 }, () => {
     expect(alive(stub.pid)).toBe(true);
   });
 
+  it("reads CLAUDE_PID from the environment only, never from an argument", async () => {
+    const dir = sandbox();
+    const stub = await orphanStub(dir, 0, `CLAUDE_PID=${deadPid()}`);
+    expect((await start(dir)).stdout).toBe("");
+    expect(alive(stub.pid)).toBe(true);
+  });
+
+  it("stops nothing when a read does not answer in time", async () => {
+    const dir = sandbox();
+    const stub = await orphanStub(dir, deadPid());
+    const bin = project({ ps: "#!/bin/sh\nexec sleep 30\n" });
+    chmodSync(path.join(bin, "ps"), 0o755);
+    const { status, stdout, stderr } = await runExit("reap.mjs", { hook_event_name: "SessionStart", source: "startup" }, dir, {
+      PATH: `${bin}:${process.env.PATH}`,
+    });
+    expect([status, stdout]).toEqual([0, ""]);
+    expect(stderr).toBe("docrank reap: `ps` did not answer in time; nothing stopped\n");
+    expect(alive(stub.pid)).toBe(true);
+  });
+
   it("stops nothing while off, and on an invalid config", async () => {
     for (const reap of [{ enabled: false }, { enabled: "yes" }]) {
       const dir = sandbox(reap);
@@ -164,9 +185,15 @@ describe("reap.mjs at session end", { timeout: 30000 }, () => {
     const dir = sandbox();
     const session = deadPid();
     const held = heldStub(dir, session);
-    for (const reason of ["clear", "resume"]) await finish(dir, session, reason);
-    await new Promise((r) => setTimeout(r, 1500));
-    expect(alive(held.pid)).toBe(true);
+    for (const reason of ["clear", "resume"]) {
+      const { status, stderr } = await finish(dir, session, reason);
+      expect(status).toBe(0);
+      expect(stderr).toBe(`docrank reap: the session goes on (${reason}); nothing stopped.\n`);
+      expect(alive(held.pid)).toBe(true);
+    }
+    // The same session ending for good stops the same stub: the runs above decided, not missed it.
+    expect((await finish(dir, session, "other")).stderr).toBe("docrank reap: stopping this session's groups in the background.\n");
+    expect(await gone(held.pid)).toBe(true);
   });
 });
 

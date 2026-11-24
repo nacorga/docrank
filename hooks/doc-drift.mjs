@@ -29,7 +29,7 @@ const { root, docDrift } = config;
 if (docDrift.entries.length === 0) process.exit(0);
 
 const session = String(input.session_id ?? "none").replace(/[^\w-]/gu, "");
-const marker = path.join(tmpdir(), `docrank-drift-${session}`);
+const marker = path.join(tmpdir(), `stickler-drift-${session}`);
 if (existsSync(marker)) process.exit(0);
 
 const git = (...args) => execFileSync("git", args, { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });

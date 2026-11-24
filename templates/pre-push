@@ -1,5 +1,5 @@
 #!/bin/sh
-# docrank: the gates, checked before a push leaves, for pushes made outside
+# stickler: the gates, checked before a push leaves, for pushes made outside
 # Claude Code (inside it, the Bash guard makes the same check).
 #
 # A pushed commit goes through when the gates runner recorded it (all gates
@@ -7,28 +7,28 @@
 # deleted branch and a pushed tag are not commits to gate. `git push
 # --no-verify` is the user's way past it.
 #
-# The settings are read from .claude/docrank.json with node, which Claude Code
+# The settings are read from .claude/stickler.json with node, which Claude Code
 # needs anyway. Git runs a hook from the top of the work tree, where that file
 # is. A missing file is every default: with no gates.run the check is off. A
 # file that cannot be read, is not JSON, or gives a key read here the wrong
 # type refuses the push, as an invalid config refuses every guarded call inside
 # Claude Code. Only the keys read here are checked: this file is copied into
 # the repository and cannot load the plugin's validation, so the rest of the
-# schema is left to `docrank config`.
+# schema is left to `stickler config`.
 set -u
 if command -v node >/dev/null 2>&1; then
   # shellcheck disable=SC2016
   settings=$(node -e '
-    const file = ".claude/docrank.json";
+    const file = ".claude/stickler.json";
     const fs = require("fs");
     const kind = (v) => (v === null ? "null" : Array.isArray(v) ? "an array" : typeof v === "object" ? "an object" : JSON.stringify(v));
     const isObject = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
     const refuse = (problems) => {
       process.stderr.write(
         [
-          `docrank pre-push: ${file} is not valid, so the push is refused:`,
+          `stickler pre-push: ${file} is not valid, so the push is refused:`,
           ...problems.map((p) => `  ${p}`),
-          "Run node <plugin>/bin/docrank.mjs config to see every problem and fix the file; git push --no-verify pushes without this check.",
+          "Run node <plugin>/bin/stickler.mjs config to see every problem and fix the file; git push --no-verify pushes without this check.",
         ].join("\n") + "\n",
       );
       process.exit(1);
@@ -59,13 +59,13 @@ if command -v node >/dev/null 2>&1; then
     want("branches.integration", b.integration, str, "a string");
     if (problems.length > 0) refuse(problems);
     const on = g.requireBeforePush !== false && (g.run ?? []).length > 0;
-    console.log([g.record ?? "docrank-gates-passed", b.integration ?? "main", on ? "on" : "off"].join(" "));
+    console.log([g.record ?? "stickler-gates-passed", b.integration ?? "main", on ? "on" : "off"].join(" "));
   ') || exit 1
 else
   # Without node the file is not read at all, so the check is on with the
-  # defaults whatever the file says: record docrank-gates-passed, integration
+  # defaults whatever the file says: record stickler-gates-passed, integration
   # branch main, gates.run and gates.requireBeforePush unseen.
-  settings="docrank-gates-passed main on"
+  settings="stickler-gates-passed main on"
 fi
 # shellcheck disable=SC2086
 set -- $settings
@@ -78,7 +78,7 @@ while read -r local_ref local_sha remote_ref remote_sha; do
   [ "$local_sha" = "$zero" ] && continue
   grep -qx "$local_sha" "$passed" 2>/dev/null && continue
   git merge-base --is-ancestor "$local_sha" "origin/$2" 2>/dev/null && continue
-  printf 'docrank pre-push: the gates have not passed on %s (%s).\n' "$(git rev-parse --short "$local_sha")" "$local_ref" >&2
+  printf 'stickler pre-push: the gates have not passed on %s (%s).\n' "$(git rev-parse --short "$local_sha")" "$local_ref" >&2
   status=1
 done
 if [ $status -ne 0 ]; then

@@ -7,9 +7,9 @@
  * `.worktreeinclude` is not read: `worktree.copy` takes its place.
  *
  * The input may carry a `base`, a ref to cut from instead, which nothing
- * fetches: `docrank worktree <branch> <base>` has fetched it already.
+ * fetches: `stickler worktree <branch> <base>` has fetched it already.
  *
- * The work is `lib/worktree.mjs`, shared with `docrank worktree`. Claude Code
+ * The work is `lib/worktree.mjs`, shared with `stickler worktree`. Claude Code
  * reads the path from the last line of stdout, so everything else goes to
  * stderr, and a failure fails the creation (docs/harness-facts.md, fact 2).
  */

@@ -16,7 +16,7 @@ let principles;
 try {
   ({ principles } = loadConfig({ cwd: input.cwd || process.cwd() }));
 } catch (e) {
-  process.stderr.write(`docrank: ${e.message}\n`);
+  process.stderr.write(`stickler: ${e.message}\n`);
   process.exit(0);
 }
 if (!principles.enabled) process.exit(0);

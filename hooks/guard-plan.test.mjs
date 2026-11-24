@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { project, runHook } from "../lib/testing.mjs";
 
-const configured = project({ ".claude/docrank.json": JSON.stringify({ plan: { requiredHeadings: ["Double check", "Doble check"] } }) });
+const configured = project({ ".claude/stickler.json": JSON.stringify({ plan: { requiredHeadings: ["Double check", "Doble check"] } }) });
 const plan = "# Plan\n\n## Context\n\nWhat changes.\n";
 
 /** The deny reason for an ExitPlanMode call, or null. */

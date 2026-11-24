@@ -28,7 +28,7 @@
  * the limit and its ten-second timeout: a worktree merged before the last 200
  * is for a hand to remove (`scripts/prune-worktrees.mjs`). Without `gh`,
  * offline or past the timeout, it does nothing, and it never fails the session.
- * `DOCRANK_GH_TIMEOUT_MS` exists only for tests: it shortens that timeout, and
+ * `STICKLER_GH_TIMEOUT_MS` exists only for tests: it shortens that timeout, and
  * unset or non-numeric means ten seconds.
  */
 import path from "node:path";
@@ -36,7 +36,7 @@ import { loadConfig } from "../lib/config.mjs";
 import { git, listWorktrees, run } from "../lib/git.mjs";
 import { readInput } from "../lib/hook.mjs";
 
-const GH_TIMEOUT = Number(process.env.DOCRANK_GH_TIMEOUT_MS) || 10_000;
+const GH_TIMEOUT = Number(process.env.STICKLER_GH_TIMEOUT_MS) || 10_000;
 const input = await readInput();
 const cwd = input.cwd || process.cwd();
 
@@ -74,5 +74,5 @@ for (const { path: dir, head, branch } of listWorktrees(main)) {
 }
 
 if (removed.length) {
-  process.stdout.write(`docrank: removed worktrees ${removed.join(", ")}, their pull requests already merged.\n`);
+  process.stdout.write(`stickler: removed worktrees ${removed.join(", ")}, their pull requests already merged.\n`);
 }

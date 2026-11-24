@@ -8,10 +8,10 @@ const on = { watch: { enabled: true }, gates: { run: [{ name: "test", command: "
 
 /** A repository and a sandbox HOME; `fire` runs the hook there. */
 function sandbox(config = on) {
-  const dir = project(config == null ? {} : { ".claude/docrank.json": typeof config === "string" ? config : JSON.stringify(config) });
+  const dir = project(config == null ? {} : { ".claude/stickler.json": typeof config === "string" ? config : JSON.stringify(config) });
   const home = project();
   const fire = (input) => runExit("watch-event.mjs", { session_id: "s1", ...input }, dir, { HOME: home });
-  const watch = path.join(home, ".claude", "docrank", "watch");
+  const watch = path.join(home, ".claude", "stickler", "watch");
   const lines = () => {
     if (!existsSync(watch)) return [];
     const [repo] = readdirSync(watch);

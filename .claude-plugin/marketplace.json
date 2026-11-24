@@ -1,10 +1,10 @@
 {
-  "name": "docrank",
+  "name": "stickler",
   "owner": { "name": "Ignacio Cortés" },
-  "description": "docrank: the method enforced by hooks instead of asked for.",
+  "description": "stickler: the method enforced by hooks instead of asked for.",
   "plugins": [
     {
-      "name": "docrank",
+      "name": "stickler",
       "source": "./",
       "description": "Guard hooks, read-only judges, gates before a push and docs that outrank code."
     }

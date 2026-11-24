@@ -35,7 +35,7 @@ async function sweep(root, session, held = []) {
   const stopped = await reap(groups);
   if (stopped.length === 0) return "";
   const where = [...new Set(stopped.map(({ directory }) => path.relative(path.dirname(root), directory) || directory))];
-  return `docrank reap: stopped ${stopped.length} process group(s) ${session ? "this session left" : "nobody held"}, in ${where.join(", ")}.\n`;
+  return `stickler reap: stopped ${stopped.length} process group(s) ${session ? "this session left" : "nobody held"}, in ${where.join(", ")}.\n`;
 }
 
 /** The hook's run; what it says on stderr at session end is for the debug log and the tests. */
@@ -54,7 +54,7 @@ async function main() {
   }
   const pid = Number.parseInt(process.env.CLAUDE_PID ?? "", 10);
   if (["clear", "resume"].includes(input.reason)) {
-    process.stderr.write(`docrank reap: the session goes on (${input.reason}); nothing stopped.\n`);
+    process.stderr.write(`stickler reap: the session goes on (${input.reason}); nothing stopped.\n`);
     return;
   }
   // 0 or 1 is no session: as one, it would own every process nobody started.
@@ -66,11 +66,11 @@ async function main() {
     detached: true,
     stdio: "ignore",
   }).unref();
-  process.stderr.write("docrank reap: stopping this session's groups in the background.\n");
+  process.stderr.write("stickler reap: stopping this session's groups in the background.\n");
 }
 
 try {
   await main();
 } catch (e) {
-  process.stderr.write(`docrank reap: ${e.message}\n`);
+  process.stderr.write(`stickler reap: ${e.message}\n`);
 }

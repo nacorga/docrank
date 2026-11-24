@@ -12,7 +12,7 @@ const config = { format: { command: sed, lintCommand: lint, lintExtensions: [".j
 
 const git = (cwd, ...args) => execFileSync("git", ["-c", "user.name=t", "-c", "user.email=t@t", "-C", cwd, ...args], { stdio: "ignore" });
 const repo = (files = {}, extra = config) => {
-  const dir = project({ ".claude/docrank.json": JSON.stringify(extra), ...files });
+  const dir = project({ ".claude/stickler.json": JSON.stringify(extra), ...files });
   git(dir, "init", "-q");
   git(dir, "add", ".");
   git(dir, "commit", "-qm", "base");

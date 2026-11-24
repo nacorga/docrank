@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * docrank watch's observer: every hook event it is wired to becomes one line
+ * stickler watch's observer: every hook event it is wired to becomes one line
  * in the session's watch log (`lib/watch/record.mjs`), which the watch server
  * tails for the browser tab.
  *

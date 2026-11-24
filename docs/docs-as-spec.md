@@ -59,11 +59,11 @@ expect(keys).toContain("docs.precedence");
 
 ## The judges
 
-`docrank:spec-arbiter` and `docrank:surface-reviewer` preload the
+`stickler:spec-arbiter` and `stickler:surface-reviewer` preload the
 `judge-protocol` skill and hold no tool that edits, so the read-only guard
 keeps their Bash to reads. Agent frontmatter cannot read the repository's
 config, and a brief can be paraphrased or forgotten on a re-check, so each
-judge Reads `.claude/docrank.json` itself before anything else, and takes a
+judge Reads `.claude/stickler.json` itself before anything else, and takes a
 key it does not set from this repository's `docs/config.md`. Read is not
 Bash, so the read-only guard never stands between a judge and its config.
 
@@ -71,5 +71,5 @@ The surface reviewer's browser is the plugin's MCP server `browser`
 (`.mcp.json`, `chrome-devtools-mcp` pinned, headless, a throwaway profile):
 a plugin agent's `mcpServers` frontmatter is ignored
 ([harness-facts.md](harness-facts.md) § 6). Its tools are named
-`mcp__plugin_docrank_browser__<tool>`, and the reviewer's `tools:` names only
+`mcp__plugin_stickler_browser__<tool>`, and the reviewer's `tools:` names only
 those that read a page.

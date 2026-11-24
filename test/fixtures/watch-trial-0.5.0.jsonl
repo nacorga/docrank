@@ -7,8 +7,8 @@
 {"time":1795450913490,"event":"SessionStart","source":"resume","repo":"repo-tracking"}
 {"time":1795450915608,"event":"UserPromptSubmit"}
 {"time":1795450915838,"event":"SubagentStart","agentId":"a3ce22baa578f9600","agentType":"general-purpose"}
-{"time":1795450917507,"event":"PreToolUse","agentId":"a3ce22baa578f9600","agentType":"general-purpose","toolUseId":"toolu_01AgJVbmKGa3n4NQPsyGEcHD","tool":"Bash","input":{"command":"node /path/to/docrank/scripts/run-gates.mjs -C /tmp/demo/repo-tracking 2>&1 | tail -60"},"gate":"*"}
-{"time":1795450919138,"event":"PostToolUse","agentId":"a3ce22baa578f9600","agentType":"general-purpose","toolUseId":"toolu_01AgJVbmKGa3n4NQPsyGEcHD","tool":"Bash","input":{"command":"node /path/to/docrank/scripts/run-gates.mjs -C /tmp/demo/repo-tracking 2>&1 | tail -60"},"gate":"*","ok":true}
+{"time":1795450917507,"event":"PreToolUse","agentId":"a3ce22baa578f9600","agentType":"general-purpose","toolUseId":"toolu_01AgJVbmKGa3n4NQPsyGEcHD","tool":"Bash","input":{"command":"node /path/to/stickler/scripts/run-gates.mjs -C /tmp/demo/repo-tracking 2>&1 | tail -60"},"gate":"*"}
+{"time":1795450919138,"event":"PostToolUse","agentId":"a3ce22baa578f9600","agentType":"general-purpose","toolUseId":"toolu_01AgJVbmKGa3n4NQPsyGEcHD","tool":"Bash","input":{"command":"node /path/to/stickler/scripts/run-gates.mjs -C /tmp/demo/repo-tracking 2>&1 | tail -60"},"gate":"*","ok":true}
 {"time":1795450921093,"event":"SubagentStop","agentId":"a3ce22baa578f9600","agentType":"general-purpose"}
 {"time":1795450921098,"event":"Stop"}
 {"time":1795450921413,"event":"SessionEnd","reason":"other"}

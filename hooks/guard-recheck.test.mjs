@@ -17,7 +17,7 @@ const dir = project(agents);
 const sessions = [];
 
 afterEach(() => {
-  for (const session of sessions.splice(0)) rmSync(path.join(tmpdir(), `docrank-recheck-${session}`), { force: true });
+  for (const session of sessions.splice(0)) rmSync(path.join(tmpdir(), `stickler-recheck-${session}`), { force: true });
 });
 
 /** A session in which each `id` was dispatched as `type`, optionally with a name. */
@@ -60,7 +60,7 @@ describe("guard-recheck.mjs", () => {
   });
 
   it("reads the limit from judges.maxRechecks", async () => {
-    const configured = project({ ...agents, ".claude/docrank.json": JSON.stringify({ judges: { maxRechecks: 1 } }) });
+    const configured = project({ ...agents, ".claude/stickler.json": JSON.stringify({ judges: { maxRechecks: 1 } }) });
     const probe = await sessionWith([["a1", "reviewer"]], configured);
     expect(await recheckDecision(probe, "a1", "round 1")).toBeNull();
     expect(await recheckDecision(probe, "a1", "round 2")).toContain("has had 1 messages");

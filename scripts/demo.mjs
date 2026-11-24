@@ -17,7 +17,7 @@
  * machine with no global one builds it too.
  *
  * The session is opened with `--plugin-dir` this plugin's root: it loads this
- * copy whatever scope docrank is installed at, and a project- or local-scope
+ * copy whatever scope stickler is installed at, and a project- or local-scope
  * install elsewhere is not enabled in a new directory (docs/harness-facts.md,
  * fact 16).
  */
@@ -60,7 +60,7 @@ if (args[0]) {
   if (existsSync(dir)) die(`${dir} exists. Name a directory that does not: the demo never writes into one.`);
   mkdirSync(dir, { recursive: true });
   dir = realpathSync(dir);
-} else dir = realpathSync(mkdtempSync(path.join(tmpdir(), "docrank-demo-")));
+} else dir = realpathSync(mkdtempSync(path.join(tmpdir(), "stickler-demo-")));
 
 const origin = path.join(dir, "origin.git");
 const repo = path.join(dir, "repo");
@@ -74,7 +74,7 @@ try {
   git(dir, "init", "-q", "--bare", "-b", "main", origin);
   mkdirSync(repo);
   git(repo, "init", "-q", "-b", "main");
-  git(repo, "config", "user.name", "docrank demo");
+  git(repo, "config", "user.name", "stickler demo");
   git(repo, "config", "user.email", "demo@example.com");
   git(repo, "config", "commit.gpgsign", "false");
   copyExample(EXAMPLE, repo);
@@ -94,7 +94,7 @@ try {
   die(`The demo could not be built, and ${dir} was removed: ${e.stderr?.toString().trim() || e.message}`);
 }
 
-process.stdout.write(`docrank demo in ${dir}
+process.stdout.write(`stickler demo in ${dir}
 
   origin.git      a bare remote; main is pushed to it
   repo            the main checkout, on main
@@ -106,15 +106,15 @@ Open a session in the worktree, with this copy of the plugin:
 
   cd ${sh(worktree)} && claude --plugin-dir ${sh(PLUGIN_ROOT)}
 
---plugin-dir loads this copy for that session whatever scope docrank is
+--plugin-dir loads this copy for that session whatever scope stickler is
 installed at, and replaces an installed one; a project- or local-scope
 install in another repository is not enabled in this new directory
 (docs/harness-facts.md, fact 16).
 
 Then type, one at a time, each line as it is:
 
-  1. /docrank:gates
-  2. Review this branch with docrank:spec-arbiter.
+  1. /stickler:gates
+  2. Review this branch with stickler:spec-arbiter.
   3. Switch this worktree to demo/fixed, then have the same arbiter re-check demo/tracking..HEAD.
 
 What to expect, kept apart so a pasted step carries no hint to the judge:

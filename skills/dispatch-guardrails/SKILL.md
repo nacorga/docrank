@@ -10,10 +10,10 @@ see what it is reaching into. Each constraint below answers one of those
 reaches.
 
 Copy the block into the dispatch verbatim: a paraphrase drops the clause that
-mattered. docrank's dispatch guard appends every line a dispatch to an agent
+mattered. stickler's dispatch guard appends every line a dispatch to an agent
 that can edit lacks, so a dispatch that forgets it still carries it. A
 repository adds its own lines in the file `dispatch.guardrailsFile` names in
-`.claude/docrank.json`; the guard appends that file after this block, and a
+`.claude/stickler.json`; the guard appends that file after this block, and a
 dispatch copies both.
 
 ## The block
@@ -96,7 +96,7 @@ constraints`, verbatim too:
   branch.
 ```
 
-docrank's read-only guard holds an agent whose type cannot edit to Bash reads
+stickler's read-only guard holds an agent whose type cannot edit to Bash reads
 alone, so for a read-only reviewer that line is enforced, not only asked.
 
 ## Dispatching on Opus

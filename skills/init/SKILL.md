@@ -1,16 +1,16 @@
 ---
 name: init
-description: Read this repository (branches, package manager, scripts, formatter, docs tree, ignored env files) and propose a complete `.claude/docrank.json` for the user to confirm, then write it, prove it loads, and offer the optional git pre-push hook and, with watch on, the task tools' variable. Use when adopting docrank in a repository, or to revisit its configuration.
+description: Read this repository (branches, package manager, scripts, formatter, docs tree, ignored env files) and propose a complete `.claude/stickler.json` for the user to confirm, then write it, prove it loads, and offer the optional git pre-push hook and, with watch on, the task tools' variable. Use when adopting stickler in a repository, or to revisit its configuration.
 disable-model-invocation: true
-allowed-tools: Bash(node ${CLAUDE_PLUGIN_ROOT}/bin/docrank.mjs *) Bash(git branch *) Bash(git remote *) Bash(git ls-files *) Bash(git status *) Bash(git rev-parse *) Read Grep Glob
+allowed-tools: Bash(node ${CLAUDE_PLUGIN_ROOT}/bin/stickler.mjs *) Bash(git branch *) Bash(git remote *) Bash(git ls-files *) Bash(git status *) Bash(git rev-parse *) Read Grep Glob
 ---
 
-Propose `.claude/docrank.json` for this repository. Every key and default is in
+Propose `.claude/stickler.json` for this repository. Every key and default is in
 `${CLAUDE_PLUGIN_ROOT}/docs/config.md`; read it first. The file is the only
-thing docrank asks of a repository, and a key left out keeps its default, so
+thing stickler asks of a repository, and a key left out keeps its default, so
 write a key only where the repository differs from the default or the key turns
 a feature on. Read; write nothing until step 3. Files are read with Read and
-found with Glob; Bash runs only the git and docrank commands of
+found with Glob; Bash runs only the git and stickler commands of
 `allowed-tools`, one per call, never chained. Absence is read from a Glob or
 a listing, never from an error: a file that may be missing is found with Glob
 before it is read, and no command is run that fails when what it asks about is
@@ -52,8 +52,8 @@ neither settles a key, it stays out and the proposal says so; never guess.
   `docs.scanRoots` as `["docs"]` when documents cite each other by
   `§` headings. Empty when unsure: an empty key is an off feature, a wrong one
   is noise on every stop.
-- **Spec arbiter.** `docrank:spec-arbiter` judges a diff against the
-  documents of `docs.precedence`, and `docrank judges`, which the ship skill
+- **Spec arbiter.** `stickler:spec-arbiter` judges a diff against the
+  documents of `docs.precedence`, and `stickler judges`, which the ship skill
   follows, names it for a diff only through `judges.routes`; either empty, it
   is off. Settle the document first:
   - A candidate that states a rank, its own or another's ("this document
@@ -71,7 +71,7 @@ neither settles a key, it stays out and the proposal says so; never guess.
   itself, so a file added beside it is not left unjudged; the user still
   chooses. Propose the two keys together:
   `docs.precedence`, `["<doc>"]` for a chosen document, and
-  `judges.routes: [{ "agent": "docrank:spec-arbiter", "ground": [<globs>] }]`,
+  `judges.routes: [{ "agent": "stickler:spec-arbiter", "ground": [<globs>] }]`,
   the ground `["**"]` when the user narrows nothing. Neither is inferred: a
   stated rank is proposed for the user's yes, and anything else is asked.
 - **Worktree files.** `.env*` (and `.mcp.json`) that exist but are git-ignored
@@ -82,9 +82,9 @@ neither settles a key, it stays out and the proposal says so; never guess.
   repository has dependencies.
 - **Watch.** `watch.enabled` turns on the live view of a session in a
   browser tab; nothing in a repository says whether its user wants one, so
-  ask, with the value of an existing `.claude/docrank.json` as the first
+  ask, with the value of an existing `.claude/stickler.json` as the first
   option when it has one. Off: the key stays out.
-- **Existing setup.** An existing `.claude/docrank.json` is read first and its
+- **Existing setup.** An existing `.claude/stickler.json` is read first and its
   keys kept; a `CLAUDE.md` is read for rules a key can state (a banned
   command is a `guard.extraDeny`, a file nobody edits a `paths.rules`).
 
@@ -108,18 +108,18 @@ user's words. Decide what the repository settles; ask only what it does not.
 
 Nothing is written before the user confirms the proposal.
 
-1. If `.claude/docrank.json` exists, show the diff against the proposal and ask
+1. If `.claude/stickler.json` exists, show the diff against the proposal and ask
    before replacing it. Never overwrite it unseen.
 2. Write the file.
-3. Prove it: `node ${CLAUDE_PLUGIN_ROOT}/bin/docrank.mjs config` prints the
+3. Prove it: `node ${CLAUDE_PLUGIN_ROOT}/bin/stickler.mjs config` prints the
    resolved config, or one error per problem naming the key and exits 1; fix
    and run again until it prints. Where `docs.scanRoots` or `docs.unitRoots` is
-   set, also run `docrank check sections` or `docrank check drift-pairs` and
+   set, also run `stickler check sections` or `stickler check drift-pairs` and
    report what they find, without editing the documents. Where
    `judges.routes` is set, also run
-   `node ${CLAUDE_PLUGIN_ROOT}/bin/docrank.mjs judges` and report the judge it
+   `node ${CLAUDE_PLUGIN_ROOT}/bin/stickler.mjs judges` and report the judge it
    names. It reads the working tree too, so the file just written is a change:
-   a ground that covers `.claude/docrank.json` shows the judge as `launch`,
+   a ground that covers `.claude/stickler.json` shows the judge as `launch`,
    one that does not as `skip`, and both prove the route, as does
    `Nothing changed` on a tree with no change since the fork. It exits 1 when
    neither `origin/<integration>` nor `<integration>` is a commit here, as in a

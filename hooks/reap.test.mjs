@@ -31,7 +31,7 @@ function deadPid() {
 
 /** A sandbox repository whose config turns the reaper on. */
 function sandbox(reap = { enabled: true }) {
-  const dir = project({ ".claude/docrank.json": JSON.stringify({ reap }) });
+  const dir = project({ ".claude/stickler.json": JSON.stringify({ reap }) });
   execFileSync("git", ["init", "-q", "-b", "main", dir]);
   execFileSync("git", ["-C", dir, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "--allow-empty", "-m", "init"]);
   return dir;
@@ -96,7 +96,7 @@ describe("reap.mjs at session start", { timeout: 30000 }, () => {
     const { status, stdout } = await start(dir);
     expect(status).toBe(0);
     expect(await gone(stub.pid)).toBe(true);
-    expect(stdout).toMatch(/^docrank reap: stopped 1 process group\(s\) nobody held, in /u);
+    expect(stdout).toMatch(/^stickler reap: stopped 1 process group\(s\) nobody held, in /u);
   });
 
   it("stops one in a worktree beside the main checkout that was removed and pruned under it", async () => {
@@ -151,7 +151,7 @@ describe("reap.mjs at session start", { timeout: 30000 }, () => {
       PATH: `${bin}:${process.env.PATH}`,
     });
     expect([status, stdout]).toEqual([0, ""]);
-    expect(stderr).toBe("docrank reap: `ps` did not answer in time; nothing stopped\n");
+    expect(stderr).toBe("stickler reap: `ps` did not answer in time; nothing stopped\n");
     expect(alive(stub.pid)).toBe(true);
   });
 
@@ -188,11 +188,11 @@ describe("reap.mjs at session end", { timeout: 30000 }, () => {
     for (const reason of ["clear", "resume"]) {
       const { status, stderr } = await finish(dir, session, reason);
       expect(status).toBe(0);
-      expect(stderr).toBe(`docrank reap: the session goes on (${reason}); nothing stopped.\n`);
+      expect(stderr).toBe(`stickler reap: the session goes on (${reason}); nothing stopped.\n`);
       expect(alive(held.pid)).toBe(true);
     }
     // The same session ending for good stops the same stub: the runs above decided, not missed it.
-    expect((await finish(dir, session, "other")).stderr).toBe("docrank reap: stopping this session's groups in the background.\n");
+    expect((await finish(dir, session, "other")).stderr).toBe("stickler reap: stopping this session's groups in the background.\n");
     expect(await gone(held.pid)).toBe(true);
   });
 });

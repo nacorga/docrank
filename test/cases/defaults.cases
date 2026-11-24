@@ -1,4 +1,4 @@
-# No .claude/docrank.json: the defaults. The integration branch is `main`, which
+# No .claude/stickler.json: the defaults. The integration branch is `main`, which
 # is also protected; a session merges no pull request.
 # The gh stub answers the bases: 1 main, 2 develop.
 

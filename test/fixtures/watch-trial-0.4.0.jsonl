@@ -5,9 +5,9 @@
 {"time":1795446167294,"event":"PreToolUse","toolUseId":"toolu_01SMrfqGVAkaSBKCx4porVv4","tool":"TaskCreate","input":{"subject":"Listar archivos de src/ y test/ con un Explore subagent","activeForm":"Listando archivos con Explore"}}
 {"time":1795446167298,"event":"TaskCreated","taskId":"1","subject":"Listar archivos de src/ y test/ con un Explore subagent"}
 {"time":1795446167300,"event":"PostToolUse","toolUseId":"toolu_01SMrfqGVAkaSBKCx4porVv4","tool":"TaskCreate","input":{"subject":"Listar archivos de src/ y test/ con un Explore subagent","activeForm":"Listando archivos con Explore"},"ok":true,"taskId":"1"}
-{"time":1795446168215,"event":"PreToolUse","toolUseId":"toolu_011oMxAkfrt2uxhWKsUtCqCN","tool":"TaskCreate","input":{"subject":"Ejecutar los gates con /docrank:gates","activeForm":"Ejecutando los gates"}}
-{"time":1795446168219,"event":"TaskCreated","taskId":"2","subject":"Ejecutar los gates con /docrank:gates"}
-{"time":1795446168221,"event":"PostToolUse","toolUseId":"toolu_011oMxAkfrt2uxhWKsUtCqCN","tool":"TaskCreate","input":{"subject":"Ejecutar los gates con /docrank:gates","activeForm":"Ejecutando los gates"},"ok":true,"taskId":"2"}
+{"time":1795446168215,"event":"PreToolUse","toolUseId":"toolu_011oMxAkfrt2uxhWKsUtCqCN","tool":"TaskCreate","input":{"subject":"Ejecutar los gates con /stickler:gates","activeForm":"Ejecutando los gates"}}
+{"time":1795446168219,"event":"TaskCreated","taskId":"2","subject":"Ejecutar los gates con /stickler:gates"}
+{"time":1795446168221,"event":"PostToolUse","toolUseId":"toolu_011oMxAkfrt2uxhWKsUtCqCN","tool":"TaskCreate","input":{"subject":"Ejecutar los gates con /stickler:gates","activeForm":"Ejecutando los gates"},"ok":true,"taskId":"2"}
 {"time":1795446169267,"event":"PreToolUse","toolUseId":"toolu_0171PQ4Aq8sNq1aMvrZcR2k3","tool":"TaskCreate","input":{"subject":"Comparar src/checkout.mjs con docs/spec.md","activeForm":"Comparando checkout con la spec"}}
 {"time":1795446169276,"event":"TaskCreated","taskId":"3","subject":"Comparar src/checkout.mjs con docs/spec.md"}
 {"time":1795446169276,"event":"PostToolUse","toolUseId":"toolu_0171PQ4Aq8sNq1aMvrZcR2k3","tool":"TaskCreate","input":{"subject":"Comparar src/checkout.mjs con docs/spec.md","activeForm":"Comparando checkout con la spec"},"ok":true,"taskId":"3"}
@@ -41,9 +41,9 @@
 {"time":1795446200155,"event":"PostToolUse","toolUseId":"toolu_014bfikZsb1hHWcteKgKSbKU","tool":"TaskUpdate","input":{"taskId":"1","status":"completed"},"ok":true}
 {"time":1795446200603,"event":"PreToolUse","toolUseId":"toolu_013sngC1BT9DigxhRx7UuepS","tool":"TaskUpdate","input":{"taskId":"2","status":"in_progress"}}
 {"time":1795446200606,"event":"PostToolUse","toolUseId":"toolu_013sngC1BT9DigxhRx7UuepS","tool":"TaskUpdate","input":{"taskId":"2","status":"in_progress"},"ok":true}
-{"time":1795446200818,"event":"PreToolUse","toolUseId":"toolu_01UqSNdT5crC9ggZ5PzaTkLt","tool":"Skill","input":{"skill":"docrank:gates"}}
+{"time":1795446200818,"event":"PreToolUse","toolUseId":"toolu_01UqSNdT5crC9ggZ5PzaTkLt","tool":"Skill","input":{"skill":"stickler:gates"}}
 {"time":1795446201204,"event":"SubagentStart","agentId":"aa63b62702bc448ab","agentType":"general-purpose"}
-{"time":1795446201212,"event":"PostToolUse","toolUseId":"toolu_01UqSNdT5crC9ggZ5PzaTkLt","tool":"Skill","input":{"skill":"docrank:gates"},"ok":true}
+{"time":1795446201212,"event":"PostToolUse","toolUseId":"toolu_01UqSNdT5crC9ggZ5PzaTkLt","tool":"Skill","input":{"skill":"stickler:gates"},"ok":true}
 {"time":1795446205008,"event":"PreToolUse","agentId":"aa63b62702bc448ab","agentType":"general-purpose","toolUseId":"toolu_014s83C4L1S8gMdJqZTJDubf","tool":"Bash","input":{"command":"node ${CLAUDE_PLUGIN_ROOT}/scripts/run-gates.mjs -C /tmp/demo/repo-tracking 2>&1 | tail -60"},"gate":"*"}
 {"time":1795446205026,"event":"Stop"}
 {"time":1795446206253,"event":"PostToolUse","agentId":"aa63b62702bc448ab","agentType":"general-purpose","toolUseId":"toolu_014s83C4L1S8gMdJqZTJDubf","tool":"Bash","input":{"command":"node ${CLAUDE_PLUGIN_ROOT}/scripts/run-gates.mjs -C /tmp/demo/repo-tracking 2>&1 | tail -60"},"gate":"*","ok":true}

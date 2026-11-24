@@ -10,7 +10,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(here, "..");
 const SCRIPT = path.join(here, "demo.mjs");
 const EXAMPLE = path.join(ROOT, "examples", "consent");
-const scratch = realpathSync(mkdtempSync(path.join(tmpdir(), "docrank-demo-test-")));
+const scratch = realpathSync(mkdtempSync(path.join(tmpdir(), "stickler-demo-test-")));
 afterAll(() => rmSync(scratch, { recursive: true, force: true }));
 
 const gitIn = (dir, ...args) => execFileSync("git", ["-C", dir, ...args], { encoding: "utf8" }).trim();
@@ -58,7 +58,7 @@ describe("demo.mjs", () => {
   });
 
   it("prints the paths, the session command with this plugin's root and how to remove the demo", () => {
-    expect(built.stdout).toContain(`docrank demo in ${dir}\n`);
+    expect(built.stdout).toContain(`stickler demo in ${dir}\n`);
     expect(built.stdout).toContain(`  cd ${worktree} && claude --plugin-dir ${ROOT}\n`);
     expect(built.stdout).toContain(`rm -rf ${dir}\n`);
   });
@@ -71,8 +71,8 @@ describe("demo.mjs", () => {
     expect(expectAt).toBeGreaterThan(typeAt);
     const typed = lines.slice(typeAt + 1, expectAt).filter(Boolean);
     expect(typed).toEqual([
-      "  1. /docrank:gates",
-      "  2. Review this branch with docrank:spec-arbiter.",
+      "  1. /stickler:gates",
+      "  2. Review this branch with stickler:spec-arbiter.",
       "  3. Switch this worktree to demo/fixed, then have the same arbiter re-check demo/tracking..HEAD.",
     ]);
     // A pasted step must not tell the judge what to find.
@@ -87,20 +87,20 @@ describe("demo.mjs", () => {
     const config = loadConfig({ cwd: worktree });
     expect(config.root).toBe(worktree);
     expect(config.docs.precedence).toEqual(["docs/spec.md"]);
-    expect(config.judges.routes).toEqual([{ agent: "docrank:spec-arbiter", ground: ["src/**"] }]);
+    expect(config.judges.routes).toEqual([{ agent: "stickler:spec-arbiter", ground: ["src/**"] }]);
     expect(config.gates.run).toEqual([{ name: "test", command: "node --test test/checkout.test.mjs" }]);
     // No drift pairing: its Stop hook would point the session at the spec before the arbiter is asked.
     expect(config.docDrift.entries).toEqual([]);
-    const cli = node([path.join(ROOT, "bin", "docrank.mjs"), "config"], worktree);
+    const cli = node([path.join(ROOT, "bin", "stickler.mjs"), "config"], worktree);
     expect(cli.status).toBe(0);
     expect(JSON.parse(cli.stdout).root).toBe(worktree);
   });
 
   it("names the spec arbiter, launched on src/checkout.mjs, for the branch and for the fix's range", () => {
     for (const args of [[], ["demo/tracking..demo/fixed"]]) {
-      const r = node([path.join(ROOT, "bin", "docrank.mjs"), "judges", ...args], worktree);
+      const r = node([path.join(ROOT, "bin", "stickler.mjs"), "judges", ...args], worktree);
       expect(r.status).toBe(0);
-      expect(r.stdout).toContain("- `docrank:spec-arbiter` — launch: `src/checkout.mjs`.\n");
+      expect(r.stdout).toContain("- `stickler:spec-arbiter` — launch: `src/checkout.mjs`.\n");
     }
   });
 
@@ -110,7 +110,7 @@ describe("demo.mjs", () => {
       expect(r.stdout).toContain("PASS test\n");
       expect(r.status).toBe(0);
     }
-    const record = path.join(repo, ".git", "docrank-gates-passed");
+    const record = path.join(repo, ".git", "stickler-gates-passed");
     expect(readFileSync(record, "utf8")).toContain(`${gitIn(worktree, "rev-parse", "HEAD")}\n`);
   });
 
@@ -146,7 +146,7 @@ describe("demo.mjs", () => {
     const r = spawnSync(process.execPath, [SCRIPT], { env: { ...env, TMPDIR: tmp }, encoding: "utf8" });
     expect(r.status).toBe(0);
     const [made] = readdirSync(tmp);
-    expect(made).toMatch(/^docrank-demo-/u);
+    expect(made).toMatch(/^stickler-demo-/u);
     expect(readdirSync(path.join(tmp, made)).sort()).toEqual(["origin.git", "repo", "repo-tracking"]);
   });
 });

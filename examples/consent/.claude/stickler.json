@@ -3,7 +3,7 @@
     "run": [{ "name": "test", "command": "node --test test/checkout.test.mjs" }]
   },
   "judges": {
-    "routes": [{ "agent": "docrank:spec-arbiter", "ground": ["src/**"] }]
+    "routes": [{ "agent": "stickler:spec-arbiter", "ground": ["src/**"] }]
   },
   "docs": {
     "precedence": ["docs/spec.md"]

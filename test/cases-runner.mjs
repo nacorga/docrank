@@ -2,7 +2,7 @@
  * Runs a hook the way Claude Code does: a JSON object on stdin, exit 0 to
  * allow, 2 to block. Each sandbox is a git repository with a sandbox HOME (the
  * audit log never touches the real one), a `gh` stub first on PATH, and the
- * repository's `.claude/docrank.json` committed, so a worktree reads it too.
+ * repository's `.claude/stickler.json` committed, so a worktree reads it too.
  *
  * A cases file is one config and many cases, one per line:
  *
@@ -40,7 +40,7 @@ export function parseCases(file) {
 }
 
 export function sandbox({ config, hook = GUARD } = {}) {
-  const dir = realpathSync(mkdtempSync(path.join(tmpdir(), "docrank-guard-")));
+  const dir = realpathSync(mkdtempSync(path.join(tmpdir(), "stickler-guard-")));
   const repo = path.join(dir, "repo");
   const wt = path.join(dir, "wt");
   const git = (cwd, ...args) =>
@@ -52,8 +52,8 @@ export function sandbox({ config, hook = GUARD } = {}) {
   git(repo, "config", "user.name", "test");
   if (config) {
     mkdirSync(path.join(repo, ".claude"));
-    writeFileSync(path.join(repo, ".claude", "docrank.json"), JSON.stringify(config));
-    git(repo, "add", ".claude/docrank.json");
+    writeFileSync(path.join(repo, ".claude", "stickler.json"), JSON.stringify(config));
+    git(repo, "add", ".claude/stickler.json");
   }
   writeFileSync(path.join(repo, "seed.txt"), "");
   git(repo, "add", "seed.txt");

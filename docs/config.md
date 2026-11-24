@@ -1,6 +1,6 @@
 # Configuration
 
-One file per repository, `.claude/docrank.json`, read through `lib/config.mjs`.
+One file per repository, `.claude/stickler.json`, read through `lib/config.mjs`.
 This page is the only place a key is documented; the loader is the only place
 its shape is defined. The file may be absent: every key then has its default.
 
@@ -19,14 +19,14 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 
 | Key | Type | Default | Read by |
 |---|---|---|---|
-| `requires` | version (`major.minor.patch`) | `null` | every hook and the CLI, through the loader: the oldest docrank this repository accepts. An older plugin refuses the whole file, so every guard refuses and the CLI exits 1, naming both versions and `claude plugin update docrank@docrank`. A plugin that predates the key refuses it as unknown, so the floor holds from the release that introduced it. Null means no floor |
+| `requires` | version (`major.minor.patch`) | `null` | every hook and the CLI, through the loader: the oldest stickler this repository accepts. An older plugin refuses the whole file, so every guard refuses and the CLI exits 1, naming both versions and `claude plugin update stickler@stickler`. A plugin that predates the key refuses it as unknown, so the floor holds from the release that introduced it. Null means no floor |
 
 ## `branches`
 
 | Key | Type | Default | Read by |
 |---|---|---|---|
 | `branches.protected` | string[] | `["main", "master"]` | Bash guard: refuses a push naming one, a bare push or a `git merge` while on one, any `gh pr merge` or `gh api` merge into one, whatever `allowedPrBases` says, and is a base `gh pr create` may name. Exact names, no globs |
-| `branches.integration` | string | `"main"` | Bash guard (the main checkout stays on it; a push of a commit `origin/<integration>` holds needs no gates record), worktrees (cut from the fetched `origin/<integration>`), `docrank judges` (the fork point), the PR handover guard, doc drift and `pr` defaults |
+| `branches.integration` | string | `"main"` | Bash guard (the main checkout stays on it; a push of a commit `origin/<integration>` holds needs no gates record), worktrees (cut from the fetched `origin/<integration>`), `stickler judges` (the fork point), the PR handover guard, doc drift and `pr` defaults |
 | `branches.allowedPrBases` | glob[] | `[<integration>]` | Bash guard: `gh pr merge` is allowed only for a pull request whose base matches and is not protected (GitHub is asked; `--admin` never), and `gh pr create` or `edit` may name a protected branch or one of these as base. `[]` leaves every merge to the user |
 
 ## `guard`
@@ -47,7 +47,7 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 | `gates.prelude` | string | `""` | gates runner: shell text run before every gate, job and the preflight, in the same shell as the command, so what it exports or sources (a version manager's `use`, an environment variable) reaches it; one that fails fails the command |
 | `gates.preflight` | string | `""` | gates runner: a command run once, after the prelude and before the first gate or job; when it fails the run ends there with `FAIL preflight` and the tail of its output, so a missing toolchain is said once and not by every gate |
 | `gates.requireBeforePush` | boolean | `true` | Bash guard: a push is refused unless the tip of each ref it pushes is listed in the record or is an ancestor of `origin/<integration>`; tags, deletions and dry runs are not checked; moot while `gates.run` is empty |
-| `gates.record` | string | `"docrank-gates-passed"` | gates runner, Bash guard and the optional `templates/pre-push`: file name, in the git common directory, holding one commit sha per line, each a HEAD that passed; the runner writes it only when every gate passed on a clean tree whose HEAD did not move |
+| `gates.record` | string | `"stickler-gates-passed"` | gates runner, Bash guard and the optional `templates/pre-push`: file name, in the git common directory, holding one commit sha per line, each a HEAD that passed; the runner writes it only when every gate passed on a clean tree whose HEAD did not move |
 
 ## `dispatch`
 
@@ -65,7 +65,7 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 |---|---|---|---|
 | `judges.skill` | string | `"judge-protocol"` | read-only enforcement: the skill whose agents are judges |
 | `judges.maxRechecks` | integer >= 1 | `3` | re-check guard and the judge protocol: the one value both read |
-| `judges.routes` | `{agent: string, ground: glob[]}[]` | `[]` | `docrank judges [<range>]` and the ship skill: a judge is launched when a changed path matches one of its `ground` globs, `["**"]` being every change. Empty means no judge is named |
+| `judges.routes` | `{agent: string, ground: glob[]}[]` | `[]` | `stickler judges [<range>]` and the ship skill: a judge is launched when a changed path matches one of its `ground` globs, `["**"]` being every change. Empty means no judge is named |
 
 ## `paths`
 
@@ -105,7 +105,7 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 | `worktree.prune` | boolean | `false` | session start: removes a worktree and its local branch only when it is on a branch (not detached, not the main checkout, not the session's own), GitHub lists a merged pull request from the branch among the last 200 (one `gh` call, ten seconds at most) with the worktree's tip as its merged head, and `git status` shows nothing, untracked files included. A tip merely on `origin/<integration>` is not enough, and no idle-time heuristic stands in for the merge: a live session's unedited worktree is told from a dead one's only by a merged head. Ignored files are not listed by `git status`, so removal deletes them with the worktree (dependencies, build output). Without `gh`, offline or past the timeout, nothing goes. Anything else is the repository's own to remove |
 
 A worktree is cut from `origin/<integration>` unless it is given a base. Slices
-that build on a shared branch pass it: `docrank worktree <branch> <base>` fetches
+that build on a shared branch pass it: `stickler worktree <branch> <base>` fetches
 `origin/<base>` (and fails if it cannot) and cuts from it, and the `WorktreeCreate`
 input may carry a `base`, a ref that is cut from as it stands with nothing
 fetched. A branch that already exists is checked out as it is.
@@ -174,7 +174,7 @@ fetched. A branch that already exists is checked out as it is.
 | Key | Type | Default | Read by |
 |---|---|---|---|
 | `watch.enabled` | boolean | `false` | watch hook: records the session's events for the live view, and its `SessionStart` starts the server and opens the tab. Off, the hook exits at once |
-| `watch.port` | integer from 1025 to 65535 | `47173` | watch server and `docrank watch`: the port on `127.0.0.1` that one server, shared by every session of the machine, listens on |
+| `watch.port` | integer from 1025 to 65535 | `47173` | watch server and `stickler watch`: the port on `127.0.0.1` that one server, shared by every session of the machine, listens on |
 | `watch.language` | `en`, `es` | `"en"` | watch view: the language of its sentences and labels |
 | `watch.retentionDays` | integer >= 1 | `30` | watch server: days a recorded session is kept after its last line; the server deletes older ones when it starts and once a day. One server serves every repository, so the value of the session that started it applies to all |
 
@@ -196,7 +196,7 @@ fetched. A branch that already exists is checked out as it is.
 
 | Key | Type | Default | Read by |
 |---|---|---|---|
-| `reap.enabled` | boolean | `false` | reaper, at session start and end: stops the process groups sessions left running in the repository. At start, a group goes only when a member's working directory is in one of the repository's checkouts or in a removed `<main>-<name>` beside the main one, every such member carries a `CLAUDE_PID` naming a session no longer alive, and its leader is gone or adopted by PID 1. At end (unless the reason is `clear` or `resume`), every group a member of which carries the ending session's `CLAUDE_PID` goes, held or not. A process with no `CLAUDE_PID`, or whose environment cannot be read, is never stopped; neither is docrank's watch server, nor a group holding the hook, the ending session's own process or an ancestor of either. `CLAUDE_PID` is inherited: anything launched from a session's shell carries it, a tmux server, a build daemon or an editor started there included, and is stopped like a server once its session is gone; `reap.keep` is what protects it. SIGTERM, then SIGKILL after five seconds to a group still there. Reads `ps`, and on macOS `lsof` and `python3` (not run when `xcode-select -p` fails, where `python3` is only the installer's stub), each given five seconds: a read missing or out of time stops nothing |
+| `reap.enabled` | boolean | `false` | reaper, at session start and end: stops the process groups sessions left running in the repository. At start, a group goes only when a member's working directory is in one of the repository's checkouts or in a removed `<main>-<name>` beside the main one, every such member carries a `CLAUDE_PID` naming a session no longer alive, and its leader is gone or adopted by PID 1. At end (unless the reason is `clear` or `resume`), every group a member of which carries the ending session's `CLAUDE_PID` goes, held or not. A process with no `CLAUDE_PID`, or whose environment cannot be read, is never stopped; neither is stickler's watch server, nor a group holding the hook, the ending session's own process or an ancestor of either. `CLAUDE_PID` is inherited: anything launched from a session's shell carries it, a tmux server, a build daemon or an editor started there included, and is stopped like a server once its session is gone; `reap.keep` is what protects it. SIGTERM, then SIGKILL after five seconds to a group still there. Reads `ps`, and on macOS `lsof` and `python3` (not run when `xcode-select -p` fails, where `python3` is only the installer's stub), each given five seconds: a read missing or out of time stops nothing |
 | `reap.keep` | regex[] | `[]` | reaper: a group with a member whose command line matches one, tried with the flag `u`, is never stopped, at start or at end. The protection for what a session launched on purpose to outlive it: a development server kept across sessions, an environment held for a reviewer, a tmux server, a build daemon, an editor |
 
 ## `plans`

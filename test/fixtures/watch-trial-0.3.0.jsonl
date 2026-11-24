@@ -5,9 +5,9 @@
 {"time":1795443792415,"event":"PreToolUse","toolUseId":"toolu_01S7TuJJuWimeMyjMPWvh4yd","tool":"TaskCreate","input":{"subject":"Resumir docs/spec.md en tres líneas con un subagente Explore","activeForm":"Resumiendo docs/spec.md"}}
 {"time":1795443792418,"event":"TaskCreated","taskId":"1","subject":"Resumir docs/spec.md en tres líneas con un subagente Explore"}
 {"time":1795443792420,"event":"PostToolUse","toolUseId":"toolu_01S7TuJJuWimeMyjMPWvh4yd","tool":"TaskCreate","input":{"subject":"Resumir docs/spec.md en tres líneas con un subagente Explore","activeForm":"Resumiendo docs/spec.md"},"ok":true,"taskId":"1"}
-{"time":1795443793006,"event":"PreToolUse","toolUseId":"toolu_01C3vkkjPwsvsbjbS9b14aJS","tool":"TaskCreate","input":{"subject":"Ejecutar los gates con /docrank:gates","activeForm":"Ejecutando los gates"}}
-{"time":1795443793014,"event":"TaskCreated","taskId":"2","subject":"Ejecutar los gates con /docrank:gates"}
-{"time":1795443793017,"event":"PostToolUse","toolUseId":"toolu_01C3vkkjPwsvsbjbS9b14aJS","tool":"TaskCreate","input":{"subject":"Ejecutar los gates con /docrank:gates","activeForm":"Ejecutando los gates"},"ok":true,"taskId":"2"}
+{"time":1795443793006,"event":"PreToolUse","toolUseId":"toolu_01C3vkkjPwsvsbjbS9b14aJS","tool":"TaskCreate","input":{"subject":"Ejecutar los gates con /stickler:gates","activeForm":"Ejecutando los gates"}}
+{"time":1795443793014,"event":"TaskCreated","taskId":"2","subject":"Ejecutar los gates con /stickler:gates"}
+{"time":1795443793017,"event":"PostToolUse","toolUseId":"toolu_01C3vkkjPwsvsbjbS9b14aJS","tool":"TaskCreate","input":{"subject":"Ejecutar los gates con /stickler:gates","activeForm":"Ejecutando los gates"},"ok":true,"taskId":"2"}
 {"time":1795443794163,"event":"PreToolUse","toolUseId":"toolu_01GevbaNmozAGqa6NDshPous","tool":"TaskCreate","input":{"subject":"Ejecutar `git push origin HEAD:main` una vez y reportar si fue permitido","activeForm":"Ejecutando git push"}}
 {"time":1795443794171,"event":"TaskCreated","taskId":"3","subject":"Ejecutar `git push origin HEAD:main` una vez y reportar si fue permitido"}
 {"time":1795443794172,"event":"PostToolUse","toolUseId":"toolu_01GevbaNmozAGqa6NDshPous","tool":"TaskCreate","input":{"subject":"Ejecutar `git push origin HEAD:main` una vez y reportar si fue permitido","activeForm":"Ejecutando git push"},"ok":true,"taskId":"3"}
@@ -26,11 +26,11 @@
 {"time":1795443810581,"event":"PreToolUse","toolUseId":"toolu_01S8H3Zu8ry4WGa93qXMNL9N","tool":"TaskUpdate","input":{"taskId":"2","status":"in_progress"}}
 {"time":1795443810592,"event":"PostToolUse","toolUseId":"toolu_01V1YxkmLwFDgp8nF4CZPVjP","tool":"TaskUpdate","input":{"taskId":"1","status":"completed"},"ok":true}
 {"time":1795443810592,"event":"PostToolUse","toolUseId":"toolu_01S8H3Zu8ry4WGa93qXMNL9N","tool":"TaskUpdate","input":{"taskId":"2","status":"in_progress"},"ok":true}
-{"time":1795443810679,"event":"PreToolUse","toolUseId":"toolu_01Qo1bUV3qRpSCPGENo3Phgb","tool":"Skill","input":{"skill":"docrank:gates"}}
-{"time":1795443810689,"event":"PermissionRequest","tool":"Skill","input":{"skill":"docrank:gates"}}
+{"time":1795443810679,"event":"PreToolUse","toolUseId":"toolu_01Qo1bUV3qRpSCPGENo3Phgb","tool":"Skill","input":{"skill":"stickler:gates"}}
+{"time":1795443810689,"event":"PermissionRequest","tool":"Skill","input":{"skill":"stickler:gates"}}
 {"time":1795443816688,"event":"Notification","kind":"permission_prompt"}
 {"time":1795443979958,"event":"SubagentStart","agentId":"a255db62190c708c7","agentType":"general-purpose"}
-{"time":1795443979971,"event":"PostToolUse","toolUseId":"toolu_01Qo1bUV3qRpSCPGENo3Phgb","tool":"Skill","input":{"skill":"docrank:gates"},"ok":true}
+{"time":1795443979971,"event":"PostToolUse","toolUseId":"toolu_01Qo1bUV3qRpSCPGENo3Phgb","tool":"Skill","input":{"skill":"stickler:gates"},"ok":true}
 {"time":1795443983606,"event":"Stop"}
 {"time":1795443984273,"event":"PreToolUse","agentId":"a255db62190c708c7","agentType":"general-purpose","toolUseId":"toolu_01GN8k2dD5e3YZdT3YYXUKsd","tool":"Bash","input":{"command":"node ${CLAUDE_PLUGIN_ROOT}/scripts/run-gates.mjs -C /tmp/demo/repo-tracking 2>&1 | tail -80"},"gate":"*"}
 {"time":1795443984650,"event":"PostToolUse","agentId":"a255db62190c708c7","agentType":"general-purpose","toolUseId":"toolu_01GN8k2dD5e3YZdT3YYXUKsd","tool":"Bash","input":{"command":"node ${CLAUDE_PLUGIN_ROOT}/scripts/run-gates.mjs -C /tmp/demo/repo-tracking 2>&1 | tail -80"},"gate":"*","ok":true}

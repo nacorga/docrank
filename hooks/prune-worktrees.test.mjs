@@ -50,7 +50,7 @@ describe("prune-worktrees.mjs, a hook that is off unless worktree.prune", () => 
     const { box, dir, tip, prune } = setup({ age: 3 });
     const r = prune({ merged: mergedAs(tip) });
     expect(r.status, r.stderr).toBe(0);
-    expect(r.stdout).toBe("docrank: removed worktrees done, their pull requests already merged.\n");
+    expect(r.stdout).toBe("stickler: removed worktrees done, their pull requests already merged.\n");
     expect(existsSync(dir)).toBe(false);
     expect(box.git(box.repo, "branch", "--list", "done")).toBe("");
   });
@@ -146,7 +146,7 @@ describe("prune-worktrees.mjs, a hook that is off unless worktree.prune", () => 
       cwd: box.repo,
       input: JSON.stringify({ cwd: box.repo }),
       encoding: "utf8",
-      env: { ...process.env, PATH: `${stub}:${process.env.PATH}`, DOCRANK_GH_TIMEOUT_MS: "300" },
+      env: { ...process.env, PATH: `${stub}:${process.env.PATH}`, STICKLER_GH_TIMEOUT_MS: "300" },
     });
     expect(r.status).toBe(0);
     expect(r.stdout).toBe("");
@@ -165,7 +165,7 @@ describe("prune-worktrees.mjs, a hook that is off unless worktree.prune", () => 
   it("does nothing, and fails nothing, outside a repository or on an unusable config", () => {
     const { box, dir, tip, prune } = setup();
     expect(prune({ merged: mergedAs(tip), cwd: box.dir }).status).toBe(0);
-    writeFileSync(path.join(box.repo, ".claude", "docrank.json"), '{"worktree":{"prune":"yes"}}');
+    writeFileSync(path.join(box.repo, ".claude", "stickler.json"), '{"worktree":{"prune":"yes"}}');
     const r = prune({ merged: mergedAs(tip) });
     expect(r.status).toBe(0);
     expect(r.stdout).toBe("");

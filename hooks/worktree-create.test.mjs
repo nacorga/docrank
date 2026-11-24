@@ -87,7 +87,7 @@ describe("worktree-create.mjs", () => {
     const box = repoWithRemote(config);
     expect(create(box.repo, {}).status).toBe(1);
     expect(create(box.dir, { name: "feat/y" }).status).toBe(1);
-    writeFileSync(path.join(box.repo, ".claude", "docrank.json"), '{"worktree":{"install":3}}');
+    writeFileSync(path.join(box.repo, ".claude", "stickler.json"), '{"worktree":{"install":3}}');
     const r = create(box.repo, { name: "feat/z" });
     expect(r.status).toBe(1);
     expect(r.stderr).toContain("worktree.install");

@@ -1,4 +1,4 @@
-# Claude Code facts docrank depends on
+# Claude Code facts stickler depends on
 
 Read from code.claude.com on 2026-11-18, one entry per fact. A fact is
 VERIFIED with the page it was read on and a short quote, or NOT DOCUMENTED.
@@ -20,7 +20,7 @@ Fact 16 was read on 2026-11-20 from
 [settings]=https://code.claude.com/docs/en/settings.md,
 [permissions]=https://code.claude.com/docs/en/permissions.md,
 [worktrees]=https://code.claude.com/docs/en/worktrees.md and [hooks].
-Facts 17 to 23 (docrank watch) and 24 were read on 2026-11-23 from [hooks], [tools],
+Facts 17 to 23 (stickler watch) and 24 were read on 2026-11-23 from [hooks], [tools],
 [components],
 [sdk-todo]=https://code.claude.com/docs/en/agent-sdk/todo-tracking.md and
 [sdk-ts]=https://code.claude.com/docs/en/agent-sdk/typescript.md.
@@ -125,7 +125,7 @@ the subagent or in-process teammate the hook fires in."
 
 For a subagent a plugin ships, [hooks] § matchers: "the agent type is the
 plugin-scoped identifier such as `my-plugin:reviewer`, not the bare frontmatter
-name". Slice 3 must compare against `docrank:<name>`.
+name". Slice 3 must compare against `stickler:<name>`.
 
 ## 6. Plugin agents' `mcpServers` and `skills`: split
 
@@ -142,7 +142,7 @@ So the surface reviewer cannot pin its browser MCP through its own
 frontmatter. [components] § MCP servers: "Declare it in `.mcp.json` at the
 plugin root", and § Server names, tool names, and reloads: "Tool names:
 `mcp__plugin_<plugin>_<server>__<tool>`". The plugin's `.mcp.json` declares
-`browser`, and the reviewer's `tools:` names `mcp__plugin_docrank_browser__*`
+`browser`, and the reviewer's `tools:` names `mcp__plugin_stickler_browser__*`
 tools one by one. [sub-agents]: "Subagents inherit the ... MCP tools available
 in the main conversation", so the main session and every agent without a
 `tools:` list reach that browser too; an agent whose `tools:` list does not
@@ -160,10 +160,10 @@ closed".
 `skills:` preloading works; how it names a plugin's own skill is NOT
 DOCUMENTED. [skills] names a plugin skill `plugin-name:skill-name` (the bare
 name also invokes it "unless another command already uses that name"), so the
-judges list `docrank:judge-protocol`, which `lib/agent-types.mjs` accepts as
+judges list `stickler:judge-protocol`, which `lib/agent-types.mjs` accepts as
 well as the bare name. PROVED LIVE (§ 15): a judge told to use no tool
 quoted the skill's first sentence verbatim with zero tool uses, so
-`docrank:judge-protocol` is preloaded under that name.
+`stickler:judge-protocol` is preloaded under that name.
 
 [components] § Reference plugin paths: `${CLAUDE_PLUGIN_ROOT}` is "substituted
 in skill, command, and agent content", which is how a judge finds the
@@ -221,12 +221,12 @@ the fields of `skills/<name>/SKILL.md`, which include `context`, `agent`,
   required key"; "An unrecognized top-level key is stripped"; `license` is an
   SPDX identifier; `author` is an object with required `name` ([manifest]).
 - A name starting `claude-` or `anthropic-` is reserved ([manifest] § name);
-  `docrank` is not.
+  `stickler` is not.
 - `marketplace.json` lives at `.claude-plugin/marketplace.json`; "`name`,
   `owner`, and `plugins` are required"; an entry needs `name` and `source`; a
   relative `source` "must start with `./`, unless you write a bare name under
   `metadata.pluginRoot`", and `"."` on its own means the root itself
-  ([marketplace]). docrank is the marketplace root, so its entry uses `"./"`
+  ([marketplace]). stickler is the marketplace root, so its entry uses `"./"`
   (stated as "a plugin at the marketplace root, with `"source": "./"`").
 - A plugin's manifest `version` overrides the entry's; setting `version` pins
   users until it changes ([manifest] § version).
@@ -307,13 +307,13 @@ it, which `docs/config.md` states.
 Claude Code 2.1.327, the plugin loaded with `--plugin-dir`, in a clone of a
 Next.js repository on npm with only `main`, its remote a local bare copy.
 
-- `init` proposed and wrote `.claude/docrank.json`; `docrank config` resolved it.
+- `init` proposed and wrote `.claude/stickler.json`; `stickler config` resolved it.
 - SessionStart injected `# Working principles`.
 - `guard-bash` refused `git reset --hard`, `git push --force`, an unrecorded
   push and `git branch -D main`, each with its message.
 - The `gates` skill (forked, `allowed-tools` through `${CLAUDE_PLUGIN_ROOT}`)
   ran lint, typecheck and build, recorded HEAD, and the same push then passed.
-- `docrank judges` named `docrank:spec-arbiter`; it ran read-only (its guard
+- `stickler judges` named `stickler:spec-arbiter`; it ran read-only (its guard
   refused `git hash-object`) and labelled added tracking a `code defect`
   against the repository's CLAUDE.md. The re-check state recorded the
   dispatch's `agentId` and three sends to that same string as `to`.
@@ -352,28 +352,28 @@ trial session.
 Claude Code 2.1.329, the plugin loaded with `--plugin-dir` from a checkout at
 `9c10859`.
 
-`/docrank:init`, in a copy of `examples/consent` with no `.claude/` and no
+`/stickler:init`, in a copy of `examples/consent` with no `.claude/` and no
 sentence stating a rank:
 
 - It asked which document binds, `None` among the options and `docs/spec.md`
   recommended, then the ground, for which the user typed `src/**` and
   `docs/spec.md`.
-- It proposed `docs.precedence` and `judges.routes` together; `docrank config`
-  exited 0, and `docrank judges` showed the arbiter as `skip`, only
-  `.claude/docrank.json` having changed. It said the arbiter was on.
+- It proposed `docs.precedence` and `judges.routes` together; `stickler config`
+  exited 0, and `stickler judges` showed the arbiter as `skip`, only
+  `.claude/stickler.json` having changed. It said the arbiter was on.
 - It offered no fallback hook: 2.1.329 is not older than 2.1.300.
 - It installed the pre-push as `.githooks/pre-push`, identical to the
   template, with `core.hooksPath=.githooks`, and tried it: it exited 0 on the
   commit at `origin/main` and 1 on a commit whose gates had not passed, "the
   gates have not passed on fadfb0b".
 
-The demo, from `/docrank:demo` to the re-check:
+The demo, from `/stickler:demo` to the re-check:
 
-- `/docrank:demo`, run from `~`, built a new directory under the system's temp
+- `/stickler:demo`, run from `~`, built a new directory under the system's temp
   directory and printed what `scripts/demo.mjs` prints.
 - In a session opened in `repo-tracking` with the printed command,
-  `/docrank:gates` passed `test` and recorded `4a00491`.
-- Asked for the arbiter, the session launched `docrank:spec-arbiter` in the
+  `/stickler:gates` passed `test` and recorded `4a00491`.
+- Asked for the arbiter, the session launched `stickler:spec-arbiter` in the
   background. It reported by message a `code defect` citing
   `examples/consent/docs/spec.md` § Analytics, its lines 16 and 17 as they
   were: the event is sent without consent and carries the email. It also
@@ -385,16 +385,16 @@ The demo, from `/docrank:demo` to the re-check:
   required the email resolved; the consent test nearly, with no case for
   `{ analytics: "yes" }`, which `if (consent.analytics)` would pass; the two
   spec gaps open, the commit not touching `docs/spec.md`. `npm test` 4/4.
-- 9 min 07 s wall clock, from `/docrank:demo` (09:18:15Z) to the verdict on
+- 9 min 07 s wall clock, from `/stickler:demo` (09:18:15Z) to the verdict on
   `demo/fixed` (09:27:22Z), read from the two sessions' transcripts. It
   includes about 2 min of an unrelated question.
 
-A plugin loaded by `--plugin-dir` is named `docrank@inline` in hook messages:
-"This hook comes from the docrank@inline plugin."
+A plugin loaded by `--plugin-dir` is named `stickler@inline` in hook messages:
+"This hook comes from the stickler@inline plugin."
 
 Found in the trial, and changed after it:
 
-- Doc drift on `Stop` fired after `/docrank:gates`, since the example paired
+- Doc drift on `Stop` fired after `/stickler:gates`, since the example paired
   `src/` with `docs/spec.md`, and the session found the violations before the
   arbiter was asked. The example no longer sets `docDrift.entries`.
 - `init`'s first two Bash calls chained `cat`, `sed` and `ls`, ending on an
@@ -415,30 +415,30 @@ ran the example's two; `init`'s two were proved on 2026-11-21, below.
 
 ### The marketplace install, 2026-11-20
 
-Claude Code 2.1.329, on a machine where docrank had never been installed and
-no docrank marketplace added, in `~/docrank-trial`, an empty repository made
+Claude Code 2.1.329, on a machine where stickler had never been installed and
+no stickler marketplace added, in `~/stickler-trial`, an empty repository made
 with `git init`.
 
-- `/plugin marketplace add nacorga/docrank` (13:56:24Z): "Added marketplace:
-  docrank".
-- `/plugin install docrank@docrank` at Project scope (13:56:49Z): "✓ Installed
-  docrank. Plugin is now active." The repository's `.claude/settings.json`
-  became `{"enabledPlugins": {"docrank@docrank": true}}`.
+- `/plugin marketplace add nacorga/stickler` (13:56:24Z): "Added marketplace:
+  stickler".
+- `/plugin install stickler@stickler` at Project scope (13:56:49Z): "✓ Installed
+  stickler. Plugin is now active." The repository's `.claude/settings.json`
+  became `{"enabledPlugins": {"stickler@stickler": true}}`.
 - The minimum configuration is that and nothing else: the trial repository has
-  no `.claude/docrank.json`, the demo carrying its own.
+  no `.claude/stickler.json`, the demo carrying its own.
 
-The demo, from `/docrank:demo` to the re-check:
+The demo, from `/stickler:demo` to the re-check:
 
-- `/docrank:demo` (13:57:00Z) printed what `scripts/demo.mjs` printed at
+- `/stickler:demo` (13:57:00Z) printed what `scripts/demo.mjs` printed at
   0.2.0. Its session command named the installed copy, version 0.2.0:
-  `--plugin-dir ~/.claude/plugins/cache/docrank/docrank/0.2.0`.
-- In the session opened in `repo-tracking` with that command, `/docrank:gates`
+  `--plugin-dir ~/.claude/plugins/cache/stickler/stickler/0.2.0`.
+- In the session opened in `repo-tracking` with that command, `/stickler:gates`
   passed `test` and recorded `42317e307`. Doc drift on `Stop` did not fire:
   the example sets no `docDrift.entries`.
 - The prompt asking for the arbiter also held the demo's 0.2.0 hint for step
   2, to look for a `code defect` citing the spec's § Analytics. The session
   passed it to the arbiter as what to check, not as a conclusion.
-- `docrank:spec-arbiter` reported four `code defect`s, each citing
+- `stickler:spec-arbiter` reported four `code defect`s, each citing
   `examples/consent/docs/spec.md` § Analytics by line: the event sent without
   consent, the event carrying the email, the signature leaving out `consent`,
   and the test copying the defect with no case without consent. No spec gap.
@@ -446,7 +446,7 @@ The demo, from `/docrank:demo` to the re-check:
   sent the re-check by `SendMessage` to the same arbiter. Verdict: the four
   resolved, the `{ analytics: "yes" }` case among them; "No findings",
   `Judged: ca4d9d1`. `npm test` 4/4.
-- 5 min 14 s wall clock from `/docrank:demo` (13:57:00Z) to the verdict on
+- 5 min 14 s wall clock from `/stickler:demo` (13:57:00Z) to the verdict on
   `demo/fixed` (14:02:14Z), and 5 min 50 s from `marketplace add`, read from
   the sessions' transcripts.
 
@@ -466,20 +466,20 @@ Claude Code 2.1.330. Claude, the orchestrating session, drove every session
 through tmux, typing into real interactive sessions; no human read or
 answered, so the times below hold no reading time.
 
-- `claude plugin update docrank@docrank`, in `~/docrank-trial` as the
-  marketplace install above left it: "Plugin "docrank" updated from 0.2.0 to
-  0.2.1 for scope project (~/docrank-trial)".
+- `claude plugin update stickler@stickler`, in `~/stickler-trial` as the
+  marketplace install above left it: "Plugin "stickler" updated from 0.2.0 to
+  0.2.1 for scope project (~/stickler-trial)".
 
-The demo, from `/docrank:demo` to the re-check:
+The demo, from `/stickler:demo` to the re-check:
 
-- `/docrank:demo` in `~/docrank-trial` (10:36:51Z) printed the steps as a
+- `/stickler:demo` in `~/stickler-trial` (10:36:51Z) printed the steps as a
   block, "Then type, one at a time, each line as it is:", of three bare lines,
   and what to expect as a separate block, "What to expect…". Its session
-  command named `~/.claude/plugins/cache/docrank/docrank/0.2.1`.
+  command named `~/.claude/plugins/cache/stickler/stickler/0.2.1`.
 - In the session opened in `repo-tracking` with that command, each step typed
-  alone: `/docrank:gates` passed `test` and recorded `bf2c3d2`. Doc drift on
+  alone: `/stickler:gates` passed `test` and recorded `bf2c3d2`. Doc drift on
   `Stop` did not fire.
-- With no hint in the prompt, `docrank:spec-arbiter` reported three `code
+- With no hint in the prompt, `stickler:spec-arbiter` reported three `code
   defect`s, each citing `examples/consent/docs/spec.md` § Analytics by line:
   the event carries the email; there is no consent check, the signature taking
   no `consent`; the test asserts the forbidden behaviour. Beside them, a note:
@@ -488,7 +488,7 @@ The demo, from `/docrank:demo` to the re-check:
   resolved and nothing new. Two `Late` notes, not findings: `consent: null`
   throws a TypeError, and two defaults, the no-op `track` and an absent
   `consent` meaning no consent, are not written in the spec.
-- 3 min 56 s from `/docrank:demo` (10:36:51Z) to the verdict on `demo/fixed`
+- 3 min 56 s from `/stickler:demo` (10:36:51Z) to the verdict on `demo/fixed`
   (10:40:47Z).
 
 This proved live the demo's step output changed after the marketplace install.
@@ -497,17 +497,17 @@ Fact 16's unproved half, a hook in a session started in a worktree:
 
 - With that session still open in `repo-tracking`, on `demo/fixed`, a `!`
   command added `docDrift.entries`, `src/` paired with `docs/spec.md`, to
-  `repo-tracking/.claude/docrank.json` only; the main checkout's
-  `repo/.claude/docrank.json` had none, which was checked.
+  `repo-tracking/.claude/stickler.json` only; the main checkout's
+  `repo/.claude/stickler.json` had none, which was checked.
 - The turn that followed (2.1.330 answers the output of a `!` command) ended
   with the `Stop` hook: "Code a document states changed, and the document did
   not: - src/ changed; docs/spec.md did not", "This hook comes from the
-  docrank@inline plugin."
+  stickler@inline plugin."
 
 So the hook read the configuration of the worktree the session was started
 in (§ 16).
 
-`/docrank:init` with 0.2.1, `--plugin-dir` the installed 0.2.1, in a copy of
+`/stickler:init` with 0.2.1, `--plugin-dir` the installed 0.2.1, in a copy of
 `examples/consent` with no `.claude/`, no sentence stating a rank in
 `docs/spec.md` nor in `CLAUDE.md`, and a bare remote with no `origin/HEAD`:
 
@@ -516,8 +516,8 @@ in (§ 16).
   `None`: `docs/spec.md`. For the ground it offered `src/**`, recommended as
   the named file's directory, ahead of `src/checkout.mjs` and `**`: `src/**`.
 - It proposed `docDrift.entries` `[{ "code": ["src/"], "docs":
-  ["docs/spec.md"] }]` with `docs.precedence` and `judges.routes`; `docrank
-  config` loaded it, and `docrank judges` showed the arbiter as `skip`.
+  ["docs/spec.md"] }]` with `docs.precedence` and `judges.routes`; `stickler
+  config` loaded it, and `stickler judges` showed the arbiter as `skip`.
 - It installed the pre-push in `.git/hooks` and tried it: 0, then 1.
 
 This proved live the three changes to `init`'s wording of 0.2.0 and 0.2.1:
@@ -526,13 +526,13 @@ ahead of it for the ground, and its directory for doc drift.
 
 Four errors remained, each a probe of something absent: `git symbolic-ref
 refs/remotes/origin/HEAD` (exit 128, which the skill prescribed), a Read of
-the absent `.claude/docrank.json` and of the absent `.git/hooks/pre-push`, and
+the absent `.claude/stickler.json` and of the absent `.git/hooks/pre-push`, and
 `git config --get core.hooksPath`, unset (exit 1). Changed in 0.2.2: absence
 is read from a Glob or a listing, `git branch --all` for the remote's default,
 Glob before a Read, `git status --short --ignored` for ignored env files and
 `git rev-parse --git-path hooks` for the hooks directory.
 
-`/docrank:init` with 0.2.2, the same driver, in a fresh copy that also holds a
+`/stickler:init` with 0.2.2, the same driver, in a fresh copy that also holds a
 git-ignored `.env`. The plugin was loaded with `--plugin-dir` from the
 `fix/0.2.2` branch at `2d887aa`, not from the released 0.2.2, whose content is
 that commit's tree.
@@ -546,16 +546,16 @@ that commit's tree.
 - The install step chained `cp && chmod && ls && cmp` in one Bash call, once:
   no error, but a chain.
 
-### docrank watch 0.3.0, 2026-11-23
+### stickler watch 0.3.0, 2026-11-23
 
 Claude Code 2.1.330, model Fable 5.2, an interactive session in tmux driven
 by Claude, the plugin loaded with `--plugin-dir` from `main` at `8dd9971`
 (0.3.0), in `repo-tracking` as `scripts/demo.mjs` builds it. Its
-`.claude/docrank.json` had `"watch": { "enabled": true, "language": "es",
+`.claude/stickler.json` had `"watch": { "enabled": true, "language": "es",
 "port": 47199 }`; the environment `CLAUDE_CODE_ENABLE_TODO_TOOLS=1
-DOCRANK_WATCH_NO_OPEN=1`; permissions asked. One prompt: three tasks with
+STICKLER_WATCH_NO_OPEN=1`; permissions asked. One prompt: three tasks with
 the task tools, then an Explore helper summarising `docs/spec.md`,
-`/docrank:gates`, and `git push origin HEAD:main` once. The page was read in
+`/stickler:gates`, and `git push origin HEAD:main` once. The page was read in
 a headless Chrome over the DevTools protocol, not by a person.
 
 - The `SessionStart` hook started the server on 47199, `server.json` 0600,
@@ -568,7 +568,7 @@ a headless Chrome over the DevTools protocol, not by a person.
   `SessionEnd` 1 (`prompt_input_exit`, on leaving the session). No secret-like
   value was produced, and none is in the log. It is
   `test/fixtures/watch-trial-0.3.0.jsonl`, its absolute paths made generic.
-- The header read "Esperando tu permiso" while the `Skill(docrank:gates)`
+- The header read "Esperando tu permiso" while the `Skill(stickler:gates)`
   prompt was open and "Esperando tu respuesta" once the turn ended.
 - The three tasks read Hecha, En curso and Hecha as they went; the Explore
   helper hung under task 1 with its errand "Resumir docs/spec.md"; the gate
@@ -585,7 +585,7 @@ Fixed in 0.4.0 (0.3.1 was never released), each found here:
   node new and unmeasured: hidden until measured again, and left out of a
   fit. The sizes are now kept; a sampled load shows no hidden node and a fit
   on each added node.
-- `/docrank:gates` runs forked: its helper's `SubagentStart` (type
+- `/stickler:gates` runs forked: its helper's `SubagentStart` (type
   `general-purpose`) followed a `Skill` call, not an `Agent` call, so it read
   "un encargo sin nombre". A `Skill` call is now an errand too (fact 23).
 - The session list named the repository by its directory key ("repo"), the
@@ -594,7 +594,7 @@ Fixed in 0.4.0 (0.3.1 was never released), each found here:
 Not proved: the tab opening by itself (suppressed here), a person reading
 the page, Linux.
 
-### docrank watch 0.4.0, 2026-11-23
+### stickler watch 0.4.0, 2026-11-23
 
 Claude Code 2.1.330, model Opus 5.5, an interactive session in tmux driven
 by Claude, the plugin loaded with `--plugin-dir` from `main` at `c71127f`
@@ -602,7 +602,7 @@ by Claude, the plugin loaded with `--plugin-dir` from `main` at `c71127f`
 configuration and environment as the 0.3.0 trial and permissions in auto
 mode. The 0.3.0 trial's server had stopped itself after its idle timeout.
 One prompt: three tasks with the task tools, an Explore helper listing
-`src/` and `test/`, `/docrank:gates`, and a comparison of
+`src/` and `test/`, `/stickler:gates`, and a comparison of
 `src/checkout.mjs` with `docs/spec.md`. The page was read in a headless
 Chrome over the DevTools protocol, not by a person.
 
@@ -642,13 +642,13 @@ Not proved: a protocol-1 server replaced live (the old one had already
 stopped; unit-tested only), the daily retention timer, the tab opening by
 itself, a person reading the page, Linux.
 
-### docrank watch 0.5.0, 2026-11-23
+### stickler watch 0.5.0, 2026-11-23
 
 Claude Code 2.1.330, `-p` mode, the plugin loaded with `--plugin-dir` from
 `main` at `f73b30d` (0.5.0), in the demo's worktree on `demo/tracking` with
 `"watch": { "enabled": true }` and `CLAUDE_CODE_ENABLE_TODO_TOOLS` unset, so
 no task list. One session, three `-p` runs resumed with `--resume`: "run
-`node --test test/no-existe.mjs`", then the prompt `/docrank:gates` typed
+`node --test test/no-existe.mjs`", then the prompt `/stickler:gates` typed
 alone, then `node -e 'process.exit(3)'`. The page was read in a headless
 Chrome, not by a person.
 
@@ -660,7 +660,7 @@ Chrome, not by a person.
   paths made generic.
 - Run 1: Claude appended `; echo "exit=$?"` to the command, so the shell
   exited 0 and `PostToolUse` with `ok: true` was right.
-- Run 2: the typed `/docrank:gates` forked a `general-purpose` helper with no
+- Run 2: the typed `/stickler:gates` forked a `general-purpose` helper with no
   `Skill` call; it ran the gates runner, which passed.
 - Run 3: `PostToolUseFailure` with exit code 3 (fact 26).
 - The page showed three turns, the helper under turn 2, `Bash ✗` "— falló"
@@ -678,7 +678,7 @@ Fixed in 0.5.1, found here:
 - The helper read "un encargo sin nombre": the skill was the prompt, with no
   `Skill` call to take the errand from, and the hook kept nothing of a
   prompt. It now keeps the name of the slash command a prompt opens with
-  (`docrank:gates`), nothing after it, and the reducer counts it as a
+  (`stickler:gates`), nothing after it, and the reducer counts it as a
   `Skill` call (fact 23).
 - The sessions list showed two groups both headed "REPO": two demo builds,
   each a main checkout named `repo` in a different temporary directory, so
@@ -712,9 +712,9 @@ plugin**: replaced silently. `claude plugin list` still shows the marketplace
 row as enabled". The order "compares manifest names", and only one source
 ranks higher: "A plugin whose id appears in managed settings `enabledPlugins`
 ... A `--plugin-dir` copy whose manifest name matches the id's name part isn't
-loaded". So `claude --plugin-dir <plugin root>` loads that copy of docrank
+loaded". So `claude --plugin-dir <plugin root>` loads that copy of stickler
 whatever scope it is installed at, or whether it is installed at all, unless
-an organization's managed settings name docrank.
+an organization's managed settings name stickler.
 
 **A session started in a worktree.** [permissions] § Working directories:
 "Claude has access to files in the directory where you launched it. That
@@ -727,15 +727,15 @@ only that copy loads. The same read-through covers `.claude/agents` and
 `.claude/commands`", and "All of these apply whether you create the worktree
 with `--worktree` or with `git worktree add`".
 
-`.claude/docrank.json` is not read by Claude Code but by docrank, at the git
+`.claude/stickler.json` is not read by Claude Code but by stickler, at the git
 top level of the hook input's `cwd` (`lib/hook.mjs` `configFor`). [hooks]
 § Common input fields: "`cwd` | Current working directory when the hook is
 invoked"; that it is the launch directory in a session started there is read
 from the primary working directory above, not from a page that states both.
 The demo (`scripts/demo.mjs`) does not depend on it: its patches never touch
-`.claude/docrank.json`, so the worktree and the main checkout hold the same
+`.claude/stickler.json`, so the worktree and the main checkout hold the same
 file. PROVED LIVE on 2026-11-21 (§ 15), still not documented: with
-`docDrift.entries` in the worktree's `.claude/docrank.json` only, doc drift
+`docDrift.entries` in the worktree's `.claude/stickler.json` only, doc drift
 fired on `Stop` in a session started in the worktree, so the hook read the
 configuration of the worktree the session was started in.
 
@@ -863,7 +863,7 @@ a `PreToolUse` hook blocks a call, or when a `deny` rule matches".
 § PostToolUseFailure: "Permission denials fire `PreToolUse` but not this
 event". Hooks of one event run in parallel (§ Hook handler fields: "When an
 event fires, its matching hooks run in parallel"), so the watch hook cannot
-see what a guard decided. A docrank guard that refuses writes the refusal to
+see what a guard decided. A stickler guard that refuses writes the refusal to
 the watch log itself; a refusal by any other hook, a deny rule or the user
 leaves an action with no outcome.
 
@@ -906,7 +906,7 @@ helper's own, so which agent spawned it is not known either. An id match is NOT 
 `PostToolUse` arrives only when the helper has finished.
 
 A skill with `context: fork` (fact 10) starts a helper with no `Agent` call:
-in the watch trial (§ 15) `/docrank:gates`'s `SubagentStart`, type
+in the watch trial (§ 15) `/stickler:gates`'s `SubagentStart`, type
 `general-purpose`, followed the `Skill` call's `PreToolUse` and preceded its
 `PostToolUse` by 13 ms. A `Skill` call is therefore an errand too, the
 skill's name: a helper takes the oldest `Agent` call of its type, else the
@@ -916,7 +916,7 @@ next prompt, and until then a helper with no call of its own takes it. A
 helper whose `SubagentStart` line lands before its call's (async hooks,
 fact 19) gets no errand.
 
-A skill typed as the prompt (`/docrank:gates`) forks with no `Skill` call at
+A skill typed as the prompt (`/stickler:gates`) forks with no `Skill` call at
 all (§ 15, 0.5.0). `UserPromptSubmit`'s `prompt` is "the submitted text"
 (fact 17), and a probe proved it is the slash command as typed, in `-p`
 (§ 15). So the hook keeps the command's name, `plugin:skill` or `skill`, and
@@ -1090,7 +1090,7 @@ reaper stops nothing.
 `"startup"` for new sessions, `"resume"` for resumed sessions, `"clear"`
 after `/clear`, `"compact"` after compaction, or `"fork"` for a new session
 forked from an existing one". A plugin's hook in `hooks/hooks.json` without
-a matcher runs on each (fact 14), so a docrank `SessionStart` hook is written
+a matcher runs on each (fact 14), so a stickler `SessionStart` hook is written
 to be right on every source.
 
 [hooks] § SessionEnd: "`clear` | Session cleared with `/clear` command",

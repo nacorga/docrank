@@ -86,8 +86,8 @@ describe("a version floor the installed plugin does not meet", () => {
     const box = sandbox({ config: { requires: "999.0.0" } });
     const { status, stderr } = box.run("git status");
     expect(status).toBe(2);
-    expect(stderr).toMatch(/needs docrank 999\.0\.0 or newer and docrank \d+\.\d+\.\d+ is installed/u);
-    expect(stderr).toContain("claude plugin update docrank@docrank");
+    expect(stderr).toMatch(/needs stickler 999\.0\.0 or newer and stickler \d+\.\d+\.\d+ is installed/u);
+    expect(stderr).toContain("claude plugin update stickler@stickler");
     box.cleanup();
   });
 });
@@ -125,7 +125,7 @@ describe("deleting a branch whose pull request merged", () => {
 
 describe("a push needs the gates", () => {
   const config = { gates: { run: [{ name: "all", command: "true" }] } };
-  const record = (box, name = "docrank-gates-passed") => path.join(box.commonDir, name);
+  const record = (box, name = "stickler-gates-passed") => path.join(box.commonDir, name);
   const commit = (box, msg) => {
     box.git(box.wt, "commit", "-q", "--allow-empty", "-m", msg);
     return box.git(box.wt, "rev-parse", "HEAD");
@@ -171,7 +171,7 @@ describe("a push needs the gates", () => {
     const sha = commit(box, "work");
     box.git(box.repo, "update-ref", "refs/remotes/origin/main", sha);
     expect(push(box).status).toBe(2); // main is no longer the integration branch
-    writeFileSync(record(box, "docrank-gates-passed"), `${sha}\n`);
+    writeFileSync(record(box, "stickler-gates-passed"), `${sha}\n`);
     expect(push(box).status).toBe(2); // the default file name is not the configured one
     writeFileSync(record(box, "passed-here"), `${sha}\n`);
     expect(push(box).status).toBe(0);

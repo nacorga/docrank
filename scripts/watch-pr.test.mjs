@@ -63,7 +63,8 @@ describe("watch-pr.mjs checks", () => {
     expect(gone({ state: "CLOSED" })).toMatchObject({ status: 1, out: ["CLOSED"] });
     // UNKNOWN and a merely conflicting pull request that is not OPEN count for nothing: it keeps waiting, to its limit.
     expect(gone({ mergeable: "UNKNOWN" })).toMatchObject({ status: 1, out: ["RED no check registered in time"] });
-  });
+    // Four watchers in a row, the last polling stubbed gh to its limit: past the default 5 s on a loaded macOS runner.
+  }, 20000);
 
   it("reports NO CI for a base outside pr.ciBases, and follows pr.ciBases when it names one", () => {
     expect(watch(["3"])).toMatchObject({ status: 0, out: ["NO CI on a pull request into batch/demo-walk"] });

@@ -31,6 +31,10 @@ names. A repository that needs a key of a later release sets `requires`
 ([docs/config.md](docs/config.md)), and an older stickler then refuses its
 configuration instead of misreading it.
 
+Coming from docrank: run `claude plugin uninstall docrank@docrank`, install
+`stickler@stickler` as above, and rename `.claude/docrank.json` to
+`.claude/stickler.json`. A `DOCRANK_*` environment variable becomes `STICKLER_*`.
+
 To try it from a checkout without installing: `claude --plugin-dir <path to this repository>`.
 
 ## Quick start

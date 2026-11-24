@@ -11,7 +11,7 @@
  *   node prune-worktrees.mjs --apply   remove each worktree and its local branch
  */
 import path from "node:path";
-import { git, mergedTip } from "../lib/git.mjs";
+import { git, listWorktrees, mergedTip } from "../lib/git.mjs";
 
 const apply = process.argv.includes("--apply");
 const here = git(process.cwd(), "rev-parse", "--show-toplevel");
@@ -22,10 +22,7 @@ if (!here || !common) {
 }
 const main = path.dirname(common);
 
-const listed = git(main, "worktree", "list", "--porcelain").split("\n\n").map((block) => {
-  const field = (key) => block.split("\n").find((l) => l.startsWith(`${key} `))?.slice(key.length + 1);
-  return { path: field("worktree"), head: field("HEAD"), branch: field("branch")?.replace(/^refs\/heads\//, "") };
-});
+const listed = listWorktrees(main);
 
 for (const { path: dir, head, branch } of listed) {
   if (!dir || !branch || dir === main || dir === here) continue;

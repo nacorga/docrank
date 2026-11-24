@@ -65,19 +65,19 @@ Every key is documented once, with its default, in [docs/config.md](docs/config.
 | Bash | pushing tags that match a pattern, `--tags`, `--follow-tags` | `guard.blockedTagPatterns` |
 | Bash | `npm publish`, `pnpm publish` | `guard.publishBan` |
 | Bash | moving the main checkout off the integration branch, deleting an unmerged branch | `branches.integration` |
-| Bash | any command that matches a pattern the repository adds | `guard.extraDeny` |
+| Bash | any command that matches a pattern the repository adds, with the case or line flags it names | `guard.extraDeny` |
 | Bash | a write or a command that runs, from a read-only agent | `judges.skill` |
 | Agent | a fork dispatch; a `general-purpose` Opus dispatch with no `Heavy:` line; completes a dispatch with the guardrails block, and sets the default model and effort | `dispatch.*` |
-| SendMessage | a message to a judge past its re-check limit, once | `judges.maxRechecks` |
+| SendMessage | a message to a judge past its re-check limit, once; a message to an agent that can edit and whose transcript shows a compaction, once, asking for a fresh one | `judges.maxRechecks`; the compaction is always on |
 | Edit, Write | `.env*` except `.env.example`, lockfiles, and the repository's own rules | `paths.builtIns`, `paths.rules` |
 | ExitPlanMode | a plan without a required heading | `plan.requiredHeadings` |
-| `gh pr create` | one whose diff touches product or surface paths, with the handover checklist: once per branch, or, with `pr.requiredLines`, every time its body lacks one of the lines | `pr.*`, `surface.paths` |
+| `gh pr create` | one whose diff touches product or surface paths, with the handover checklist: once per branch, or, with `pr.requiredLines`, every time its body lacks one of the lines the diff owes (an entry with `paths` is owed only by a diff that touches them) | `pr.*`, `surface.paths` |
 | MCP tools | a message through a configured tool, with a claims checklist: once per input, or, with `messages.evidenceHeader`, every time the turn wrote no claims table | `messages.*` |
 
 Around them, not refusing: the formatter and linter run on each edited file
 (`format.*`), a question at the end of a session whose code changes a document
 did not follow (`docDrift.*`), a worktree cut from the fetched integration
-branch with the repository's ignored files copied in (`worktree.*`), the working
+branch with the repository's ignored files copied in, and, when `worktree.prune` is on, the merged ones removed at session start (`worktree.*`), the working
 principles at session start (`principles.*`), a hand-off request when the
 context grows past a threshold (`handoff.*`), and an optional link between
 Claude Code's memory and the repository's tracked `.claude/memory` (`memory.link`,
@@ -122,10 +122,10 @@ The CLI is `node <plugin>/bin/docrank.mjs <command>`:
 - `check sections` and `check drift-pairs` hold the documents to their
   references and to a pair for every code unit (`docs.scanRoots`, `docs.unitRoots`).
 - `judges [<range>]` names the judges a diff needs (`judges.routes`).
-- `worktree <branch>` makes the worktree `claude -w` makes (cut from the
-  fetched `origin/<branches.integration>`, `worktree.copy` copied,
-  `worktree.install` run) for a session the hook did not reach, and prints its
-  path.
+- `worktree <branch> [<base>]` makes the worktree `claude -w` makes (cut from the
+  fetched `origin/<branches.integration>`, or from the fetched `origin/<base>`
+  when slices share a branch; `worktree.copy` copied, `worktree.install` run)
+  for a session the hook did not reach, and prints its path.
 
 - `watch [--no-open]` starts the watch server when none runs, prints the
   page's address and opens it.

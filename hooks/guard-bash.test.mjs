@@ -29,6 +29,19 @@ describe("the extraDeny example in docs/config.md", () => {
   });
 });
 
+describe("the case-insensitive example in docs/config.md", () => {
+  const docs = readFileSync(path.join(casesDir, "..", "..", "docs", "config.md"), "utf8");
+  const config = JSON.parse(docs.match(/## Example: refusing a statement whatever its case[\s\S]*?```json\n([\s\S]*?)```/)[1]);
+  const box = sandbox({ config });
+  afterAll(box.cleanup);
+  it("refuses a statement through a client in any case, and lets a search for its words pass", () => {
+    expect(box.run('psql "$URL" -c "Drop Table orders"').status).toBe(2);
+    expect(box.run('psql "$URL" -c "TRUNCATE orders"').status).toBe(2);
+    expect(box.run('grep -rn "DROP TABLE" migrations/').status).toBe(0);
+    expect(box.run('psql "$URL" -c "SELECT 1"').status).toBe(0);
+  });
+});
+
 describe("a refusal", () => {
   it("is logged to the audit log under HOME", () => {
     const box = sandbox();
@@ -43,6 +56,38 @@ describe("a refusal", () => {
     const { status, stderr } = box.run("git status");
     expect(status).toBe(2);
     expect(stderr).toContain("branches.integration: expected a string");
+    box.cleanup();
+  });
+});
+
+describe("guard.extraDeny flags", () => {
+  const refuses = (entry, command) => {
+    const box = sandbox({ config: { guard: { extraDeny: [{ reason: "held", ...entry }] } } });
+    const status = box.run(command).status;
+    box.cleanup();
+    return status === 2;
+  };
+  it("i: matches whatever the case, and without it does not", () => {
+    expect(refuses({ pattern: "wipe data", flags: "i" }, "echo WIPE Data")).toBe(true);
+    expect(refuses({ pattern: "wipe data" }, "echo WIPE Data")).toBe(false);
+  });
+  it("m: ^ and $ stand at each line of a multi-line command", () => {
+    expect(refuses({ pattern: "^wipe$", flags: "m" }, "echo a\nwipe\necho b")).toBe(true);
+    expect(refuses({ pattern: "^wipe$" }, "echo a\nwipe\necho b")).toBe(false);
+  });
+  it("s: a dot reaches across a line break", () => {
+    expect(refuses({ pattern: "wipe.run", flags: "s" }, "wipe\nrun")).toBe(true);
+    expect(refuses({ pattern: "wipe.run" }, "wipe\nrun")).toBe(false);
+  });
+});
+
+describe("a version floor the installed plugin does not meet", () => {
+  it("refuses every command, naming both versions and the update command", () => {
+    const box = sandbox({ config: { requires: "999.0.0" } });
+    const { status, stderr } = box.run("git status");
+    expect(status).toBe(2);
+    expect(stderr).toMatch(/needs docrank 999\.0\.0 or newer and docrank \d+\.\d+\.\d+ is installed/u);
+    expect(stderr).toContain("claude plugin update docrank@docrank");
     box.cleanup();
   });
 });

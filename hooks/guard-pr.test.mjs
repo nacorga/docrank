@@ -52,6 +52,14 @@ describe("guard-pr.mjs", () => {
     expect(await decision(dir, OPEN, session())).toBe("Read it against the site.");
   });
 
+  it("answers in full, parsed whole, when the answer is far over a pipe's buffer (64 KB and more)", async () => {
+    const checklist = "long checklist ".repeat(20000);
+    const dir = branchChanging("src/a.ts", { ...config, pr: { ...config.pr, checklist } });
+    const reason = await decision(dir, OPEN, session());
+    expect(checklist.length).toBeGreaterThan(256 * 1024);
+    expect(reason).toBe(checklist);
+  });
+
   it("reads the branch a `cd` goes into", async () => {
     const dir = branchChanging("src/a.ts");
     expect(await decision(tmpdir(), `cd ${dir} && ${OPEN}`, session(), dir)).toBe("Read it against the site.");
@@ -145,6 +153,40 @@ describe("guard-pr.mjs", () => {
       for (const flags of ["--fill", "", "--body-file -", "-F nowhere.md"]) {
         expect(await decision(dir, open(flags), session())).toContain("not in the command");
       }
+    });
+
+    it("owes a line with paths only to a diff that touches one of them", async () => {
+      const scoped = {
+        ...config,
+        pr: { ...config.pr, requiredLines: ["^Gates: passed$", { pattern: "^Surface review: done$", paths: ["ui/"] }] },
+      };
+      const bare = `--body "Gates: passed"`;
+      const both = `--body "Gates: passed\nSurface review: done"`;
+      // A product diff outside the paths owes only the bare line.
+      expect(await decision(branchChanging("src/a.ts", scoped), open(bare), session())).toBeNull();
+      // A diff inside them owes both, and names the one missing.
+      const drawing = branchChanging("ui/a.tsx", scoped);
+      expect(await decision(drawing, open(bare), session())).toContain("/^Surface review: done$/");
+      expect(await decision(drawing, open(both), session())).toBeNull();
+    });
+
+    it("falls back to the once-per-branch checklist when the diff is product but no entry is owed", async () => {
+      const scopedOnly = {
+        ...config,
+        pr: { ...config.pr, requiredLines: [{ pattern: "^Surface review: done$", paths: ["ui/"] }] },
+      };
+      const dir = branchChanging("src/a.ts", scopedOnly);
+      const id = session();
+      expect(await decision(dir, open(`--body "x"`), id)).toBe("Read it against the site.");
+      expect(await decision(dir, open(`--body "x"`), id)).toBeNull();
+    });
+
+    it("reads a diff that touches only an entry's paths, with neither list set", async () => {
+      const only = { branches: { integration: "develop" }, pr: { requiredLines: [{ pattern: "^Surface review: done$", paths: ["ui/"] }] } };
+      const dir = branchChanging("ui/a.tsx", only);
+      expect(await decision(dir, open(`--body "x"`), session())).toContain("/^Surface review: done$/");
+      expect(await decision(dir, open(`--body "Surface review: done"`), session())).toBeNull();
+      expect(await decision(branchChanging("docs/a.md", only), open("--fill"), session())).toBeNull();
     });
 
     it("still leaves a diff that touches neither list, and another base, alone", async () => {

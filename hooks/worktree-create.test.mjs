@@ -25,6 +25,18 @@ function repoWithRemote(config) {
   return box;
 }
 
+
+/** Gives the remote a `batch/shared` branch that holds `batch.txt` and not what develop holds. */
+function withSharedBranch(box) {
+  box.git(box.repo, "checkout", "-q", "-b", "batch/shared", "main");
+  writeFileSync(path.join(box.repo, "batch.txt"), "shared");
+  box.git(box.repo, "add", "batch.txt");
+  box.git(box.repo, "commit", "-qm", "shared");
+  box.git(box.repo, "push", "-q", "origin", "batch/shared");
+  box.git(box.repo, "checkout", "-q", "main");
+  box.git(box.repo, "branch", "-D", "batch/shared");
+}
+
 const create = (cwd, input) =>
   spawnSync(process.execPath, [HOOK], { cwd, input: JSON.stringify({ cwd, ...input }), encoding: "utf8" });
 const lastLine = (r) => r.stdout.trim().split("\n").at(-1);
@@ -89,5 +101,29 @@ describe("worktree-create.mjs", () => {
     expect(r.status, r.stderr).toBe(0);
     expect(r.stderr).toContain("fetch failed");
     expect(existsSync(path.join(lastLine(r), "dev.txt"))).toBe(true);
+  });
+
+  it("cuts from a base the input names, and fetches nothing", () => {
+    const box = repoWithRemote(config);
+    withSharedBranch(box);
+    box.git(box.repo, "fetch", "-q", "origin");
+    box.git(box.repo, "remote", "set-url", "origin", path.join(box.dir, "gone.git"));
+    const r = create(box.repo, { name: "feat/slice", base: "origin/batch/shared" });
+    expect(r.status, r.stderr).toBe(0);
+    expect(r.stderr).not.toContain("fetch");
+    const dir = lastLine(r);
+    expect(existsSync(path.join(dir, "batch.txt"))).toBe(true);
+    expect(existsSync(path.join(dir, "dev.txt"))).toBe(false);
+    expect(() => box.git(dir, "rev-parse", "--abbrev-ref", "@{upstream}")).toThrow();
+  });
+
+  it("fails the creation when the base is no ref, and takes no base for a branch that exists", () => {
+    const box = repoWithRemote(config);
+    withSharedBranch(box);
+    box.git(box.repo, "fetch", "-q", "origin");
+    expect(create(box.repo, { name: "feat/lost", base: "origin/nope" }).status).toBe(1);
+    box.git(box.repo, "branch", "kept", "main");
+    const dir = lastLine(create(box.repo, { name: "kept", base: "origin/batch/shared" }));
+    expect(existsSync(path.join(dir, "batch.txt"))).toBe(false);
   });
 });

@@ -1,0 +1,52 @@
+# A repository's database rules, written as guard.extraDeny entries. The first
+# is case-insensitive (flags "im"): an SQL statement is refused whatever its
+# case. The rest are named for an imaginary shared project, `app`, whose
+# volume is `app_pgdata`; a throwaway project holds nothing another needs.
+CONFIG|{"guard":{"extraDeny":[{"pattern":"(?=[\\s\\S]*(?:\\bdrop[ \\t]+(?:database|table|schema)\\b|\\btruncate[ \\t]+(?:table[ \\t]+)?[a-z_\"]))(?:^|[;&|(])[ \\t]*(?:psql|pgcli|docker[ \\t]+compose\\b[^|&;\\n]*[ \\t]exec[ \\t])","flags":"im","reason":"a DROP or TRUNCATE through a SQL client erases data. Ask the user to run it."},{"pattern":"(?:\\bdrop[ \\t]+(?:database|table|schema)\\b|\\btruncate[ \\t]+(?:table[ \\t]+)?[a-z_\"])[^\\n]*\\|[ \\t]*(?:psql|pgcli)\\b","flags":"i","reason":"a DROP or TRUNCATE piped to a SQL client erases data. Ask the user to run it."},{"pattern":"(?:^|[;&|(])[ \\t]*docker[ \\t]+compose\\b(?![^|&;\\n]*[ \\t](?:-p|--project-name)(?:[ \\t]+|=)(?!app\\b))[^|&;\\n]*[ \\t]down\\b[^|&;\\n]*[ \\t](?:-v|--volumes)\\b","reason":"removing the volumes of the shared project erases its database. A throwaway project, named with -p, may be removed."},{"pattern":"(?:^|[;&|(])[ \\t]*docker[ \\t]+volume[ \\t]+(?:prune\\b|rm\\b[^|&;\\n]*(?:[ \\t][\"']?app_pgdata[\"']?(?:[ \\t]|$)|\\$\\(|`))","reason":"removing that volume, or pruning volumes, erases the shared database."},{"pattern":"(?:^|[;&|(])[ \\t]*docker[ \\t]+(?:container[ \\t]+)?(?:run|create)\\b[^|&;\\n]*(?:\\bapp_pgdata\\b|--volumes-from[ \\t=]+[\"']?app-db-1\\b)","reason":"a second container on the shared database volume runs two servers on one data directory."}]}}
+
+# -- a statement through a SQL client ----------------------------------------
+BLOCK|psql "$DATABASE_URL" -c "DROP DATABASE shop"
+BLOCK|psql "$DATABASE_URL" -c 'TRUNCATE orders'
+BLOCK|psql "$DATABASE_URL" -c "drop table orders"
+BLOCK|psql "$DATABASE_URL" -c "Drop Schema public cascade"
+BLOCK|echo "DROP SCHEMA public CASCADE" | psql "$DATABASE_URL"
+BLOCK|pgcli "$DATABASE_URL" -c "truncate table orders"
+BLOCK|docker compose -f compose.dev.yml exec db psql -U app -c "TRUNCATE TABLE orders"
+BLOCK|cd api && psql "$DATABASE_URL" -c "DROP TABLE orders"
+ALLOW|psql "$DATABASE_URL" -c "SELECT count(*) FROM orders"
+ALLOW|psql "$DATABASE_URL" -c "SELECT truncate(1.5)"
+ALLOW|grep -rn "DROP TABLE" migrations/
+ALLOW|git commit -m "docs: never drop table through psql"
+ALLOW|docker compose -f compose.dev.yml logs db
+
+# -- volumes of the shared project ---------------------------------------------
+BLOCK|docker compose -f compose.dev.yml down -v
+BLOCK|docker compose -f compose.dev.yml down --volumes
+BLOCK|docker compose -p app -f compose.dev.yml down -v
+BLOCK|docker compose --project-name=app down --volumes
+BLOCK|docker compose -f other.yml down -v; docker compose -f compose.dev.yml down -v
+BLOCK|docker compose -p scratch down -v; docker compose down -v
+BLOCK|docker volume rm app_pgdata
+BLOCK|docker volume rm -f app_pgdata
+BLOCK|docker volume rm "app_pgdata"
+BLOCK|docker volume rm $(docker volume ls -q)
+BLOCK|docker volume rm `docker volume ls -q`
+BLOCK|docker volume prune -f
+# A second container on the shared volume is a second server on its data.
+BLOCK|docker run -d --name second-db -p 5433:5432 -v app_pgdata:/var/lib/postgresql/data postgres:17
+BLOCK|docker run --rm --volume=app_pgdata:/data alpine ls /data
+BLOCK|docker container run --mount source=app_pgdata,target=/var/lib/postgresql/data postgres:17
+BLOCK|docker create -v "app_pgdata:/var/lib/postgresql/data" postgres:17
+BLOCK|docker run --rm --volumes-from app-db-1 postgres:17 pg_dump
+ALLOW|docker run -d --name scratch-db -p 55433:5432 -e POSTGRES_PASSWORD=postgres postgres:17
+ALLOW|docker run --rm -v t71_app_pgdata:/var/lib/postgresql/data postgres:17
+ALLOW|git commit -m "never docker run -v app_pgdata"
+ALLOW|git commit -m "never run docker volume rm app_pgdata"
+ALLOW|docker compose -f compose.dev.yml down
+ALLOW|docker compose -f compose.dev.yml up -d
+# A throwaway project, named, holds nothing another session needs.
+ALLOW|docker compose -p scratch -f compose.dev.yml down -v
+ALLOW|docker compose --project-name=scratch down --volumes
+ALLOW|docker compose -f other.yml -p t71 down -v
+ALLOW|docker volume rm t71_app_pgdata
+ALLOW|docker volume rm scratch_cache scratch_data

@@ -16,6 +16,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, realpathSync, stat
 import os from "node:os";
 import path from "node:path";
 import { loadConfig } from "../lib/config.mjs";
+import { writeErr } from "../lib/stdio.mjs";
 import { esc, git, glob, mergedTip, run } from "../lib/git.mjs";
 import { recordRefusal } from "../lib/watch/record.mjs";
 
@@ -36,7 +37,7 @@ function refuse(reason, message) {
   } catch {}
   // No hook event reports this refusal (harness fact 21): docrank watch hears it here.
   recordRefusal(input, config, message, "guard-bash");
-  process.stderr.write(`${message}\n`);
+  writeErr(`${message}\n`);
   process.exit(2);
 }
 
@@ -340,8 +341,8 @@ if (has(String.raw`rm\s+-[a-zA-Z]*r[a-zA-Z]*\s+(?:/|\.|\.\.|~|\$HOME)(?:\s|$)`))
   refuse("rm-rf", "BLOCKED: recursive rm of a root, the current directory or home. Ask the user for explicit confirmation before running it.");
 }
 
-for (const { pattern, reason } of guard.extraDeny) {
-  if (new RegExp(pattern, "u").test(command)) refuse("extra-deny", `BLOCKED: ${reason}`);
+for (const { pattern, flags, reason } of guard.extraDeny) {
+  if (new RegExp(pattern, `u${flags}`).test(command)) refuse("extra-deny", `BLOCKED: ${reason}`);
 }
 
 /* -- a push needs the gates -------------------------------------------------- */

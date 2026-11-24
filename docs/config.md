@@ -15,6 +15,12 @@ expression source, compiled with the `u` flag. Every string is non-empty.
 
 Defaults that depend on `branches.integration` are written `<integration>`.
 
+## `requires`
+
+| Key | Type | Default | Read by |
+|---|---|---|---|
+| `requires` | version (`major.minor.patch`) | `null` | every hook and the CLI, through the loader: the oldest docrank this repository accepts. An older plugin refuses the whole file, so every guard refuses and the CLI exits 1, naming both versions and `claude plugin update docrank@docrank`. A plugin that predates the key refuses it as unknown, so the floor holds from the release that introduced it. Null means no floor |
+
 ## `branches`
 
 | Key | Type | Default | Read by |
@@ -29,7 +35,7 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 |---|---|---|---|
 | `guard.blockedTagPatterns` | regex[] | `[]` | Bash guard: a push of a tag whose name matches one is refused (`refs/tags/<name>`, or a name that is a local tag), and so are `--tags` and `--follow-tags`, which carry tags unnamed. Empty means tags are not checked |
 | `guard.publishBan` | boolean | `true` | Bash guard: refuses `npm publish` and `pnpm publish` |
-| `guard.extraDeny` | `{pattern: regex, reason: string}[]` | `[]` | Bash guard: a command matching `pattern` is refused with `reason`. The pattern is tried against the whole command string, so anchor it to a command position if prose that merely quotes the command must pass |
+| `guard.extraDeny` | `{pattern: regex, flags: string = "", reason: string}[]` | `[]` | Bash guard: a command matching `pattern` is refused with `reason`. The pattern is tried against the whole command string, so anchor it to a command position if prose that merely quotes the command must pass. `flags` adds some of `i` (ignore case), `m` (`^` and `$` at each line) and `s` (`.` crosses a line break), each once, to the `u` every pattern has; a database statement is refused whatever its case with `"i"` |
 
 ## `gates`
 
@@ -37,6 +43,9 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 |---|---|---|---|
 | `gates.run` | `{name: string, command: string}[]` | `[]` | gates skill and runner: run in order, stop at the first failure; names are unique. Empty means no gates |
 | `gates.jobs` | map of name to command | `{}` | gates runner: run only when named, after the gates; named alone they run without them |
+| `gates.groups` | map of name to job names | `{}` | gates runner: a name for several jobs, such as `e2e` for every browser suite; naming it runs those jobs, in `gates.jobs` order, as if each were named. Each member is a key of `gates.jobs`, and a group is named like no gate or job |
+| `gates.prelude` | string | `""` | gates runner: shell text run before every gate, job and the preflight, in the same shell as the command, so what it exports or sources (a version manager's `use`, an environment variable) reaches it; one that fails fails the command |
+| `gates.preflight` | string | `""` | gates runner: a command run once, after the prelude and before the first gate or job; when it fails the run ends there with `FAIL preflight` and the tail of its output, so a missing toolchain is said once and not by every gate |
 | `gates.requireBeforePush` | boolean | `true` | Bash guard: a push is refused unless the tip of each ref it pushes is listed in the record or is an ancestor of `origin/<integration>`; tags, deletions and dry runs are not checked; moot while `gates.run` is empty |
 | `gates.record` | string | `"docrank-gates-passed"` | gates runner, Bash guard and the optional `templates/pre-push`: file name, in the git common directory, holding one commit sha per line, each a HEAD that passed; the runner writes it only when every gate passed on a clean tree whose HEAD did not move |
 
@@ -93,13 +102,20 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 |---|---|---|---|
 | `worktree.copy` | string[] | `[".env", ".mcp.json"]` | worktree creation: paths relative to the main checkout, copied into the new worktree when present. A plugin's `WorktreeCreate` hook replaces Claude Code's default, so `.worktreeinclude` is not read |
 | `worktree.install` | string | `null` | worktree creation: shell command run in the new worktree, its output sent to stderr; a failure is reported and does not fail the creation. null means none |
+| `worktree.prune` | boolean | `false` | session start: removes a worktree and its local branch only when it is on a branch (not detached, not the main checkout, not the session's own), GitHub lists a merged pull request from the branch among the last 200 (one `gh` call, ten seconds at most) with the worktree's tip as its merged head, and `git status` shows nothing, untracked files included. A tip merely on `origin/<integration>` is not enough, and no idle-time heuristic stands in for the merge: a live session's unedited worktree is told from a dead one's only by a merged head. Ignored files are not listed by `git status`, so removal deletes them with the worktree (dependencies, build output). Without `gh`, offline or past the timeout, nothing goes. Anything else is the repository's own to remove |
+
+A worktree is cut from `origin/<integration>` unless it is given a base. Slices
+that build on a shared branch pass it: `docrank worktree <branch> <base>` fetches
+`origin/<base>` (and fails if it cannot) and cuts from it, and the `WorktreeCreate`
+input may carry a `base`, a ref that is cut from as it stands with nothing
+fetched. A branch that already exists is checked out as it is.
 
 ## `pr`
 
 | Key | Type | Default | Read by |
 |---|---|---|---|
-| `pr.productPaths` | path prefix[] | `[]` | PR handover guard: a `gh pr create` into `branches.integration` whose diff against `origin/<integration>` touches one is refused with `checklist`, the first of a branch in a session only, unless `requiredLines` decides it. Empty here and in `surface.paths` means off |
-| `pr.requiredLines` | regex[] | `[]` | PR handover guard: what passes it is evidence. Each entry is a regular expression, tried with the flags `i`, `m` and `u` (Unicode, case-insensitive) against each line of the pull request body, which the guard reads from the command: `--body`/`-b`, or the file `--body-file`/`-F` names, resolved against the directory the command runs in. A body with a line for every entry passes at the first attempt; one that lacks an entry is refused every time, naming the missing entries beside `checklist`. `--fill`, no body flag, `-` (stdin) and a file that cannot be read count as no body. Empty means the once-per-branch refusal |
+| `pr.productPaths` | path prefix[] | `[]` | PR handover guard: a `gh pr create` into `branches.integration` whose diff against `origin/<integration>` touches one is refused with `checklist`, the first of a branch in a session only, unless `requiredLines` decides it (a diff touching these paths that owes no entry of `requiredLines`, every entry having `paths` and none touched, gets the once-per-branch refusal too). Empty here and in `surface.paths` means off |
+| `pr.requiredLines` | (regex \| `{pattern: regex, paths: path prefix[]}`)[] | `[]` | PR handover guard: what passes it is evidence. Each entry is a regular expression, or an object with a `pattern` of that kind and the `paths` it is owed for: a bare entry is owed by every diff the guard reads, one with `paths` only when the diff touches one of them (and such a diff is read even when it touches neither `pr.productPaths` nor `surface.paths`). The pattern is tried with the flags `i`, `m` and `u` (Unicode, case-insensitive) against each line of the pull request body, which the guard reads from the command: `--body`/`-b`, or the file `--body-file`/`-F` names, resolved against the directory the command runs in. A body with a line for every entry owed passes at the first attempt; one that lacks an entry owed is refused every time, naming the missing entries beside `checklist`. `--fill`, no body flag, `-` (stdin) and a file that cannot be read count as no body. Empty, or no entry owed by a diff that touches `pr.productPaths` or `surface.paths`, means the once-per-branch refusal |
 | `pr.checklist` | string | a generic handover line | PR handover guard: the text of that refusal. The default ends by telling the session to run the command again; a replacement should too |
 | `pr.ciBases` | glob[] | `[<integration>]` | `scripts/watch-pr.mjs`: bases whose pull requests run CI; the watcher of any other reports `NO CI` and exits 0 |
 
@@ -202,6 +218,27 @@ database:
       {
         "pattern": "docker[ \\t]+volume[ \\t]+rm\\b[^|&;]*\\bapp_pgdata\\b",
         "reason": "that volume holds the development database every session shares. Ask the user to remove it."
+      }
+    ]
+  }
+}
+```
+
+## Example: refusing a statement whatever its case
+
+A SQL statement reaches the database through a client, and its keywords may be
+written in any case. `flags` makes the entry case-insensitive; the lookahead asks
+for the statement anywhere in the command, and the client must stand at a
+command position, so a search for the words in a file passes:
+
+```json
+{
+  "guard": {
+    "extraDeny": [
+      {
+        "pattern": "(?=[\\s\\S]*\\b(?:drop[ \\t]+(?:database|table|schema)|truncate[ \\t]+(?:table[ \\t]+)?[a-z_\"]))(?:^|[;&|(])[ \\t]*(?:psql|pgcli)\\b",
+        "flags": "im",
+        "reason": "a DROP or a TRUNCATE through a SQL client erases data. Ask the user to run it."
       }
     ]
   }

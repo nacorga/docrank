@@ -15,6 +15,7 @@ import { execFileSync, execSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { readInput } from "../lib/hook.mjs";
+import { writeErr } from "../lib/stdio.mjs";
 import { loadConfig } from "../lib/config.mjs";
 
 const input = await readInput();
@@ -62,7 +63,7 @@ if (format.lintCommand && format.lintExtensions.includes(path.extname(file))) {
   try {
     exec(format.lintCommand);
   } catch (e) {
-    process.stderr.write(`Lint on ${file}:\n${e.stdout ?? e.message}\n`);
+    writeErr(`Lint on ${file}:\n${e.stdout ?? e.message}\n`);
     process.exit(2);
   }
 }

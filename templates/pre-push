@@ -28,7 +28,7 @@ if command -v node >/dev/null 2>&1; then
         [
           `stickler pre-push: ${file} is not valid, so the push is refused:`,
           ...problems.map((p) => `  ${p}`),
-          "Run node <plugin>/bin/stickler.mjs config to see every problem and fix the file; git push --no-verify pushes without this check.",
+          "Run node <plugin>/cli/stickler.mjs config to see every problem and fix the file; git push --no-verify pushes without this check.",
         ].join("\n") + "\n",
       );
       process.exit(1);

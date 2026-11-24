@@ -51,7 +51,7 @@ binds, or asks which one does (none is an answer), then asks what code it
 governs, `**` by default, and proposes both; without them the arbiter is off and a change gets the gates and guards
 only. To see what is on, run `/stickler:init` again: on a configured repository
 it keeps your keys and lists what stays at its default and what is off.
-`node <plugin>/bin/stickler.mjs config` prints the resolved configuration.
+`node <plugin>/cli/stickler.mjs config` prints the resolved configuration.
 
 ### Try it
 
@@ -128,7 +128,7 @@ Agents, both read-only: `spec-arbiter` (a diff against the documents by
 `surface-reviewer` (opens the rendered pages in a headless Chrome, which the
 plugin starts through `chrome-devtools-mcp`, at `surface.widths`).
 
-The CLI is `node <plugin>/bin/stickler.mjs <command>`:
+The CLI is `node <plugin>/cli/stickler.mjs <command>`:
 
 - `config` prints the resolved configuration, or each error and exit 1.
 - `check sections` and `check drift-pairs` hold the documents to their

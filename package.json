@@ -1,11 +1,11 @@
 {
   "name": "stickler",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "private": true,
   "description": "Claude Code plugin: guard hooks, judges, gates and docs that outrank code.",
   "license": "MIT",
   "type": "module",
-  "bin": { "stickler": "bin/stickler.mjs" },
+  "bin": { "stickler": "cli/stickler.mjs" },
   "engines": { "node": ">=20" },
   "scripts": { "test": "vitest run", "build:ui": "node ui/build.mjs" },
   "devDependencies": {

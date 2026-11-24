@@ -91,14 +91,14 @@ describe("demo.mjs", () => {
     expect(config.gates.run).toEqual([{ name: "test", command: "node --test test/checkout.test.mjs" }]);
     // No drift pairing: its Stop hook would point the session at the spec before the arbiter is asked.
     expect(config.docDrift.entries).toEqual([]);
-    const cli = node([path.join(ROOT, "bin", "stickler.mjs"), "config"], worktree);
+    const cli = node([path.join(ROOT, "cli", "stickler.mjs"), "config"], worktree);
     expect(cli.status).toBe(0);
     expect(JSON.parse(cli.stdout).root).toBe(worktree);
   });
 
   it("names the spec arbiter, launched on src/checkout.mjs, for the branch and for the fix's range", () => {
     for (const args of [[], ["demo/tracking..demo/fixed"]]) {
-      const r = node([path.join(ROOT, "bin", "stickler.mjs"), "judges", ...args], worktree);
+      const r = node([path.join(ROOT, "cli", "stickler.mjs"), "judges", ...args], worktree);
       expect(r.status).toBe(0);
       expect(r.stdout).toContain("- `stickler:spec-arbiter` — launch: `src/checkout.mjs`.\n");
     }

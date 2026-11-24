@@ -390,7 +390,7 @@ describe("templates/pre-push", () => {
     expect(r.status).toBe(1);
     expect(r.stderr).toMatch(refusal);
     expect(r.stderr).toContain("expected valid JSON");
-    expect(r.stderr).toContain("bin/stickler.mjs config");
+    expect(r.stderr).toContain("cli/stickler.mjs config");
     expect(r.stderr).toContain("git push --no-verify");
   });
 

@@ -47,6 +47,17 @@ describe("a refusal", () => {
   });
 });
 
+describe("a version floor the installed plugin does not meet", () => {
+  it("refuses every command, naming both versions and the update command", () => {
+    const box = sandbox({ config: { requires: "999.0.0" } });
+    const { status, stderr } = box.run("git status");
+    expect(status).toBe(2);
+    expect(stderr).toMatch(/needs docrank 999\.0\.0 or newer and docrank \d+\.\d+\.\d+ is installed/u);
+    expect(stderr).toContain("claude plugin update docrank@docrank");
+    box.cleanup();
+  });
+});
+
 const readLog = (file) => {
   try {
     return readFileSync(file, "utf8");

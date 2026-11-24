@@ -15,6 +15,12 @@ expression source, compiled with the `u` flag. Every string is non-empty.
 
 Defaults that depend on `branches.integration` are written `<integration>`.
 
+## `requires`
+
+| Key | Type | Default | Read by |
+|---|---|---|---|
+| `requires` | version (`major.minor.patch`) | `null` | every hook and the CLI, through the loader: the oldest docrank this repository accepts. An older plugin refuses the whole file, so every guard refuses and the CLI exits 1, naming both versions and `claude plugin update docrank@docrank`. A plugin that predates the key refuses it as unknown, so the floor holds from the release that introduced it. Null means no floor |
+
 ## `branches`
 
 | Key | Type | Default | Read by |

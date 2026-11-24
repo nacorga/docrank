@@ -2,7 +2,8 @@
 # GitHub as the case suites see it. `pr view <n> --json baseRefName` answers the
 # base of four pull requests, one per kind the guard tells apart, and fails for
 # any other, as gh does offline. `pr list` prints $GH_STUB_MERGED_HEADS, the head
-# commits of merged pull requests, and nothing when it is unset. For the PR
+# commits of merged pull requests, and nothing when it is unset; asked for
+# `headRefName` it prints $GH_STUB_MERGED_PRS instead, one `<branch><TAB><head>` per line. For the PR
 # watch: `pr view` asking for `state` prints $GH_STUB_VIEW (a JSON object);
 # `pr checks` prints $GH_STUB_CHECKS and exits $GH_STUB_CHECKS_STATUS (default
 # 0), except that with $GH_STUB_FIRST_EMPTY naming a file, its first call
@@ -20,7 +21,11 @@ case "$1 $2" in
           *) exit 1 ;;
         esac ;;
     esac ;;
-  "pr list") [ -z "$GH_STUB_MERGED_HEADS" ] || printf '%s\n' $GH_STUB_MERGED_HEADS ;;
+  "pr list")
+    case "$*" in
+      *headRefName*) [ -z "$GH_STUB_MERGED_PRS" ] || printf '%s\n' "$GH_STUB_MERGED_PRS" ;;
+      *) [ -z "$GH_STUB_MERGED_HEADS" ] || printf '%s\n' $GH_STUB_MERGED_HEADS ;;
+    esac ;;
   "pr checks")
     case "$*" in
       *--json*) printf '%s\n' "$GH_STUB_FAILED" ;;

@@ -99,6 +99,7 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 |---|---|---|---|
 | `worktree.copy` | string[] | `[".env", ".mcp.json"]` | worktree creation: paths relative to the main checkout, copied into the new worktree when present. A plugin's `WorktreeCreate` hook replaces Claude Code's default, so `.worktreeinclude` is not read |
 | `worktree.install` | string | `null` | worktree creation: shell command run in the new worktree, its output sent to stderr; a failure is reported and does not fail the creation. null means none |
+| `worktree.prune` | boolean | `false` | session start: removes a worktree and its local branch only when it is on a branch (not detached, not the main checkout, not the session's own), GitHub lists a merged pull request from the branch among the last 200 with the worktree's tip as its merged head or with the tip already on `origin/<integration>` (not fetched), `git status` shows nothing and the reflog of its HEAD has not moved for an hour. Without `gh`, or offline, nothing goes. Anything else is the repository's own to remove |
 
 A worktree is cut from `origin/<integration>` unless it is given a base. Slices
 that build on a shared branch pass it: `docrank worktree <branch> <base>` fetches

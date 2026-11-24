@@ -77,7 +77,7 @@ Every key is documented once, with its default, in [docs/config.md](docs/config.
 Around them, not refusing: the formatter and linter run on each edited file
 (`format.*`), a question at the end of a session whose code changes a document
 did not follow (`docDrift.*`), a worktree cut from the fetched integration
-branch with the repository's ignored files copied in (`worktree.*`), the working
+branch with the repository's ignored files copied in, and, when `worktree.prune` is on, the merged ones removed at session start (`worktree.*`), the working
 principles at session start (`principles.*`), a hand-off request when the
 context grows past a threshold (`handoff.*`), and an optional link between
 Claude Code's memory and the repository's tracked `.claude/memory` (`memory.link`,

@@ -340,8 +340,8 @@ if (has(String.raw`rm\s+-[a-zA-Z]*r[a-zA-Z]*\s+(?:/|\.|\.\.|~|\$HOME)(?:\s|$)`))
   refuse("rm-rf", "BLOCKED: recursive rm of a root, the current directory or home. Ask the user for explicit confirmation before running it.");
 }
 
-for (const { pattern, reason } of guard.extraDeny) {
-  if (new RegExp(pattern, "u").test(command)) refuse("extra-deny", `BLOCKED: ${reason}`);
+for (const { pattern, flags, reason } of guard.extraDeny) {
+  if (new RegExp(pattern, `u${flags}`).test(command)) refuse("extra-deny", `BLOCKED: ${reason}`);
 }
 
 /* -- a push needs the gates -------------------------------------------------- */

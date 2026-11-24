@@ -65,7 +65,7 @@ Every key is documented once, with its default, in [docs/config.md](docs/config.
 | Bash | pushing tags that match a pattern, `--tags`, `--follow-tags` | `guard.blockedTagPatterns` |
 | Bash | `npm publish`, `pnpm publish` | `guard.publishBan` |
 | Bash | moving the main checkout off the integration branch, deleting an unmerged branch | `branches.integration` |
-| Bash | any command that matches a pattern the repository adds | `guard.extraDeny` |
+| Bash | any command that matches a pattern the repository adds, with the case or line flags it names | `guard.extraDeny` |
 | Bash | a write or a command that runs, from a read-only agent | `judges.skill` |
 | Agent | a fork dispatch; a `general-purpose` Opus dispatch with no `Heavy:` line; completes a dispatch with the guardrails block, and sets the default model and effort | `dispatch.*` |
 | SendMessage | a message to a judge past its re-check limit, once | `judges.maxRechecks` |

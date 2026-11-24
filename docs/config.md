@@ -35,7 +35,7 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 |---|---|---|---|
 | `guard.blockedTagPatterns` | regex[] | `[]` | Bash guard: a push of a tag whose name matches one is refused (`refs/tags/<name>`, or a name that is a local tag), and so are `--tags` and `--follow-tags`, which carry tags unnamed. Empty means tags are not checked |
 | `guard.publishBan` | boolean | `true` | Bash guard: refuses `npm publish` and `pnpm publish` |
-| `guard.extraDeny` | `{pattern: regex, reason: string}[]` | `[]` | Bash guard: a command matching `pattern` is refused with `reason`. The pattern is tried against the whole command string, so anchor it to a command position if prose that merely quotes the command must pass |
+| `guard.extraDeny` | `{pattern: regex, flags: string = "", reason: string}[]` | `[]` | Bash guard: a command matching `pattern` is refused with `reason`. The pattern is tried against the whole command string, so anchor it to a command position if prose that merely quotes the command must pass. `flags` adds some of `i` (ignore case), `m` (`^` and `$` at each line) and `s` (`.` crosses a line break), each once, to the `u` every pattern has; a database statement is refused whatever its case with `"i"` |
 
 ## `gates`
 
@@ -189,6 +189,27 @@ database:
       {
         "pattern": "docker[ \\t]+volume[ \\t]+rm\\b[^|&;]*\\bapp_pgdata\\b",
         "reason": "that volume holds the development database every session shares. Ask the user to remove it."
+      }
+    ]
+  }
+}
+```
+
+## Example: refusing a statement whatever its case
+
+A SQL statement reaches the database through a client, and its keywords may be
+written in any case. `flags` makes the entry case-insensitive; the lookahead asks
+for the statement anywhere in the command, and the client must stand at a
+command position, so a search for the words in a file passes:
+
+```json
+{
+  "guard": {
+    "extraDeny": [
+      {
+        "pattern": "(?=[\\s\\S]*\\b(?:drop[ \\t]+(?:database|table|schema)|truncate[ \\t]+(?:table[ \\t]+)?[a-z_\"]))(?:^|[;&|(])[ \\t]*(?:psql|pgcli)\\b",
+        "flags": "im",
+        "reason": "a DROP or a TRUNCATE through a SQL client erases data. Ask the user to run it."
       }
     ]
   }

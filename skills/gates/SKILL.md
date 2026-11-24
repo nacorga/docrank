@@ -17,7 +17,9 @@ stays here; the caller receives only your final message.
    directory, which is not necessarily the tree this session works in), runs the
    gates in configured order, stops at the first failure, and prints one
    `PASS <name>` or `FAIL <name>` line per gate. A job runs only when named,
-   after the gates. Working in a worktree rather than the session's start
+   after the gates, and a name from `gates.groups` runs the jobs it holds.
+   `gates.preflight` runs once first and a failure of it ends the run
+   (`FAIL preflight`); `gates.prelude` runs before every command. Working in a worktree rather than the session's start
    directory? Pass `-C <worktree>`. A named gate or job the repository does not
    configure is an error that lists the valid names. Allow ten minutes or more:
    what a gate costs is the repository's.

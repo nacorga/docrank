@@ -114,6 +114,74 @@ describe("run-gates", () => {
     });
   });
 
+  describe("groups", () => {
+    const gates = { run: [gate("lint")], jobs: { a: "echo a >> ran.txt", b: "echo b >> ran.txt", c: "echo c >> ran.txt" }, groups: { suites: ["b", "a"] } };
+
+    it("a group runs its jobs in gates.jobs order, and not the others", () => {
+      const dir = repo(gates);
+      const { status, stdout } = run(["suites"], dir);
+      expect(status).toBe(0);
+      expect(verdicts(stdout)).toEqual(["PASS a", "PASS b"]);
+      expect(readFileSync(path.join(dir, "ran.txt"), "utf8")).toBe("a\nb\n");
+    });
+
+    it("runs a job once when named and in a group, and still after a gate named with it", () => {
+      const dir = repo(gates);
+      expect(verdicts(run(["a", "suites", "lint"], dir).stdout)).toEqual(["PASS lint", "PASS a", "PASS b"]);
+    });
+
+    it("is listed among the valid names when a name is unknown", () => {
+      const { stderr } = run(["nope"], repo(gates));
+      expect(stderr).toContain("groups: suites");
+    });
+  });
+
+  describe("prelude and preflight", () => {
+    it("the prelude runs before every gate and job, in the command's shell", () => {
+      const dir = repo({
+        prelude: "export FROM_PRELUDE=yes; echo prelude >> trail.txt",
+        run: [gate("one", 'echo "one $FROM_PRELUDE" >> trail.txt')],
+        jobs: { job: 'echo "job $FROM_PRELUDE" >> trail.txt' },
+      });
+      expect(verdicts(run(["one", "job"], dir).stdout)).toEqual(["PASS one", "PASS job"]);
+      expect(readFileSync(path.join(dir, "trail.txt"), "utf8")).toBe("prelude\none yes\nprelude\njob yes\n");
+    });
+
+    it("a prelude that fails fails the command without running it", () => {
+      const dir = repo({ prelude: "exit 4", run: [gate("one", "touch ran")] });
+      const { status, stdout } = run([], dir);
+      expect(status).toBe(1);
+      expect(verdicts(stdout)).toEqual(["FAIL one"]);
+      expect(existsSync(path.join(dir, "ran"))).toBe(false);
+    });
+
+    it("the preflight runs once, after the prelude and before the first gate", () => {
+      const dir = repo({
+        prelude: "export WHO=prelude",
+        preflight: 'echo "preflight $WHO" >> trail.txt',
+        run: [gate("one", "echo one >> trail.txt"), gate("two", "echo two >> trail.txt")],
+      });
+      expect(verdicts(run([], dir).stdout)).toEqual(["PASS preflight", "PASS one", "PASS two"]);
+      expect(readFileSync(path.join(dir, "trail.txt"), "utf8")).toBe("preflight prelude\none\ntwo\n");
+    });
+
+    it("a failed preflight ends the run with its output, and records nothing", () => {
+      const dir = repo({ preflight: "echo wrong-toolchain; exit 1", run: [gate("one", "touch ran")] });
+      const { status, stdout } = run([], dir);
+      expect(status).toBe(1);
+      expect(verdicts(stdout)).toEqual(["FAIL preflight"]);
+      expect(stdout).toContain("wrong-toolchain");
+      expect(existsSync(path.join(dir, "ran"))).toBe(false);
+      expect(record(dir)).toEqual([]);
+    });
+
+    it("the preflight does not run when a name is unknown", () => {
+      const dir = repo({ preflight: "touch preflighted", run: [gate("one")] });
+      expect(run(["nope"], dir).status).toBe(1);
+      expect(existsSync(path.join(dir, "preflighted"))).toBe(false);
+    });
+  });
+
   describe("the record", () => {
     it("takes HEAD when every gate passed on a clean tree whose HEAD did not move", () => {
       const dir = repo({ run: [gate("a"), gate("b")] });

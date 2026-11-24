@@ -43,6 +43,9 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 |---|---|---|---|
 | `gates.run` | `{name: string, command: string}[]` | `[]` | gates skill and runner: run in order, stop at the first failure; names are unique. Empty means no gates |
 | `gates.jobs` | map of name to command | `{}` | gates runner: run only when named, after the gates; named alone they run without them |
+| `gates.groups` | map of name to job names | `{}` | gates runner: a name for several jobs, such as `e2e` for every browser suite; naming it runs those jobs, in `gates.jobs` order, as if each were named. Each member is a key of `gates.jobs`, and a group is named like no gate or job |
+| `gates.prelude` | string | `""` | gates runner: shell text run before every gate, job and the preflight, in the same shell as the command, so what it exports or sources (a version manager's `use`, an environment variable) reaches it; one that fails fails the command |
+| `gates.preflight` | string | `""` | gates runner: a command run once, after the prelude and before the first gate or job; when it fails the run ends there with `FAIL preflight` and the tail of its output, so a missing toolchain is said once and not by every gate |
 | `gates.requireBeforePush` | boolean | `true` | Bash guard: a push is refused unless the tip of each ref it pushes is listed in the record or is an ancestor of `origin/<integration>`; tags, deletions and dry runs are not checked; moot while `gates.run` is empty |
 | `gates.record` | string | `"docrank-gates-passed"` | gates runner, Bash guard and the optional `templates/pre-push`: file name, in the git common directory, holding one commit sha per line, each a HEAD that passed; the runner writes it only when every gate passed on a clean tree whose HEAD did not move |
 

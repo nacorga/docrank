@@ -90,7 +90,9 @@ session should follow whenever a prompt opens with a given word
 running in the repository's checkouts once nobody holds them: at session
 start, those of sessions that are gone, at session end, the ending
 session's own, never a process started outside Claude Code nor one matching
-`reap.keep` (`reap.*`).
+`reap.keep` (`reap.*`); and, at session start and after each compaction, the
+plans in `ship.plansDir` with their checked items over all of them and
+whether each has a hand-off section (`plans.atStart`).
 
 An invalid `.claude/docrank.json` refuses every guarded call and names each
 problem; the optional pre-push hook refuses a push on a file it cannot read or

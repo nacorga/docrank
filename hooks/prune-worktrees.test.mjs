@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { STUBS, sandbox } from "../test/cases-runner.mjs";
@@ -46,7 +46,7 @@ function commitAt(box, dir, age, name) {
 const mergedAs = (head, branch = "done") => `${branch}\t${head}`;
 
 describe("prune-worktrees.mjs, a hook that is off unless worktree.prune", () => {
-  it("removes a worktree and its branch whose pull request merged with its tip, once its reflog is older than an hour", () => {
+  it("removes a worktree and its branch whose pull request merged with its tip", () => {
     const { box, dir, tip, prune } = setup({ age: 3 });
     const r = prune({ merged: mergedAs(tip) });
     expect(r.status, r.stderr).toBe(0);
@@ -55,19 +55,28 @@ describe("prune-worktrees.mjs, a hook that is off unless worktree.prune", () => 
     expect(box.git(box.repo, "branch", "--list", "done")).toBe("");
   });
 
-  it("keeps it while the reflog of its HEAD moved within the last hour", () => {
+  it("removes one whose merged head is its tip however recently its reflog moved: no idle-hour rule", () => {
     const { dir, tip, prune } = setup({ age: 0 });
-    const r = prune({ merged: mergedAs(tip) });
-    expect(r.stdout).toBe("");
-    expect(existsSync(dir)).toBe(true);
+    expect(prune({ merged: mergedAs(tip) }).stdout).toContain("removed worktrees done");
+    expect(existsSync(dir)).toBe(false);
   });
 
-  it("removes one whose tip is on origin/<integration> when a pull request from the branch merged, as a squash would not", () => {
-    const { box, dir, prune } = setup();
+  it("keeps an idle, freshly cut worktree whose tip is on origin/<integration>, whatever older merge its branch name has", () => {
+    const { box, dir, prune } = setup({ age: 5 });
     const tip = box.git(dir, "rev-parse", "HEAD");
     box.git(box.repo, "update-ref", "refs/remotes/origin/main", tip);
     // The merged head GitHub lists is another commit: the branch name was used before.
-    expect(prune({ merged: mergedAs("0".repeat(40)) }).stdout).toContain("removed worktrees done");
+    expect(prune({ merged: mergedAs("0".repeat(40)) }).stdout).toBe("");
+    expect(existsSync(dir)).toBe(true);
+  });
+
+  it("deletes ignored files with the worktree, which git status does not list", () => {
+    const { box, dir, tip, prune } = setup();
+    writeFileSync(path.join(box.repo, ".git", "info", "exclude"), "node_modules/\n", { flag: "a" });
+    mkdirSync(path.join(dir, "node_modules"));
+    writeFileSync(path.join(dir, "node_modules", "dep.js"), "ignored");
+    expect(box.git(dir, "status", "--porcelain")).toBe("");
+    expect(prune({ merged: mergedAs(tip) }).stdout).toContain("removed worktrees done");
     expect(existsSync(dir)).toBe(false);
   });
 
@@ -124,6 +133,24 @@ describe("prune-worktrees.mjs, a hook that is off unless worktree.prune", () => 
   it("does nothing by default, whatever GitHub says", () => {
     const { dir, tip, prune } = setup({ config: {} });
     expect(prune({ merged: mergedAs(tip) }).stdout).toBe("");
+    expect(existsSync(dir)).toBe(true);
+  });
+
+  it("does nothing, and fails nothing, when gh outlasts its timeout", () => {
+    const { box, dir, tip } = setup();
+    const stub = path.join(box.dir, "slow");
+    mkdirSync(stub);
+    writeFileSync(path.join(stub, "gh"), `#!/bin/sh\nsleep 5\nprintf 'done\\t${tip}\\n'\n`, { mode: 0o755 });
+    const started = Date.now();
+    const r = spawnSync(process.execPath, [HOOK], {
+      cwd: box.repo,
+      input: JSON.stringify({ cwd: box.repo }),
+      encoding: "utf8",
+      env: { ...process.env, PATH: `${stub}:${process.env.PATH}`, DOCRANK_GH_TIMEOUT_MS: "300" },
+    });
+    expect(r.status).toBe(0);
+    expect(r.stdout).toBe("");
+    expect(Date.now() - started).toBeLessThan(4000);
     expect(existsSync(dir)).toBe(true);
   });
 

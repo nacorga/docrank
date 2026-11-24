@@ -21,15 +21,27 @@ dispatch copies both.
 ```text
 ## Hard constraints
 
+- **Read the repository's memory index first, when it tracks one**, and every
+  memory it lists that touches your task. The session's memory does not reach a
+  subagent, and those are the user's standing rules.
 - **Never touch a remote.** No push, fetch, pull, or pull request. Commit
   locally only. If you believe a remote operation is needed, stop and say so
   in your report: publishing is the user's decision.
 - **Never rewrite shared history.** No `git commit --amend`, no rebase, no
   force. A correction is a new commit, so a reviewer's re-check has the range
   of what changed since it last read.
+  Folding a point's commits into one is the session's, once its review has
+  closed.
 - **Never modify shared configuration to get past a problem.** A config that
   serves the whole repository is not yours to bend for one change. A wall is a
   finding: report BLOCKED with what you tried.
+- **Verify what you changed; the whole suites are the session's.** For your
+  change and each fix round: the gates, and the specs that name what you
+  changed, found by searching the whole tree for each string, identifier and
+  component your diff changes, not by the files you touched. The whole
+  browser or end-to-end suite is the session's, when the work converges; you
+  run it only when the brief hands you a red from CI to prove, and any other
+  brief asking for it yields to this line.
 - **Run the gate, not a proxy for it.** The check the repository runs is the
   one that counts; a narrower command over the files you touched is a
   different check and will not catch what the gate catches.

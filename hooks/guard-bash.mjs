@@ -17,7 +17,7 @@ import os from "node:os";
 import path from "node:path";
 import { loadConfig } from "../lib/config.mjs";
 import { writeErr } from "../lib/stdio.mjs";
-import { esc, git, glob, mergedTip, run } from "../lib/git.mjs";
+import { esc, git, glob, mergedHead, mergedTip, run } from "../lib/git.mjs";
 import { recordRefusal } from "../lib/watch/record.mjs";
 
 let input;
@@ -261,8 +261,12 @@ if (has(String.raw`${GIT}(?:switch|checkout)\b|${GH}pr${S}+checkout\b`)) {
 // branch's own tip as the merged head. An unpushed branch deleted on a "done"
 // exists nowhere else, and a commit pushed after the merge reaches nothing;
 // both pass `git branch -D` silently. GitHub is the proof, and without an
-// answer the check refuses.
+// answer the check refuses. A remote branch's tip is read from the remote
+// itself: the tracking ref may be gone after a prune, when GitHub already
+// deleted the branch on merge, or behind a commit pushed since. A branch the
+// remote no longer holds has nothing to lose, so its deletion passes.
 const NOT_MERGED = "its pull request is not merged with this branch's tip as the merged head (gh pr list --head <branch> --state merged). Deleting it loses what exists nowhere else, or a commit pushed after the merge. Keep it and say what is pending, or ask the user to run it themselves.";
+const UNREAD = "the remote could not be read (git ls-remote), so the tip it would delete is unknown. Keep it and say what is pending, or ask the user to run it themselves.";
 const HIDDEN = "BLOCKED: a redirection hides what follows it from this guard, which cannot then tell which branch is deleted. Put the redirection after the branch names, or ask the user to run it themselves.";
 
 // A redirection is no branch name, and the cuts below end at `&` or `|`, so the
@@ -347,7 +351,10 @@ if (new RegExp(String.raw`${GIT}push\b${ARGS}(?:${S}(?:-d|--delete)(?:${S}|$)|${
       if (ref.startsWith(":")) ref = ref.slice(1);
       else if (!del) continue;
       ref = ref.replace(/^refs\/heads\//, "");
-      if (!mergedTip(dir, ref, `refs/remotes/${remote}/${ref}`)) refuse("branch-unmerged", `BLOCKED: deleting remote branch ${remote}/${ref}: ${NOT_MERGED}`);
+      const listed = run("git", ["-C", dir, "ls-remote", "--heads", remote, `refs/heads/${ref}`], dir, 15000);
+      if (listed === null) refuse("branch-unmerged", `BLOCKED: deleting remote branch ${remote}/${ref}: ${UNREAD}`);
+      if (listed === "") continue;
+      if (!mergedHead(dir, ref, listed.split(/\s/)[0])) refuse("branch-unmerged", `BLOCKED: deleting remote branch ${remote}/${ref}: ${NOT_MERGED}`);
     }
   }
 }

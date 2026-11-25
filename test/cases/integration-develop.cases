@@ -188,8 +188,9 @@ ALLOW|@wt:feat/wt|git checkout main
 ALLOW|@wt:feat/wt|gh pr checkout 12
 
 # -- deleting a branch: only once its pull request merged at its tip -----------------
-# The sandbox has no GitHub to answer, so every forced delete blocks here; what is
-# not a forced delete never asks. The merged case is in guard-bash.test.mjs.
+# The sandbox has no GitHub to answer and no remote to read, so every forced delete
+# blocks here; what is not a forced delete never asks. The merged case is in
+# guard-bash.test.mjs.
 BLOCK|git branch -D feat/x
 BLOCK|git branch -Df feat/x
 BLOCK|git branch --delete --force feat/x

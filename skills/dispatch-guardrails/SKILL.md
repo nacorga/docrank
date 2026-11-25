@@ -103,11 +103,16 @@ alone, so for a read-only reviewer that line is enforced, not only asked.
 
 With `dispatch.heavyMarker` on (the default), the dispatch guard refuses a
 `general-purpose` dispatch, named or by default, whose `model` contains
-`opus` unless its prompt holds a line of its own, `Heavy: <path>`. The path,
-read from the repository root or absolute, must name a file that can be read
-and whose text contains the word "heavy", in any case, anywhere: the plan
-that marks the slice. A dispatch that names no model needs no line: it runs
-on `dispatch.defaultModel`. Any other agent type, an `Explore` too, is not
+`opus` unless its prompt holds a line of its own, `Heavy: <path> <slice>`.
+The path, read from the repository root or absolute, must name a file that
+can be read, and the slice must have a line in it that contains the word
+"heavy", in any case: the plan that marks the slice. The slice's line is a
+table row whose first cell starts with the slice id, or a checklist item
+`- [ ] **<slice> ·`. A fix round, or a fresh builder after a compaction, for
+a slice the session already dispatched on Opus is refused unless that line
+says "heavy fixes": the build is where the stronger model pays, and a round
+re-reads a context that has only grown. A dispatch that names no model needs
+no line: it runs on `dispatch.defaultModel`. Any other agent type, an `Explore` too, is not
 checked for it.
 
 ## When the report does not arrive

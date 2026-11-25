@@ -45,10 +45,13 @@ plugin lists each key with its default. Read the file once before stage 1.
    `dispatch-guardrails` skill, and its report answers the block's hand-over
    checks, each with its search and count; a report without them goes back
    before any judge reads the work. A slice the plan marks heavy is
-   dispatched with `model: "opus"` and a line of its own `Heavy: <path>`
-   naming that plan, whose text says "heavy"; with `dispatch.heavyMarker` on,
-   the dispatch guard refuses a `general-purpose` Opus dispatch without it,
-   and one that names no model runs on `dispatch.defaultModel`.
+   dispatched with `model: "opus"` and a line of its own
+   `Heavy: <path> <slice>` naming that plan and the slice, whose line in the
+   plan says "heavy"; with `dispatch.heavyMarker` on, the dispatch guard
+   refuses a `general-purpose` Opus dispatch without it, and one that names no
+   model runs on `dispatch.defaultModel`. Fix rounds, and a fresh builder
+   after a compaction, are dispatched with no model; the slice's line says
+   "heavy fixes" to keep them on Opus.
 4. **Verify.** The gates (the `gates` skill, `-C <worktree>`), then the jobs
    `ship.pathJobs` maps to the paths the diff touches: for each entry whose
    `paths` a changed file starts with, run its `jobs` by name through the same

@@ -143,6 +143,8 @@ describe("guard-recheck.mjs", () => {
       expect(refusal).toContain("b1 (general-purpose) has compacted");
       expect(refusal).toContain("Dispatch a fresh general-purpose agent");
       expect(refusal).toContain("send this message again unchanged");
+      expect(refusal).toContain("with no model");
+      expect(refusal).toContain("heavy fixes");
       expect(await ask(probe, "b1", "fix the line", transcript)).toBeNull();
       expect(await ask(probe, "b1", "another round", transcript)).toContain("has compacted");
     });

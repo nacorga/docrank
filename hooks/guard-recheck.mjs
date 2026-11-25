@@ -91,7 +91,7 @@ if (!isJudgeType(type, config.root, config.judges.skill)) {
   if (!isReadOnlyType(type, config.root) && !state.includes(`refused ${digest}`) && hasCompacted(agent, String(input.transcript_path ?? ""))) {
     appendFileSync(stateFile, `refused ${digest}\n`);
     deny(
-      `${to} (${type}) has compacted: what it did is a summary to it now, and every call of this round re-reads the context it has grown since. Dispatch a fresh ${type} agent in the same worktree, briefed from the plan, this agent's report and the diff. If the fix is a line or two, send this message again unchanged.`,
+      `${to} (${type}) has compacted: what it did is a summary to it now, and every call of this round re-reads the context it has grown since. Dispatch a fresh ${type} agent in the same worktree, briefed from the plan, this agent's report and the diff, with no model so it runs on the configured default: a slice's fix rounds do not run on Opus unless its line in the plan says \`heavy fixes\`. If the fix is a line or two, send this message again unchanged.`,
     );
   }
   process.exit(0);

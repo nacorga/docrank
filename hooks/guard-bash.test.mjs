@@ -123,7 +123,9 @@ describe("deleting a branch whose pull request merged", () => {
   });
 });
 
-describe("a push needs the gates", () => {
+// Each case runs git and the hook a dozen times; a loaded macOS runner takes
+// several seconds, so the budget is reap's, not the default five.
+describe("a push needs the gates", { timeout: 30000 }, () => {
   const config = { gates: { run: [{ name: "all", command: "true" }] } };
   const record = (box, name = "stickler-gates-passed") => path.join(box.commonDir, name);
   const commit = (box, msg) => {

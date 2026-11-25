@@ -163,7 +163,7 @@ fetched. A branch that already exists is checked out as it is.
 |---|---|---|---|
 | `handoff.enabled` | boolean | `true` | context hand-off |
 | `handoff.tokenThreshold` | integer >= 1 | `250000` | context hand-off: context size, in tokens, past which it asks for the hand-off once |
-| `handoff.location` | string | `"plan"` | context hand-off: `"plan"` is the hand-off section of the plan the work follows; any other value is a path |
+| `handoff.location` | string | `"plan"` | context hand-off: `"plan"` is the hand-off section of the plan the work follows; any other value is a path. Each hand-off replaces the one the location holds: current state, not a log |
 
 ## `memory`
 

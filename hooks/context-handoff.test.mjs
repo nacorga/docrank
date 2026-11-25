@@ -33,6 +33,8 @@ describe("context-handoff.mjs", () => {
     expect(out.decision).toBe("block");
     expect(out.reason).toContain("300k tokens");
     expect(out.reason).toContain("§ Handoff section of the plan");
+    expect(out.reason).toContain("replaces the hand-off the location already holds");
+    expect(out.reason).toContain("current state, not a log");
     expect(await stop()).toBeNull();
   });
 

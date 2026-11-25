@@ -765,6 +765,26 @@ Not defects, learned here:
 Not proved: a push that the gates let through after a full run, in a live
 session. It was proved earlier, in § 15's first trial.
 
+### The message guard's evidence, 0.8.1, 2026-11-25
+
+Headless `claude -p` sessions of Claude Code 2.1.332, the plugin loaded with
+`--plugin-dir` from `main` after issue #39's merge, in a fresh repository
+whose `.claude/stickler.json` set `messages.tools: ["^mcp__mail__send$"]` and
+`messages.evidenceHeader: "^\\|\\s*(?:Claim|Evidence)"`. The tool came from a
+local stdio MCP server, given with `--mcp-config` and `--strict-mcp-config`,
+that only appended each call's arguments to a log file. Each result below is
+read from the session's transcript and that log, not from the model's report.
+
+- **No table, identical resend.** Told to send one input twice and to write
+  no table, the session made both calls; both were refused with the
+  checklist and the missing line, recorded as `tool_result` with
+  `is_error: true`, and the log stayed empty.
+- **The refusal followed.** Asked only to send a figure read from a file in
+  the repository, the session sent, was refused, wrote a `| Claim |
+  Evidence |` table with Write to a scratch file, and sent the identical
+  input again: it passed, and the log held that one send. Since the
+  identical resend without a table is refused, the table passed it.
+
 ## 16. Install scopes, `--plugin-dir`, a session in a worktree: VERIFIED
 
 **Scopes.** [plugins] § Understand install scopes: "**User scope**: enabled
@@ -1049,8 +1069,9 @@ refused every time. A transcript that is absent, unreadable, holds a line
 that is not JSON, or holds no user prompt proves nothing and makes it fall
 back to refusing once per input, as without the key. Run by hand on that
 session's own transcript, the hook passed a configured tool's call after a
-Write of the table and refused, twice, a copy cut before the Write; a live
-session sending through a configured tool has not run it yet.
+Write of the table and refused, twice, a copy cut before the Write. A live
+session sending through a configured tool then did both (§ 15, "The message
+guard's evidence").
 
 A second reader of a transcript is `hooks/guard-recheck.mjs`, which asks
 whether an agent that can edit has compacted before a `SendMessage` resumes it.

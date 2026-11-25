@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { afterEach, describe, expect, it } from "vitest";
-import { sandbox } from "../test/cases-runner.mjs";
+import { STUBS, sandbox } from "../test/cases-runner.mjs";
 import { runHook } from "../lib/testing.mjs";
 
 const OPEN = "gh pr create --base develop --title x --body y";
@@ -239,6 +239,43 @@ describe("guard-pr.mjs", () => {
       const dir = withOrigin(25);
       expect(await decision(dir, open("release/y"), id)).toBeNull();
       expect(await decision(dir, "gh pr create --title x --body y", id)).toBeNull();
+    });
+
+    describe("and the draft notice", () => {
+      const noticed = { branches: baseConfig.branches, pr: { baseDraft: { paths: ["ui/**"] } } };
+      /** `withOrigin`, with `file` committed on the base and pushed. */
+      function baseChanging(file, cfg = noticed) {
+        const dir = withOrigin(1, cfg);
+        execFileSync("git", ["-C", dir, "switch", "-q", "batch/x"]);
+        mkdirSync(path.dirname(path.join(dir, file)), { recursive: true });
+        writeFileSync(path.join(dir, file), "x");
+        execFileSync("git", ["-C", dir, "add", file]);
+        execFileSync("git", ["-C", dir, "commit", "-qm", "base"]);
+        execFileSync("git", ["-C", dir, "push", "-q", "origin", "batch/x"]);
+        execFileSync("git", ["-C", dir, "switch", "-q", "slice"]);
+        return dir;
+      }
+      const ask = async (dir, drafts, command = open("batch/x")) => {
+        const env = { PATH: `${STUBS}:${process.env.PATH}`, ...(drafts === undefined ? {} : { GH_STUB_DRAFTS: drafts }) };
+        return runHook("guard-pr.mjs", { session_id: session(), cwd: dir, tool_input: { command } }, dir, env);
+      };
+
+      it("says so, without refusing, when the base touches the globs and no draft takes it into the integration branch", async () => {
+        const out = await ask(baseChanging("ui/a.txt"), "[]");
+        expect(out.permissionDecision).toBeUndefined();
+        expect(out.additionalContext).toContain("no pull request takes it into main yet");
+        expect(out.additionalContext).toContain("as a draft before its last slice");
+      });
+
+      it("is silent with an open pull request, draft or ready, and when nothing matches or gh fails", async () => {
+        const dir = baseChanging("ui/a.txt");
+        expect(await ask(dir, '[{"isDraft":true}]')).toBeNull();
+        expect(await ask(dir, '[{"isDraft":false}]')).toBeNull();
+        expect(await ask(dir, undefined)).toBeNull();
+        expect(await ask(baseChanging("docs/a.md"), "[]")).toBeNull();
+        expect(await ask(baseChanging("ui/a.txt", { branches: baseConfig.branches }), "[]")).toBeNull();
+        expect(await ask(dir, "[]", open("main"))).toBeNull();
+      });
     });
 
     it("goes through when git cannot answer", async () => {

@@ -25,12 +25,17 @@
  * refused, so a slice is not cut from, and reviewed against, a tree the
  * integration branch has left behind. The integration branch enters a base by
  * a merge, never a rebase, so the base's open pull requests keep their diffs.
+ *
+ * `pr.baseDraft.paths` adds a notice, never a refusal, to the same pull
+ * request: a base that changes those paths has no draft pull request into the
+ * integration branch yet, and CI, which does not run on a slice's pull
+ * request, reads the base's changes only once one is open.
  */
 import { appendFileSync, existsSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { git, glob, run } from "../lib/git.mjs";
-import { configFor, deny, readInput } from "../lib/hook.mjs";
+import { configFor, decide, deny, readInput } from "../lib/hook.mjs";
 
 const POSITION = String.raw`(?:^|[;&|(]|&&|\|\|)\s*`;
 
@@ -51,7 +56,10 @@ const resolved = named && path.resolve(cwd, named.replace(/^~/u, process.env.HOM
 const dir = resolved && existsSync(resolved) ? resolved : cwd;
 
 if (base && base !== branches.integration) {
-  if (isSharedBase(base)) staleBase(base);
+  if (isSharedBase(base)) {
+    staleBase(base);
+    draftNotice(base);
+  }
   process.exit(0);
 }
 if (pr.productPaths.length === 0 && surface.paths.length === 0 && lines.every((entry) => !entry.paths)) process.exit(0);
@@ -123,6 +131,27 @@ function staleBase(name) {
   deny(
     `${name} lacks commits that ${integration} has held for ${Math.floor(age)} hours, more than the ${hours} of branches.baseFreshHours. Merge ${integration} into ${name} first, by a merge and not a rebase so its open pull requests keep their diffs, push it, then open this pull request again.`,
   );
+}
+
+/** Says, as context, that the base should have a draft pull request into the integration branch. */
+function draftNotice(name) {
+  const paths = pr.baseDraft.paths;
+  if (!paths) return;
+  const integration = branches.integration;
+  const changed = git(dir, "diff", "--name-only", `origin/${integration}...origin/${name}`);
+  if (!changed || !changed.split("\n").some((file) => paths.some((g) => glob(g).test(file)))) return;
+  const listed = run("gh", ["pr", "list", "--head", name, "--base", integration, "--state", "open", "--json", "isDraft"], dir, 20000);
+  let open;
+  try {
+    open = JSON.parse(listed ?? "");
+  } catch {
+    return;
+  }
+  // A ready pull request runs CI as a draft does: either one is the early read.
+  if (!Array.isArray(open) || open.length > 0) return;
+  decide({
+    additionalContext: `${name} changes ${paths.join(", ")} and no pull request takes it into ${integration} yet. A base that changes those paths opens its pull request into ${integration} as a draft before its last slice is cut, so CI's runners read it early (stickler \`pr.baseDraft.paths\`). Open it as a draft now; this pull request goes on.`,
+  });
 }
 
 /**

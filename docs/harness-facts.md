@@ -61,7 +61,7 @@ Fact 29 was read on 2026-11-25 from [hooks], [permissions] and
 | 26 | A failed tool call and a shell command's exit code in the hook input | VERIFIED; that every non-zero exit fires `PostToolUseFailure` NOT DOCUMENTED as a rule, PROVED LIVE in `-p` mode (exit 1 and 3) |
 | 27 | A `UserPromptSubmit` hook adds context beside the prompt | VERIFIED |
 | 28 | `CLAUDE_PID` in a session's subprocesses; `SessionStart` sources; `SessionEnd` reasons and its 1.5-second budget | VERIFIED |
-| 29 | A `PreToolUse` hook's `"ask"` on Edit and Write prompts the user, with its reason | VERIFIED, in the default and auto modes; denied in `-p` with no one to answer; in `bypassPermissions` and `acceptEdits` NOT DOCUMENTED |
+| 29 | A `PreToolUse` hook's `"ask"` on Edit and Write prompts the user, with its reason | VERIFIED, in the default and auto modes; denied in `-p` with no one to answer; in `bypassPermissions` and `acceptEdits` NOT DOCUMENTED, held in both PROVED LIVE in `-p` mode |
 
 ## 1. `${CLAUDE_PLUGIN_ROOT}` in hook commands: VERIFIED
 
@@ -1234,5 +1234,9 @@ or `acceptEdits` mode. [permission-modes] § Skip all checks with
 bypassPermissions mode says the mode "disables permission prompts and safety
 checks", and names explicit ask rules and critical-path removals as what still
 prompts; a hook's `"ask"` is not named either way, nor in the `acceptEdits`
-section. In those modes the guard's ask may pass unprompted; its refusals do
-not depend on this.
+section. PROVED LIVE in `-p` mode on Claude Code 2.1.332: a project whose only
+hook answers `"ask"` to `Edit|Write`, asked to overwrite a file under
+`--permission-mode` `default`, `acceptEdits` and `bypassPermissions` in turn,
+left the file unchanged in all three, and the model read the hook's reason as
+the tool's error. So neither mode skips a hook's ask there; an interactive
+session in those modes is not proved.

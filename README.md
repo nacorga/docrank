@@ -25,7 +25,10 @@ them to the repository you configure. Auto-update is off for a third-party
 marketplace: update with `claude plugin update stickler@stickler`, or turn
 auto-update on in the `/plugin` Marketplaces tab. A project-scope install
 is recorded in `.claude/settings.json`, but each clone still runs
-`claude plugin install stickler@stickler` once. A cloud session loads only
+`claude plugin install stickler@stickler` once. Until that install, the
+clone loads no stickler at all. A copy synced from claude.ai does not stand
+in, because Claude Code skips it when the repository declares a plugin of
+the same name. A cloud session loads only
 the plugins installed on the claude.ai account, not those a repository
 names. A repository that needs a key of a later release sets `requires`
 ([docs/config.md](docs/config.md)), and an older stickler then refuses its
@@ -265,13 +268,21 @@ session read as three turns, the gates' subagent under the second, a command
 exiting 3 as `Bash ✗` with its exit code ([harness fact 26](docs/harness-facts.md)),
 and the card summing it up. Its defects, a skill typed as the prompt giving
 its subagent no errand and two repositories of one name sharing a heading in
-the sessions list, are fixed in 0.5.1. Not proved for watch: the tab
+the sessions list, are fixed in 0.5.1. A ninth adopted 0.7.0 to 0.7.2 in
+a pnpm monorepo whose integration branch is `develop`. Locally, with
+Claude Code 2.1.332, the hooks ran from the marketplace install, and
+`claude -w` and `stickler worktree` cut their worktrees from
+`origin/develop` and installed. The pre-push refused an ungated commit. In
+a cloud session, the account's plugin refused a command and an edit by the
+repository's own rules. Its defects, claude.ai refusing a top-level `bin/`
+and the message guard refusing a resend forever, are fixed in 0.7.1 and
+0.7.2. Not proved for watch: the tab
 opening by itself, a person reading the page, an older server replaced live,
 the daily retention sweep, Linux, and the task tools turned on from
 `.claude/settings.json` in an interactive session (fact 25). Not yet exercised
 live, though tested on stubbed input: the
-closing line rule, and the memory link, which is experimental: off by default,
-its directory rule undocumented by Claude Code.
+closing line rule. The memory link ran live in the ninth, and stays
+experimental: off by default, its directory rule undocumented by Claude Code.
 
 ## License
 

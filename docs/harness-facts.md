@@ -689,6 +689,76 @@ Not proved: the task tools from `.claude/settings.json` in an interactive
 session (fact 25), the tab opening by itself, a person reading the page,
 Linux.
 
+### The adoption, 0.7.0 to 0.7.2, 2026-11-25
+
+Claude Code 2.1.332. The trial adopted stickler in a pnpm monorepo whose
+integration branch is `develop` and whose hooks it replaced. The plugin was
+installed from the marketplace at project scope. There were interactive
+sessions locally and a cloud session on claude.ai.
+
+- **By script, before the merge.** Each guard ran on the repository's own
+  `.claude/stickler.json` and refused what its configuration names:
+  - the Bash guard, with `extraDeny` entries with `flags`;
+  - the edit guard;
+  - the re-check guard;
+  - the message guard;
+  - the pull request guard, with `pr.requiredLines` per path.
+
+  `prompts.context`, `plans.atStart` and the reaper each did what their
+  keys say.
+- **In a live session in a worktree on the branch:**
+  - the memory link linked;
+  - the plans and the ledger were injected at start;
+  - `/stickler:gates` ran and stopped on a real lint failure;
+  - watch answered with its URL;
+  - `git switch main` was allowed in a worktree, and is refused only in the
+    main checkout, as the cases pin.
+- **In the cloud, on the branch.** stickler loaded from the claude.ai
+  account and refused both a command and an edit with the reasons only
+  the repository's configuration holds. A first cloud session opened on
+  the integration branch, which had no configuration yet. It ran the
+  defaults and proved nothing.
+- **After the merge, in the main checkout.**
+  - `stickler worktree <branch>` cut from `origin/develop`, copied the
+    named files and ran `worktree.install`.
+  - A session started with `claude -w` got a worktree from
+    `origin/develop`, with `node_modules`.
+  - In that worktree, `/stickler:gates tokens:check lint` passed both
+    named gates and recorded nothing, because a partial run never records.
+  - The pre-push refused a commit `origin/develop` does not hold, with "the
+    gates have not passed".
+  - A push of a head the integration branch already holds went through, as
+    the rule intends.
+
+Fixed, found here:
+
+- **0.7.1.** claude.ai refused to validate a plugin with a top-level `bin/`.
+  The CLI moved to `cli/stickler.mjs`, and `test/layout.test.mjs` keeps it
+  there.
+- **0.7.2.** With `messages.evidenceHeader` set, the message guard refused
+  every call whose evidence was written beside the call and never reached
+  the transcript. It now refuses once and passes the identical resend.
+
+Not defects, learned here:
+
+- **Configuration comes from the main checkout.** `WorktreeCreate` and
+  `stickler worktree` read `branches` and `worktree` from the main
+  checkout. Until the configuration is merged there, a worktree is cut
+  from `origin/main` with no install, which are the defaults.
+- **A declared plugin shadows the synced copy.** A repository whose
+  `.claude/settings.json` declares `stickler@stickler` on a machine that
+  never installed it loads no stickler at all. Claude Code skips the copy
+  synced from claude.ai, because "a plugin on this machine has the same
+  name and takes precedence". The worktree then came from Claude Code's
+  own default, a branch named `worktree-<name>` cut from `origin/main`.
+  `claude plugin install stickler@stickler --scope project` fixed it, as
+  the README's install says.
+- **The pre-push without the configuration.** In a worktree with no
+  `gates.run`, the pre-push lets every push through.
+
+Not proved: a push that the gates let through after a full run, in a live
+session. It was proved earlier, in § 15's first trial.
+
 ## 16. Install scopes, `--plugin-dir`, a session in a worktree: VERIFIED
 
 **Scopes.** [plugins] § Understand install scopes: "**User scope**: enabled

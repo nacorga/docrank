@@ -88,7 +88,7 @@ Every key is documented once, with its default, in [docs/config.md](docs/config.
 | Edit, Write | asks the user, rather than refusing, before a change to an existing lint, formatter, type-check or commit-lint configuration, git hook, Claude Code hook or `.claude/settings*.json`, and to the repository's own patterns; creating one passes | `paths.askBuiltIns`, `paths.ask` |
 | ExitPlanMode | a plan without a required heading | `plan.requiredHeadings` |
 | `gh pr create` | one whose diff touches product or surface paths, with the handover checklist: once per branch, or, with `pr.requiredLines`, every time its body lacks one of the lines the diff owes (an entry with `paths` is owed only by a diff that touches them); one into a shared base, when the base lacks commits the integration branch has held longer than `branches.baseFreshHours`, and a notice, never a refusal, when that base changes `pr.baseDraft.paths` and no pull request takes it into the integration branch yet | `pr.*`, `surface.paths`, `branches.baseFreshHours` |
-| MCP tools | a message through a configured tool, with a claims checklist: once per input; with `messages.evidenceHeader`, a turn that wrote a claims table passes at once, and one that did not is refused once per input, naming what is missing | `messages.*` |
+| MCP tools | a message through a configured tool, with a claims checklist: once per input; with `messages.evidenceHeader`, a turn that wrote a claims table, in its reply or through a tool call that ran, passes at once, and one that did not is refused every time, naming what is missing | `messages.*` |
 
 Around them, not refusing: the formatter and linter run on each edited file
 (`format.*`), a question at the end of a session whose code changes a document

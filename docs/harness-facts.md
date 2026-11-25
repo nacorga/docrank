@@ -1026,10 +1026,25 @@ versions and the summary, still counts as a prompt: the guard errs toward
 asking for the table again. A local transcript read on 2026-11-23 had that
 shape (`user` with a string content, `user` with `tool_result` blocks,
 `assistant` one entry per `text` block), which is an observation of one
-version, not a contract. So the guard decides on evidence only when it can
-read the file and finds a line it understands, and a transcript that is
-absent, unreadable, holds a line that is not JSON, or holds no user prompt
-makes it fall back to refusing once per input, as without the key.
+version, not a contract.
+
+Where the table can be found is observed too. On 2026-11-25, with Claude Code
+2.1.332 and Opus 5.5, reply text written before a tool call, a table
+included, did not reach the transcript as a `text` block, then or later: its
+`assistant` entry, marked `thinkingDisplay: "updates"`, held a `thinking`
+block with a one-line summary of that text and no table. Other transcripts of
+the same version do hold `text` blocks beside a `tool_use`, so the shape
+varies. What did hold every time: an earlier call's `tool_use` block, with its
+whole `input`, and the `user` entry with its `tool_result` were both written
+before the next call's PreToolUse hook ran; the call in flight was not. So
+the guard also reads the strings of each `tool_use` input whose
+`tool_result`, matched by `tool_use_id`, has no `is_error: true` (a refused
+call is recorded so, as the dispatch reader below relies on), and its refusal
+asks for the table through a tool, a Write of a file, say. A transcript it
+can read that holds no table, in either place, since the last prompt is
+refused every time. A transcript that is absent, unreadable, holds a line
+that is not JSON, or holds no user prompt proves nothing and makes it fall
+back to refusing once per input, as without the key.
 
 A second reader of a transcript is `hooks/guard-recheck.mjs`, which asks
 whether an agent that can edit has compacted before a `SendMessage` resumes it.

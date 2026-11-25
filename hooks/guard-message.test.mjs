@@ -78,14 +78,24 @@ describe("guard-message.mjs", () => {
       expect(await messageDecision(session, "mcp__mail__send", { body: "another" }, evidenceDir, file)).toBeNull();
     });
 
-    it("refuses every time, and not once, when the table was written before the last prompt", async () => {
+    it("refuses once with what is missing, and passes the identical resend, when the table was written before the last prompt", async () => {
       const file = transcript([prompt("first"), said(TABLE), prompt("send it"), said("Sending.")]);
       const session = fresh();
-      for (let attempt = 0; attempt < 3; attempt++) {
-        const reason = await send(session, file);
-        expect(reason).toContain(checklist);
-        expect(reason).toContain("Missing: a Markdown table");
-      }
+      const reason = await send(session, file);
+      expect(reason).toContain(checklist);
+      expect(reason).toContain("Missing: a Markdown table");
+      expect(await send(session, file)).toBeNull();
+    });
+
+    it("refuses a changed input again when the transcript holds no table, and passes a table at once", async () => {
+      const none = transcript([prompt("send it"), said("Sending.")]);
+      const session = fresh();
+      expect(await send(session, none)).toContain("Missing: a Markdown table");
+      expect(await send(session, none)).toBeNull();
+      expect(await send(session, none, { body: "changed" })).toContain("Missing: a Markdown table");
+      expect(await send(session, none, { body: "changed" })).toBeNull();
+      const withTable = transcript([prompt("send it"), said(TABLE)]);
+      expect(await send(fresh(), withTable, { body: "never seen" })).toBeNull();
     });
 
     it("does not take a tool_result for a prompt", async () => {

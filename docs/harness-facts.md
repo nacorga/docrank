@@ -29,6 +29,8 @@ Fact 25 was read on 2026-11-23 from [settings], [tools],
 [settings-ref]=https://code.claude.com/docs/en/settings-reference.md.
 Fact 26 was read on 2026-11-23 from [hooks].
 Facts 27 and 28 were read on 2026-11-24 from [hooks] and [env-vars].
+Fact 29 was read on 2026-11-25 from [hooks], [permissions] and
+[permission-modes]=https://code.claude.com/docs/en/permission-modes.md.
 
 | # | Fact | Status |
 |---|---|---|
@@ -59,6 +61,7 @@ Facts 27 and 28 were read on 2026-11-24 from [hooks] and [env-vars].
 | 26 | A failed tool call and a shell command's exit code in the hook input | VERIFIED; that every non-zero exit fires `PostToolUseFailure` NOT DOCUMENTED as a rule, PROVED LIVE in `-p` mode (exit 1 and 3) |
 | 27 | A `UserPromptSubmit` hook adds context beside the prompt | VERIFIED |
 | 28 | `CLAUDE_PID` in a session's subprocesses; `SessionStart` sources; `SessionEnd` reasons and its 1.5-second budget | VERIFIED |
+| 29 | A `PreToolUse` hook's `"ask"` on Edit and Write prompts the user, with its reason | VERIFIED, in the default and auto modes; denied in `-p` with no one to answer; in `bypassPermissions` and `acceptEdits` NOT DOCUMENTED |
 
 ## 1. `${CLAUDE_PLUGIN_ROOT}` in hook commands: VERIFIED
 
@@ -1185,3 +1188,30 @@ hooks have a default timeout of 1.5 seconds", raised by a per-hook `timeout`,
 but "Timeouts set on plugin-provided hooks don't raise the budget". A plugin's
 `SessionEnd` work that may take longer starts a detached process and returns,
 as fact 19 says for work that must outlive a `-p` session.
+
+## 29. A `PreToolUse` hook's `"ask"` on Edit and Write: VERIFIED, but for two modes
+
+The path guard asks the user before an edit to an existing file that holds
+the work to its checks (`paths.askBuiltIns`, `paths.ask`).
+
+[hooks] § PreToolUse decision control: "This gives it richer control: four
+outcomes (allow, deny, ask, or defer)", for a hook whose matcher may be
+`Edit|Write` (fact 14). Its table: "`\"ask\"` prompts the user to confirm", and
+`permissionDecisionReason`: "For `\"ask\"`, shown to the user in the
+permission prompt. When Claude Code denies the call in a `-p` run where no one
+can answer that prompt, Claude reads the reason in the tool result instead."
+And: "When multiple PreToolUse hooks return different decisions, precedence
+is `deny` > `defer` > `ask` > `allow`", and the prompt carries
+"`[plugin:<name>]` for a plugin's hook". [hooks] § PreToolUse `ask` decisions
+in auto mode: "a PreToolUse hook's `\"ask\"` normally sends the tool call to
+the permission prompt, and the classifier doesn't decide it". [permissions] §
+Extend permissions with hooks: "The hook output can deny the tool call, force
+a prompt, or skip the prompt to let the call proceed."
+
+NOT DOCUMENTED: whether a hook's `"ask"` still prompts in `bypassPermissions`
+or `acceptEdits` mode. [permission-modes] § Skip all checks with
+bypassPermissions mode says the mode "disables permission prompts and safety
+checks", and names explicit ask rules and critical-path removals as what still
+prompts; a hook's `"ask"` is not named either way, nor in the `acceptEdits`
+section. In those modes the guard's ask may pass unprompted; its refusals do
+not depend on this.

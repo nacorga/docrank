@@ -74,6 +74,8 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 |---|---|---|---|
 | `paths.builtIns` | boolean | `true` | path guard: the built-in rules, `.env*` but `.env.example`, and lockfiles |
 | `paths.rules` | `{pattern: regex, onlyIfTracked: boolean = false, reason: string}[]` | `[]` | path guard: an edit to a matching path is refused with `reason`; `onlyIfTracked` limits it to files git already tracks |
+| `paths.askBuiltIns` | boolean | `true` | path guard: an Edit or Write that modifies an existing file holding the work to its checks asks the user (`permissionDecision: "ask"`, [harness fact 29](harness-facts.md)), with a reason naming its kind: a lint configuration (eslint, oxlint, `.eslintignore`), a lint and formatter configuration (biome), a formatter configuration (prettier, `.prettierignore`), a type-check configuration (`tsconfig*.json`), a commit-lint configuration, a git hook (`.githooks/`, `.husky/`), a Claude Code hook (`.claude/hooks/`, a plugin's `hooks/hooks.json`) and Claude Code settings (`.claude/settings.json`, `.claude/settings.local.json`), at any depth. Creating such a file passes. A refusal of `paths.builtIns` or `paths.rules` comes first |
+| `paths.ask` | `{pattern: regex, reason: string}[]` | `[]` | path guard: an Edit or Write that modifies an existing file at a matching path asks the user, with `reason`; creating one passes |
 
 ## `plan`
 

@@ -1,6 +1,6 @@
 {
   "name": "stickler",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "private": true,
   "description": "Claude Code plugin: guard hooks, judges, gates and docs that outrank code.",
   "license": "MIT",

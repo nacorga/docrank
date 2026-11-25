@@ -84,7 +84,7 @@ Every key is documented once, with its default, in [docs/config.md](docs/config.
 | Edit, Write | `.env*` except `.env.example`, lockfiles, and the repository's own rules | `paths.builtIns`, `paths.rules` |
 | ExitPlanMode | a plan without a required heading | `plan.requiredHeadings` |
 | `gh pr create` | one whose diff touches product or surface paths, with the handover checklist: once per branch, or, with `pr.requiredLines`, every time its body lacks one of the lines the diff owes (an entry with `paths` is owed only by a diff that touches them) | `pr.*`, `surface.paths` |
-| MCP tools | a message through a configured tool, with a claims checklist: once per input, or, with `messages.evidenceHeader`, every time the turn wrote no claims table | `messages.*` |
+| MCP tools | a message through a configured tool, with a claims checklist: once per input; with `messages.evidenceHeader`, a turn that wrote a claims table passes at once, and one that did not is refused once per input, naming what is missing | `messages.*` |
 
 Around them, not refusing: the formatter and linter run on each edited file
 (`format.*`), a question at the end of a session whose code changes a document

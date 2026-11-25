@@ -7,15 +7,17 @@
  * What passes it is evidence when `messages.evidenceHeader` is set: the
  * session's transcript (`transcript_path`, JSONL) holds, in an assistant text
  * since the last user prompt, a Markdown table whose header row matches it.
- * Then the call passes at the first attempt, and a transcript that is read
- * and holds no such table is refused every time, with `messages.checklist` and
- * what is missing.
+ * Then the call passes at the first attempt. A transcript that is read and
+ * holds no such table proves nothing either: text written beside the call in
+ * the same turn is not in it yet. So it falls back with the rest, and the
+ * refusal also names what is missing.
  *
- * Without the key, or when the transcript is absent, unreadable or not
- * JSONL of the shape fact 24 of docs/harness-facts.md records, a refusal
- * proves nothing the retry does not: the first call with a given input is
- * refused with `messages.checklist`, the same input sent again passes, and a
- * changed message asks again. What was seen is kept per session in the
+ * Without a table found (no key, a transcript that holds none, or one that is
+ * absent, unreadable or not JSONL of the shape fact 24 of
+ * docs/harness-facts.md records), a refusal proves nothing the retry does
+ * not: the first call with a given input is refused with
+ * `messages.checklist`, the same input sent again passes, and a changed
+ * message asks again. What was seen is kept per session in the
  * system's temporary directory, by hash, never the message.
  */
 import { createHash } from "node:crypto";
@@ -34,9 +36,9 @@ if (!messages.tools.some((pattern) => new RegExp(pattern, "u").test(input.tool_n
 const header = messages.evidenceHeader;
 const written = header ? tableWritten(input.transcript_path, header) : null;
 if (written === true) process.exit(0);
-if (written === false) {
-  deny(`${messages.checklist} Missing: a Markdown table, written in this turn before the call, whose header row matches /${header}/i.`);
-}
+// A table the model wrote beside this very call is not in the transcript yet,
+// so its absence is not proof: refuse once, naming what is missing.
+const missing = written === false ? ` Missing: a Markdown table, written in this turn before the call, whose header row matches /${header}/i.` : "";
 
 const digest = createHash("sha256").update(JSON.stringify(input.tool_input ?? {})).digest("hex");
 const session = String(input.session_id ?? "none").replace(/[^\w-]/gu, "");
@@ -50,7 +52,7 @@ try {
 }
 if (seen.split("\n").includes(digest)) process.exit(0);
 appendFileSync(seenFile, `${digest}\n`);
-deny(messages.checklist);
+deny(`${messages.checklist}${missing}`);
 
 /**
  * Whether an assistant text since the last user prompt holds a table header

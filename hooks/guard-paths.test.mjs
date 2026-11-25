@@ -65,3 +65,68 @@ describe("guard-paths.mjs", () => {
     expect(await decide(`${bad}/src/a.js`, bad)).toContain("paths.builtIns");
   });
 });
+
+describe("guard-paths.mjs asks before an edit to what enforces the work", () => {
+  const kinds = {
+    ".eslintrc.json": "a lint configuration",
+    "eslint.config.mjs": "a lint configuration",
+    "packages/app/.oxlintrc.json": "a lint configuration",
+    "biome.json": "a lint and formatter configuration",
+    ".prettierrc": "a formatter configuration",
+    "prettier.config.js": "a formatter configuration",
+    "tsconfig.json": "a type-check configuration",
+    "packages/app/tsconfig.build.json": "a type-check configuration",
+    "commitlint.config.js": "a commit-lint configuration",
+    ".githooks/pre-push": "a git hook",
+    ".husky/pre-commit": "a git hook",
+    ".claude/hooks/check.sh": "a Claude Code hook",
+    "hooks/hooks.json": "a Claude Code hook",
+    ".claude/settings.json": "Claude Code settings",
+    ".claude/settings.local.json": "Claude Code settings",
+  };
+  /* No config file: the default holds. */
+  const repo = project(Object.fromEntries(Object.keys(kinds).map((file) => [file, "{}"])));
+
+  /** The hook's answer to `tool` on `file`, or null when it passes. */
+  const answer = (file, where = repo, tool = "Edit") =>
+    runHook("guard-paths.mjs", { tool_name: tool, tool_input: { file_path: `${where}/${file}` } }, where);
+
+  it.each(Object.entries(kinds))("asks for %s, naming %s, on by default", async (file, kind) => {
+    for (const tool of ["Edit", "Write"]) {
+      const output = await answer(file, repo, tool);
+      expect(output?.permissionDecision).toBe("ask");
+      expect(output.permissionDecisionReason).toBe(
+        `${file}: ${kind} holds the work to its checks, and changing it can weaken them. Whether to is the user's call, not the session's.`,
+      );
+    }
+  });
+
+  it("lets the creation of such a file through", async () => {
+    const empty = project();
+    for (const file of Object.keys(kinds)) expect(await answer(file, empty, "Write")).toBeNull();
+  });
+
+  it("lets other existing files through", async () => {
+    const other = project({ "src/app.ts": "", "docs/tsconfig.md": "", ".claude/stickler.json": "{}" });
+    for (const file of ["src/app.ts", "docs/tsconfig.md", ".claude/stickler.json"]) expect(await answer(file, other)).toBeNull();
+  });
+
+  it("asks for what a configured pattern matches, with its reason", async () => {
+    const config = { paths: { ask: [{ pattern: "^ci/", reason: "the pipeline runs the checks." }] } };
+    const custom = project({ ".claude/stickler.json": JSON.stringify(config), "ci/build.yml": "" });
+    const output = await answer("ci/build.yml", custom);
+    expect(output.permissionDecision).toBe("ask");
+    expect(output.permissionDecisionReason).toBe("ci/build.yml: the pipeline runs the checks.");
+  });
+
+  it("turns the built-in kinds off with paths.askBuiltIns", async () => {
+    const off = project({ ".claude/stickler.json": JSON.stringify({ paths: { askBuiltIns: false } }), "tsconfig.json": "{}" });
+    expect(await answer("tsconfig.json", off)).toBeNull();
+  });
+
+  it("refuses before it asks", async () => {
+    const both = { paths: { rules: [{ pattern: "^tsconfig", reason: "generated." }] } };
+    const refused = project({ ".claude/stickler.json": JSON.stringify(both), "tsconfig.json": "{}" });
+    expect((await answer("tsconfig.json", refused)).permissionDecision).toBe("deny");
+  });
+});

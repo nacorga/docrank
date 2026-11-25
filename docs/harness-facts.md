@@ -740,7 +740,10 @@ Fixed, found here:
   there.
 - **0.7.2.** With `messages.evidenceHeader` set, the message guard refused
   every call whose evidence was written beside the call and never reached
-  the transcript. It now refuses once and passes the identical resend.
+  the transcript. 0.7.2 made it refuse once and pass the identical resend;
+  0.8.1 (issue #39) refuses every time again when the transcript can be
+  read, and finds the table also in the input of a tool call that ran
+  (fact 24).
 
 Not defects, learned here:
 
@@ -1044,7 +1047,10 @@ asks for the table through a tool, a Write of a file, say. A transcript it
 can read that holds no table, in either place, since the last prompt is
 refused every time. A transcript that is absent, unreadable, holds a line
 that is not JSON, or holds no user prompt proves nothing and makes it fall
-back to refusing once per input, as without the key.
+back to refusing once per input, as without the key. Run by hand on that
+session's own transcript, the hook passed a configured tool's call after a
+Write of the table and refused, twice, a copy cut before the Write; a live
+session sending through a configured tool has not run it yet.
 
 A second reader of a transcript is `hooks/guard-recheck.mjs`, which asks
 whether an agent that can edit has compacted before a `SendMessage` resumes it.

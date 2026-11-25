@@ -122,10 +122,19 @@ describe("guard-message.mjs", () => {
       expect(await send(fresh(), transcript([prompt("go"), ...grep]))).toContain("Missing");
     });
 
-    it("matches a header written decomposed (NFD) against a pattern written composed", async () => {
-      const nfd = "| AFIRMACIÓN | x |\n|---|---|".normalize("NFD");
-      expect(nfd).not.toBe(nfd.normalize("NFC"));
-      expect(await send(fresh(), transcript([prompt("go"), ...wrote("n1", nfd)]))).toBeNull();
+    it("compares header and pattern composed (NFC), whichever form each was written in", async () => {
+      const accented = (form) => {
+        const where = project({
+          ".claude/stickler.json": JSON.stringify({
+            messages: { tools: ["^mcp__mail__send$"], checklist, evidenceHeader: "^\\|\\s*AFIRMACIÓN\\s*\\|".normalize(form) },
+          }),
+        });
+        return (header) => messageDecision(fresh(), "mcp__mail__send", { body: "x" }, where, transcript([prompt("go"), ...wrote("n1", `${header}\n|---|---|`)]));
+      };
+      const row = "| AFIRMACIÓN | x |";
+      expect(row.normalize("NFD")).not.toBe(row.normalize("NFC"));
+      expect(await accented("NFC")(row.normalize("NFD"))).toBeNull();
+      expect(await accented("NFD")(row.normalize("NFC"))).toBeNull();
     });
 
     it("does not take a tool_result for a prompt", async () => {

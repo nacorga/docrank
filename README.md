@@ -88,7 +88,7 @@ Every key is documented once, with its default, in [docs/config.md](docs/config.
 | Edit, Write | asks the user, rather than refusing, before a change to an existing lint, formatter, type-check or commit-lint configuration, git hook, Claude Code hook or `.claude/settings*.json`, and to the repository's own patterns; creating one passes | `paths.askBuiltIns`, `paths.ask` |
 | ExitPlanMode | a plan without a required heading | `plan.requiredHeadings` |
 | `gh pr create` | one whose diff touches product or surface paths, with the handover checklist: once per branch, or, with `pr.requiredLines`, every time its body lacks one of the lines the diff owes (an entry with `paths` is owed only by a diff that touches them); one into a shared base, when the base lacks commits the integration branch has held longer than `branches.baseFreshHours`, and a notice, never a refusal, when that base changes `pr.baseDraft.paths` and no pull request takes it into the integration branch yet | `pr.*`, `surface.paths`, `branches.baseFreshHours` |
-| MCP tools | a message through a configured tool, with a claims checklist: once per input; with `messages.evidenceHeader`, a turn that wrote a claims table, in its reply or through a tool call that ran, passes at once, and one that did not is refused every time, naming what is missing | `messages.*` |
+| MCP tools | a message through a configured tool, with a claims checklist: once per input; with `messages.evidenceHeader`, a turn that wrote a claims table, in its reply or through a tool call that ran, passes at once, and one that did not is refused every time, naming what is missing, or once per input when the session's transcript cannot be read | `messages.*` |
 
 Around them, not refusing: the formatter and linter run on each edited file
 (`format.*`), a question at the end of a session whose code changes a document
@@ -277,12 +277,15 @@ Claude Code 2.1.332, the hooks ran from the marketplace install, and
 a cloud session, the account's plugin refused a command and an edit by the
 repository's own rules. Its defects, claude.ai refusing a top-level `bin/`
 and the message guard refusing a resend forever, are fixed in 0.7.1 and
-0.7.2. Not proved for watch: the tab
+0.7.2; 0.8.1 refuses until a claims table is found again, now also in the
+input of a tool call that ran. Not proved for watch: the tab
 opening by itself, a person reading the page, an older server replaced live,
 the daily retention sweep, Linux, and the task tools turned on from
 `.claude/settings.json` in an interactive session (fact 25). Not yet exercised
 live, though tested on stubbed input: the
-closing line rule. The memory link ran live in the ninth, and stays
+closing line rule, and the message guard passing a configured tool's call
+after a Write of the claims table, though the hook passed and refused on a
+real 2.1.332 transcript (fact 24). The memory link ran live in the ninth, and stays
 experimental: off by default, its directory rule undocumented by Claude Code.
 
 ## License

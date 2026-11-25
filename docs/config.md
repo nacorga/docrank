@@ -27,6 +27,7 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 |---|---|---|---|
 | `branches.protected` | string[] | `["main", "master"]` | Bash guard: refuses a push naming one, a bare push or a `git merge` while on one, any `gh pr merge` or `gh api` merge into one, whatever `allowedPrBases` says, and is a base `gh pr create` may name. Exact names, no globs |
 | `branches.integration` | string | `"main"` | Bash guard (the main checkout stays on it; a push of a commit `origin/<integration>` holds needs no gates record), worktrees (cut from the fetched `origin/<integration>`), `stickler judges` (the fork point), the PR handover guard, doc drift and `pr` defaults |
+| `branches.baseFreshHours` | number > 0 | `null` (off) | PR base guard: a `gh pr create` whose `--base` is one of `allowedPrBases` other than the integration branch is refused when the oldest first-parent commit of `origin/<integration>` that `origin/<base>` lacks was committed longer ago than this many hours: the base is to take the integration branch by a merge first. Both branches are fetched first (ten seconds at most); a git failure lets it through |
 | `branches.allowedPrBases` | glob[] | `[<integration>]` | Bash guard: `gh pr merge` is allowed only for a pull request whose base matches and is not protected (GitHub is asked; `--admin` never), and `gh pr create` or `edit` may name a protected branch or one of these as base. `[]` leaves every merge to the user |
 
 ## `guard`

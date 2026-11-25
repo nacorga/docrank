@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -192,6 +193,59 @@ describe("guard-pr.mjs", () => {
     it("still leaves a diff that touches neither list, and another base, alone", async () => {
       expect(await decision(branchChanging("docs/a.md", evidence), open("--fill"), session())).toBeNull();
       expect(await decision(branchChanging("src/a.ts", evidence), "gh pr create -B batch/x --fill", session())).toBeNull();
+    });
+  });
+
+  describe("a pull request into a shared base", () => {
+    const baseConfig = { branches: { integration: "main", allowedPrBases: ["main", "batch/*"], baseFreshHours: 24 } };
+    const hoursAgo = (h) => new Date(Date.now() - h * 3600_000).toISOString();
+
+    /**
+     * A repository with a bare origin whose `main` holds one commit that
+     * `batch/x` lacks, committed `hours` ago; `behind` further commits sit on
+     * top of it, newer. The probe runs on the checkout, off `main`.
+     */
+    function withOrigin(hours, cfg = baseConfig, newer = 0) {
+      const box = sandbox({ config: cfg });
+      boxes.push(box);
+      const origin = path.join(box.dir, "origin.git");
+      execFileSync("git", ["init", "-q", "--bare", "-b", "main", origin]);
+      box.git(box.repo, "remote", "add", "origin", origin);
+      box.git(box.repo, "branch", "batch/x");
+      const commit = (name, when) => {
+        writeFileSync(path.join(box.repo, name), name);
+        box.git(box.repo, "add", name);
+        execFileSync("git", ["-C", box.repo, "commit", "-qm", name], { env: { ...process.env, GIT_COMMITTER_DATE: when } });
+      };
+      commit("late.txt", hoursAgo(hours));
+      for (let i = 0; i < newer; i++) commit(`newer-${i}.txt`, hoursAgo(0.5));
+      box.git(box.repo, "push", "-q", "origin", "main", "batch/x");
+      box.git(box.repo, "switch", "-q", "-c", "slice");
+      return box.repo;
+    }
+    const open = (base) => `gh pr create --base ${base} --title x --body y`;
+
+    it("is refused when the integration branch's oldest commit the base lacks is older than baseFreshHours", async () => {
+      const dir = withOrigin(25, baseConfig, 2);
+      const reason = await decision(dir, open("batch/x"), session());
+      expect(reason).toContain("Merge main into batch/x first");
+      expect(reason).toContain("by a merge and not a rebase");
+    });
+
+    it("goes through when that commit is younger, off, or the base is no shared base", async () => {
+      const id = session();
+      expect(await decision(withOrigin(23), open("batch/x"), id)).toBeNull();
+      expect(await decision(withOrigin(25, { branches: { ...baseConfig.branches, baseFreshHours: undefined } }), open("batch/x"), id)).toBeNull();
+      const dir = withOrigin(25);
+      expect(await decision(dir, open("release/y"), id)).toBeNull();
+      expect(await decision(dir, "gh pr create --title x --body y", id)).toBeNull();
+    });
+
+    it("goes through when git cannot answer", async () => {
+      const dir = withOrigin(25);
+      execFileSync("git", ["-C", dir, "remote", "set-url", "origin", path.join(dir, "gone.git")]);
+      expect(await decision(dir, open("batch/x"), session())).toBeNull();
+      expect(await decision(dir, open("batch/absent"), session())).toBeNull();
     });
   });
 });

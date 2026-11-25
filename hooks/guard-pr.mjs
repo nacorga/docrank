@@ -19,11 +19,17 @@
  * It stays out of the way for a pull request into a base other than
  * `branches.integration` (a slice into a shared base is read once, at its
  * close), for a diff that touches neither list, and whenever git cannot answer.
+ *
+ * A pull request into such a base is held to one other thing, `branches.baseFreshHours`:
+ * a base that has not taken the integration branch for longer than that is
+ * refused, so a slice is not cut from, and reviewed against, a tree the
+ * integration branch has left behind. The integration branch enters a base by
+ * a merge, never a rebase, so the base's open pull requests keep their diffs.
  */
 import { appendFileSync, existsSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { git } from "../lib/git.mjs";
+import { git, glob, run } from "../lib/git.mjs";
 import { configFor, deny, readInput } from "../lib/hook.mjs";
 
 const POSITION = String.raw`(?:^|[;&|(]|&&|\|\|)\s*`;
@@ -35,16 +41,20 @@ if (!create) process.exit(0);
 
 const { branches, pr, surface } = configFor(input);
 const lines = pr.requiredLines.map((entry) => (typeof entry === "string" ? { pattern: entry, paths: null } : entry));
-if (pr.productPaths.length === 0 && surface.paths.length === 0 && lines.every((entry) => !entry.paths)) process.exit(0);
 
 const base = /(?:--base|-B)[\s=]+(\S+)/u.exec(create[0])?.[1]?.replace(/["']/gu, "");
-if (base && base !== branches.integration) process.exit(0);
 
 const cwd = String(input.cwd ?? process.cwd());
 /** The last `cd <dir>` before the command, as the shell would run it. */
 const named = [...command.matchAll(new RegExp(`${POSITION}cd\\s+([^;&|]+)`, "gu"))].at(-1)?.[1]?.trim().replace(/["']/gu, "");
 const resolved = named && path.resolve(cwd, named.replace(/^~/u, process.env.HOME));
 const dir = resolved && existsSync(resolved) ? resolved : cwd;
+
+if (base && base !== branches.integration) {
+  if (isSharedBase(base)) staleBase(base);
+  process.exit(0);
+}
+if (pr.productPaths.length === 0 && surface.paths.length === 0 && lines.every((entry) => !entry.paths)) process.exit(0);
 
 const branch = git(dir, "rev-parse", "--abbrev-ref", "HEAD");
 const changed = git(dir, "diff", "--name-only", `origin/${branches.integration}...HEAD`);
@@ -89,6 +99,31 @@ deny(
     .filter(Boolean)
     .join(" "),
 );
+
+/** Whether `base` is a shared base: one `branches.allowedPrBases` names, other than the integration branch. */
+function isSharedBase(name) {
+  return !branches.protected.includes(name) && branches.allowedPrBases.some((g) => glob(g).test(name));
+}
+
+/**
+ * Refuses a pull request into `base` when `branches.baseFreshHours` is set and
+ * the integration branch's oldest first-parent commit that `base` lacks is
+ * older than it. Any git failure, the fetch included, lets it through.
+ */
+function staleBase(name) {
+  const hours = branches.baseFreshHours;
+  if (hours === null) return;
+  const integration = branches.integration;
+  if (run("git", ["fetch", "-q", "origin", integration, name], dir, 10000) === null) return;
+  const times = git(dir, "log", "--first-parent", "--format=%ct", `origin/${integration}`, `^origin/${name}`);
+  if (!times) return;
+  const oldest = Number(times.split("\n").at(-1));
+  const age = (Date.now() / 1000 - oldest) / 3600;
+  if (!Number.isFinite(age) || age <= hours) return;
+  deny(
+    `${name} lacks commits that ${integration} has held for ${Math.floor(age)} hours, more than the ${hours} of branches.baseFreshHours. Merge ${integration} into ${name} first, by a merge and not a rebase so its open pull requests keep their diffs, push it, then open this pull request again.`,
+  );
+}
 
 /**
  * The pull request body the command carries, or null when it carries none

@@ -167,6 +167,27 @@ if (merges.length) {
   }
 }
 
+// `merge.method` fixes how a pull request lands. A squash or a rebase writes
+// the commit on GitHub, where no commit-msg hook the repository has installed
+// reads it, so a message its hooks would have refused lands anyway.
+if (merges.length && config.merge.method) {
+  const method = config.merge.method;
+  const flag = { merge: ["--merge", "m"], squash: ["--squash", "s"], rebase: ["--rebase", "r"] }[method];
+  const stated = new RegExp(String.raw`(?:^|${S})(?:${flag[0]}(?=${S}|$|=)|-[A-Za-z]*${flag[1]}[A-Za-z]*(?=${S}|$))`);
+  for (const [text] of all(String.raw`${GH}pr${S}+merge\b${ARGS}`)) {
+    if (!stated.test(text)) {
+      refuse(
+        "merge-method",
+        `BLOCKED: 'gh pr merge' without ${flag[0]} (merge.method is "${method}"). ${
+          method === "merge"
+            ? "A squash or a rebase writes a commit on GitHub that no local commit-msg hook reads, so a message the repository's hooks would refuse lands anyway; a merge commit keeps the commits the hooks already read."
+            : `Every pull request of this repository lands by ${method}.`
+        }`,
+      );
+    }
+  }
+}
+
 // The API merges without a base this guard can read: REST's pull request merge
 // and branch merge, and GraphQL's merge and auto-merge mutations.
 if (has(String.raw`${GH}api\b${ARGS}(?:pulls/[^\s/]+/merge\b|/merges\b|mergePullRequest|mergeBranch|enablePullRequestAutoMerge)`)) {

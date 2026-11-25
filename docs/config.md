@@ -121,6 +121,12 @@ fetched. A branch that already exists is checked out as it is.
 | `pr.baseDraft.paths` | glob[] | `null` (off) | PR base guard: a `gh pr create` into a shared base (see `branches.baseFreshHours`) whose diff against `origin/<integration>` touches one of these globs, with no open pull request (draft or ready) from the base into the integration branch, gets a notice and never a refusal: a base that changes those paths opens its pull request into the integration branch as a draft before its last slice, so CI reads it early. Without an answer from `gh`, no notice |
 | `pr.ciBases` | glob[] | `[<integration>]` | `scripts/watch-pr.mjs`: bases whose pull requests run CI; the watcher of any other reports `NO CI` and exits 0 |
 
+## `merge`
+
+| Key | Type | Default | Read by |
+|---|---|---|---|
+| `merge.method` | `"merge"` \| `"squash"` \| `"rebase"` | `null` (off) | Bash guard: a pull request merge command without the flag of this method (`--merge`/`-m`, `--squash`/`-s`, `--rebase`/`-r`) is refused. With `"merge"`: a squash or a rebase writes a commit on GitHub that no local commit-msg hook reads |
+
 ## `docs`
 
 | Key | Type | Default | Read by |

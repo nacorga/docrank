@@ -72,7 +72,7 @@ Every key is documented once, with its default, in [docs/config.md](docs/config.
 | Guard | Refuses | Key |
 |---|---|---|
 | Bash | `git reset --hard`, `git clean -fd`, `git checkout .`, force pushes, `git push --no-verify`, `rm -rf` of a root, the current directory or home | always on |
-| Bash | a push naming a protected branch, a bare push or `git merge` while on one, `gh pr merge --admin`, a merge into a protected branch or a base not in the allowed list | `branches.*` |
+| Bash | a push naming a protected branch, a bare push or `git merge` while on one, `gh pr merge --admin`, a merge into a protected branch or a base not in the allowed list, a merge without the flag of `merge.method` | `branches.*`, `merge.method` |
 | Bash | a push of a commit whose gates have not passed | `gates.requireBeforePush`, `gates.run` |
 | Bash | pushing tags that match a pattern, `--tags`, `--follow-tags` | `guard.blockedTagPatterns` |
 | Bash | `npm publish`, `pnpm publish` | `guard.publishBan` |

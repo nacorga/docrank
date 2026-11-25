@@ -1,0 +1,7 @@
+# merge.method "squash": the other values name their own flag, and only that one.
+CONFIG|{"branches":{"integration":"develop","allowedPrBases":["develop"]},"merge":{"method":"squash"}}
+
+BLOCK|gh pr merge 2 --merge
+BLOCK|gh pr merge 2 --rebase
+ALLOW|gh pr merge 2 --squash
+ALLOW|gh pr merge 2 -s

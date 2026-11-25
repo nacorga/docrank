@@ -104,8 +104,11 @@ describe("deleting a branch whose pull request merged", () => {
   const box = sandbox({ config: {} });
   afterAll(box.cleanup);
   const tip = (ref) => box.git(box.repo, "rev-parse", ref);
+  const remote = path.join(box.dir, "remote.git");
+  box.git(box.dir, "init", "-q", "--bare", remote);
+  box.git(box.repo, "remote", "add", "origin", remote);
   box.git(box.repo, "branch", "feat/done");
-  box.git(box.repo, "update-ref", "refs/remotes/origin/feat/done", tip("feat/done"));
+  box.git(box.repo, "push", "-q", "origin", "feat/done", "feat/done:feat/later");
 
   const merged = (heads) => ({ env: { GH_STUB_MERGED_HEADS: heads } });
   it("is allowed when GitHub's merged head is the branch's tip, locally and on the remote", () => {
@@ -120,6 +123,26 @@ describe("deleting a branch whose pull request merged", () => {
   });
   it("is refused for a branch that does not exist", () => {
     expect(box.run("git branch -D feat/ghost", merged(tip("feat/done"))).status).toBe(2);
+  });
+  it("reads a remote branch's tip from the remote, not from a tracking ref that may be gone or behind", () => {
+    // No refs/remotes/origin/feat/done was ever fetched: the remote answers.
+    expect(box.run("git push origin --delete feat/done", merged(tip("feat/done"))).status).toBe(0);
+    // A commit pushed after the merge: the merged head is no longer the remote's tip.
+    const work = path.join(box.dir, "later");
+    box.git(box.dir, "clone", "-q", "-b", "feat/later", remote, work);
+    box.git(work, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "--allow-empty", "-m", "after the merge");
+    box.git(work, "push", "-q", "origin", "feat/later");
+    box.git(box.repo, "update-ref", "refs/remotes/origin/feat/later", tip("feat/done"));
+    const refused = box.run("git push origin --delete feat/later", merged(tip("feat/done")));
+    expect(refused.status).toBe(2);
+    expect(refused.stderr).toContain("not merged");
+  });
+  it("lets through a remote branch the remote no longer holds, and refuses when the remote cannot be read", () => {
+    expect(box.run("git push origin --delete feat/gone").status).toBe(0);
+    expect(box.run("git push origin :feat/gone").status).toBe(0);
+    const unread = box.run("git push nowhere --delete feat/done", merged(tip("feat/done")));
+    expect(unread.status).toBe(2);
+    expect(unread.stderr).toContain("could not be read");
   });
 });
 

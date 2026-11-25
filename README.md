@@ -278,14 +278,15 @@ a cloud session, the account's plugin refused a command and an edit by the
 repository's own rules. Its defects, claude.ai refusing a top-level `bin/`
 and the message guard refusing a resend forever, are fixed in 0.7.1 and
 0.7.2; 0.8.1 refuses until a claims table is found again, now also in the
-input of a tool call that ran. Not proved for watch: the tab
+input of a tool call that ran. A tenth, with 0.8.1 in `-p` mode, proved
+that: an identical resend with no table refused twice, and a session that
+followed the refusal, wrote the table with Write and sent again, let
+through ([harness fact 15](docs/harness-facts.md)). Not proved for watch: the tab
 opening by itself, a person reading the page, an older server replaced live,
 the daily retention sweep, Linux, and the task tools turned on from
 `.claude/settings.json` in an interactive session (fact 25). Not yet exercised
 live, though tested on stubbed input: the
-closing line rule, and the message guard passing a configured tool's call
-after a Write of the claims table, though the hook passed and refused on a
-real 2.1.332 transcript (fact 24). The memory link ran live in the ninth, and stays
+closing line rule. The memory link ran live in the ninth, and stays
 experimental: off by default, its directory rule undocumented by Claude Code.
 
 ## License

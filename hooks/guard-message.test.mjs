@@ -63,6 +63,9 @@ describe("guard-message.mjs", () => {
     const said = (text) => ({ type: "assistant", message: { role: "assistant", content: [{ type: "text", text }] } });
     const toolCall = { type: "assistant", message: { role: "assistant", content: [{ type: "tool_use", id: "t1", name: "mcp__mail__send", input: {} }] } };
     const toolResult = { type: "user", message: { role: "user", content: [{ type: "tool_result", tool_use_id: "t1", content: "ok" }] } };
+    const call = (id, name, toolInput, extra = {}) => ({ type: "assistant", ...extra, message: { role: "assistant", content: [{ type: "tool_use", id, name, input: toolInput }] } });
+    const result = (id, extra = {}) => ({ type: "user", message: { role: "user", content: [{ type: "tool_result", tool_use_id: id, content: "ok", ...extra }] } });
+    const wrote = (id, text) => [call(id, "Write", { file_path: "/tmp/evidence.md", content: text }), result(id)];
     const transcript = (entries, raw = null) => {
       const file = path.join(mkdtempSync(path.join(tmpdir(), "stickler-transcript-")), "t.jsonl");
       writeFileSync(file, raw ?? entries.map((e) => JSON.stringify(e)).join("\n") + "\n");
@@ -78,24 +81,60 @@ describe("guard-message.mjs", () => {
       expect(await messageDecision(session, "mcp__mail__send", { body: "another" }, evidenceDir, file)).toBeNull();
     });
 
-    it("refuses once with what is missing, and passes the identical resend, when the table was written before the last prompt", async () => {
-      const file = transcript([prompt("first"), said(TABLE), prompt("send it"), said("Sending.")]);
+    it("refuses every attempt, naming what is missing, when the table was written before the last prompt", async () => {
+      const file = transcript([prompt("first"), said(TABLE), ...wrote("w0", TABLE), prompt("send it"), said("Sending.")]);
       const session = fresh();
       const reason = await send(session, file);
       expect(reason).toContain(checklist);
       expect(reason).toContain("Missing: a Markdown table");
-      expect(await send(session, file)).toBeNull();
+      expect(reason).toContain("Write it with a tool");
+      expect(await send(session, file)).toContain("Missing: a Markdown table");
     });
 
-    it("refuses a changed input again when the transcript holds no table, and passes a table at once", async () => {
+    it("refuses the identical resend too when the transcript holds no table, and passes once one is written", async () => {
       const none = transcript([prompt("send it"), said("Sending.")]);
       const session = fresh();
       expect(await send(session, none)).toContain("Missing: a Markdown table");
-      expect(await send(session, none)).toBeNull();
-      expect(await send(session, none, { body: "changed" })).toContain("Missing: a Markdown table");
-      expect(await send(session, none, { body: "changed" })).toBeNull();
-      const withTable = transcript([prompt("send it"), said(TABLE)]);
-      expect(await send(fresh(), withTable, { body: "never seen" })).toBeNull();
+      expect(await send(session, none)).toContain("Missing: a Markdown table");
+      const withTable = transcript([prompt("send it"), said("Sending."), ...wrote("w1", TABLE)]);
+      expect(await send(session, withTable)).toBeNull();
+    });
+
+    it("takes the table from the input of an earlier call that ran: a Write, an Edit, a Bash heredoc", async () => {
+      expect(await send(fresh(), transcript([prompt("write to them"), ...wrote("w1", TABLE)]))).toBeNull();
+      const edit = [call("e1", "Edit", { file_path: "/tmp/e.md", old_string: "", new_string: TABLE }), result("e1")];
+      expect(await send(fresh(), transcript([prompt("go"), ...edit]))).toBeNull();
+      const heredoc = [call("b1", "Bash", { command: `cat > /tmp/e.md <<'EOF'\n${TABLE}\nEOF` }), result("b1")];
+      expect(await send(fresh(), transcript([prompt("go"), ...heredoc]))).toBeNull();
+    });
+
+    it("does not take the input of a call that was refused, has no result yet, ran before the last prompt or ran in a subagent", async () => {
+      const refused = [call("r1", "mcp__mail__send", { body: TABLE }), result("r1", { is_error: true })];
+      expect(await send(fresh(), transcript([prompt("go"), ...refused]))).toContain("Missing");
+      expect(await send(fresh(), transcript([prompt("go"), call("p1", "Write", { content: TABLE })]))).toContain("Missing");
+      expect(await send(fresh(), transcript([prompt("first"), ...wrote("o1", TABLE), prompt("send it")]))).toContain("Missing");
+      const sidechain = [call("s1", "Write", { content: TABLE }, { isSidechain: true }), { ...result("s1"), isSidechain: true }];
+      expect(await send(fresh(), transcript([prompt("go"), ...sidechain]))).toContain("Missing");
+    });
+
+    it("does not take a search for the header for the table", async () => {
+      const grep = [call("g1", "Bash", { command: "grep -c '| Claim | Source | Result |' t.jsonl" }), result("g1")];
+      expect(await send(fresh(), transcript([prompt("go"), ...grep]))).toContain("Missing");
+    });
+
+    it("compares header and pattern composed (NFC), whichever form each was written in", async () => {
+      const accented = (form) => {
+        const where = project({
+          ".claude/stickler.json": JSON.stringify({
+            messages: { tools: ["^mcp__mail__send$"], checklist, evidenceHeader: "^\\|\\s*AFIRMACIÓN\\s*\\|".normalize(form) },
+          }),
+        });
+        return (header) => messageDecision(fresh(), "mcp__mail__send", { body: "x" }, where, transcript([prompt("go"), ...wrote("n1", `${header}\n|---|---|`)]));
+      };
+      const row = "| AFIRMACIÓN | x |";
+      expect(row.normalize("NFD")).not.toBe(row.normalize("NFC"));
+      expect(await accented("NFC")(row.normalize("NFD"))).toBeNull();
+      expect(await accented("NFD")(row.normalize("NFC"))).toBeNull();
     });
 
     it("does not take a tool_result for a prompt", async () => {
@@ -139,6 +178,7 @@ describe("guard-message.mjs", () => {
       expect(await send(fresh(), transcript([prompt("go"), said(TABLE), prompt("send it"), ...long, said("no table here")]))).toContain("Missing");
       expect(await send(fresh(), transcript([prompt("go"), ...long, said(TABLE)]))).toBeNull();
       expect(await send(fresh(), transcript([prompt("go"), said(TABLE), ...long]))).toBeNull();
+      expect(await send(fresh(), transcript([prompt("go"), ...wrote("l1", TABLE), ...long]))).toBeNull();
     });
 
     it("keeps today's refusal once when the key is empty", async () => {

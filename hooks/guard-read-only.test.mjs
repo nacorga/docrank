@@ -17,7 +17,9 @@ async function decision(command, agentType) {
   return output?.permissionDecision ?? null;
 }
 
-describe("guard-read-only.mjs", () => {
+// Dozens of hook runs per case: a loaded macOS runner takes most of the default
+// five seconds, so the budget is reap's.
+describe("guard-read-only.mjs", { timeout: 30000 }, () => {
   it("lets a read-only agent read", async () => {
     for (const [type, command] of [
       ["reviewer", "git diff main...HEAD -- lib | head -50"],

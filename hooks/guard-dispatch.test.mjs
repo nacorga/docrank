@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { PLUGIN_ROOT, builtInReadOnly } from "../lib/agent-types.mjs";
@@ -14,8 +14,18 @@ const agents = {
 };
 const dir = project({
   ...agents,
-  "docs/plan.md": "- [ ] Slice B (heavy): the detector.\n",
-  "docs/light.md": "- [ ] Slice A: the copy.\n",
+  "docs/plan.md": [
+    "| # | Slice | Model |",
+    "| 8 | the copy | Sonnet |",
+    "| 9 | the detector | Heavy |",
+    "| B `branch-b` | the model | Opus, heavy fixes |",
+    "- [ ] **C · the schema** heavy",
+    "- [x] **D · the page**",
+    "| E | the report | heavy |",
+    "| F | the export | heavy fixes |",
+    "",
+  ].join("\n"),
+  "docs/light.md": "- [ ] **A · the copy.**\n",
 });
 
 /** The block as the skill holds it; the suite never keeps a copy. */
@@ -27,8 +37,8 @@ const dispatched = (text) => `${task}\n\n${text}`;
 /** A dispatch that names its model, so only the block is in question. */
 const named = { model: "sonnet" };
 
-const dispatch = (toolInput, where = dir) =>
-  runHook("guard-dispatch.mjs", { tool_name: "Agent", tool_input: { description: "probe", ...toolInput } }, where);
+const dispatch = (toolInput, where = dir, extra = {}) =>
+  runHook("guard-dispatch.mjs", { tool_name: "Agent", tool_input: { description: "probe", ...toolInput }, ...extra }, where);
 
 /** What the hook did to a dispatch: the input it set and what it said, or null. */
 async function dispatchDecision(prompt, subagentType, chosen = {}, where = dir) {
@@ -143,14 +153,52 @@ describe("guard-dispatch.mjs", () => {
     }
   });
 
-  it("builds on Opus only when the dispatch names the file that marks it heavy", async () => {
+  it("builds on Opus only when the dispatch names a slice whose own line says heavy", async () => {
     const whole = dispatched(block);
-    const decide = async (prompt) => (await dispatch({ prompt, model: "opus" }))?.permissionDecision ?? null;
+    const decide = async (prompt, extra = {}) =>
+      (await dispatch({ prompt, model: "opus", ...extra }))?.permissionDecision ?? null;
     expect(await decide(whole)).toBe("deny");
-    expect(await decide(`Heavy: docs/light.md\n${whole}`)).toBe("deny");
-    expect(await decide(`Heavy: docs/absent.md\n${whole}`)).toBe("deny");
-    expect(await decide(`Heavy: docs/plan.md\n${whole}`)).toBeNull();
-    expect(await decide(`Heavy: ${path.join(dir, "docs/plan.md")}\n${whole}`)).toBeNull();
+    // The file says "heavy" for slice 9 only: any other slice stays refused.
+    expect(await decide(`Heavy: docs/plan.md 9\n${whole}`)).toBeNull();
+    expect(await decide(`Heavy: docs/plan.md B\n${whole}`)).toBeNull();
+    expect(await decide(`Heavy: docs/plan.md C\n${whole}`)).toBeNull();
+    expect(await decide(`Heavy: ${path.join(dir, "docs/plan.md")} 9\n${whole}`)).toBeNull();
+    for (const slice of ["8", "A", "D", "absent"]) expect(await decide(`Heavy: docs/plan.md ${slice}\n${whole}`), slice).toBe("deny");
+    expect(await decide(`Heavy: docs/light.md A\n${whole}`)).toBe("deny");
+    expect(await decide(`Heavy: docs/absent.md 9\n${whole}`)).toBe("deny");
+    const bare = await dispatch({ prompt: `Heavy: docs/plan.md\n${whole}`, model: "opus" });
+    expect(bare.permissionDecision).toBe("deny");
+    expect(bare.permissionDecisionReason).toContain("Heavy: <path> <slice>");
+  });
+
+  it("runs a slice's fix rounds on the default model unless its line says heavy fixes", async () => {
+    const decide = async (slice, transcript_path) =>
+      (await dispatch({ prompt: dispatched(`Heavy: docs/plan.md ${slice}\n${block}`), model: "opus" }, dir, { transcript_path }))
+        ?.permissionDecision ?? null;
+    const record = (slice, model = "opus", name = "Agent", is_error = false) => {
+      const id = `toolu_${slice}_${model}_${name}_${is_error}`;
+      return [
+        JSON.stringify({
+          type: "assistant",
+          message: { content: [{ type: "tool_use", id, name, input: { model, prompt: `Heavy: docs/plan.md ${slice}\nbuild` } }] },
+        }),
+        JSON.stringify({ type: "user", message: { content: [{ type: "tool_result", tool_use_id: id, is_error, content: "x" }] } }),
+      ].join("\n");
+    };
+    const transcript = path.join(dir, "session.jsonl");
+    writeFileSync(transcript, [record("9"), record("B"), record("C", "sonnet"), "not json", ""].join("\n"));
+    expect(await decide("9", transcript)).toBe("deny");
+    expect(await decide("B", transcript)).toBeNull(); // its line says "heavy fixes"
+    expect(await decide("E", transcript)).toBeNull();
+    expect(await decide("C", transcript)).toBeNull();
+    expect(await decide("F", transcript)).toBeNull();
+    // A dispatch that was refused never ran: its retry is the build.
+    writeFileSync(transcript, record("9", "opus", "Agent", true));
+    expect(await decide("9", transcript)).toBeNull();
+    writeFileSync(transcript, record("9", "opus", "Task"));
+    expect(await decide("9", transcript)).toBe("deny");
+    expect(await decide("9", path.join(dir, "absent.jsonl"))).toBeNull();
+    expect(await decide("9", undefined)).toBeNull();
   });
 
   it("refuses a name for an agent defined without SendMessage", async () => {

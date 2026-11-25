@@ -1,9 +1,10 @@
+import { execFileSync } from "node:child_process";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { afterEach, describe, expect, it } from "vitest";
-import { sandbox } from "../test/cases-runner.mjs";
+import { STUBS, sandbox } from "../test/cases-runner.mjs";
 import { runHook } from "../lib/testing.mjs";
 
 const OPEN = "gh pr create --base develop --title x --body y";
@@ -192,6 +193,96 @@ describe("guard-pr.mjs", () => {
     it("still leaves a diff that touches neither list, and another base, alone", async () => {
       expect(await decision(branchChanging("docs/a.md", evidence), open("--fill"), session())).toBeNull();
       expect(await decision(branchChanging("src/a.ts", evidence), "gh pr create -B batch/x --fill", session())).toBeNull();
+    });
+  });
+
+  describe("a pull request into a shared base", () => {
+    const baseConfig = { branches: { integration: "main", allowedPrBases: ["main", "batch/*"], baseFreshHours: 24 } };
+    const hoursAgo = (h) => new Date(Date.now() - h * 3600_000).toISOString();
+
+    /**
+     * A repository with a bare origin whose `main` holds one commit that
+     * `batch/x` lacks, committed `hours` ago; `behind` further commits sit on
+     * top of it, newer. The probe runs on the checkout, off `main`.
+     */
+    function withOrigin(hours, cfg = baseConfig, newer = 0) {
+      const box = sandbox({ config: cfg });
+      boxes.push(box);
+      const origin = path.join(box.dir, "origin.git");
+      execFileSync("git", ["init", "-q", "--bare", "-b", "main", origin]);
+      box.git(box.repo, "remote", "add", "origin", origin);
+      box.git(box.repo, "branch", "batch/x");
+      const commit = (name, when) => {
+        writeFileSync(path.join(box.repo, name), name);
+        box.git(box.repo, "add", name);
+        execFileSync("git", ["-C", box.repo, "commit", "-qm", name], { env: { ...process.env, GIT_COMMITTER_DATE: when } });
+      };
+      commit("late.txt", hoursAgo(hours));
+      for (let i = 0; i < newer; i++) commit(`newer-${i}.txt`, hoursAgo(0.5));
+      box.git(box.repo, "push", "-q", "origin", "main", "batch/x");
+      box.git(box.repo, "switch", "-q", "-c", "slice");
+      return box.repo;
+    }
+    const open = (base) => `gh pr create --base ${base} --title x --body y`;
+
+    it("is refused when the integration branch's oldest commit the base lacks is older than baseFreshHours", async () => {
+      const dir = withOrigin(25, baseConfig, 2);
+      const reason = await decision(dir, open("batch/x"), session());
+      expect(reason).toContain("Merge main into batch/x first");
+      expect(reason).toContain("by a merge and not a rebase");
+    });
+
+    it("goes through when that commit is younger, off, or the base is no shared base", async () => {
+      const id = session();
+      expect(await decision(withOrigin(23), open("batch/x"), id)).toBeNull();
+      expect(await decision(withOrigin(25, { branches: { ...baseConfig.branches, baseFreshHours: undefined } }), open("batch/x"), id)).toBeNull();
+      const dir = withOrigin(25);
+      expect(await decision(dir, open("release/y"), id)).toBeNull();
+      expect(await decision(dir, "gh pr create --title x --body y", id)).toBeNull();
+    });
+
+    describe("and the draft notice", () => {
+      const noticed = { branches: baseConfig.branches, pr: { baseDraft: { paths: ["ui/**"] } } };
+      /** `withOrigin`, with `file` committed on the base and pushed. */
+      function baseChanging(file, cfg = noticed) {
+        const dir = withOrigin(1, cfg);
+        execFileSync("git", ["-C", dir, "switch", "-q", "batch/x"]);
+        mkdirSync(path.dirname(path.join(dir, file)), { recursive: true });
+        writeFileSync(path.join(dir, file), "x");
+        execFileSync("git", ["-C", dir, "add", file]);
+        execFileSync("git", ["-C", dir, "commit", "-qm", "base"]);
+        execFileSync("git", ["-C", dir, "push", "-q", "origin", "batch/x"]);
+        execFileSync("git", ["-C", dir, "switch", "-q", "slice"]);
+        return dir;
+      }
+      const ask = async (dir, drafts, command = open("batch/x")) => {
+        const env = { PATH: `${STUBS}:${process.env.PATH}`, ...(drafts === undefined ? {} : { GH_STUB_DRAFTS: drafts }) };
+        return runHook("guard-pr.mjs", { session_id: session(), cwd: dir, tool_input: { command } }, dir, env);
+      };
+
+      it("says so, without refusing, when the base touches the globs and no draft takes it into the integration branch", async () => {
+        const out = await ask(baseChanging("ui/a.txt"), "[]");
+        expect(out.permissionDecision).toBeUndefined();
+        expect(out.additionalContext).toContain("no pull request takes it into main yet");
+        expect(out.additionalContext).toContain("as a draft before its last slice");
+      });
+
+      it("is silent with an open pull request, draft or ready, and when nothing matches or gh fails", async () => {
+        const dir = baseChanging("ui/a.txt");
+        expect(await ask(dir, '[{"isDraft":true}]')).toBeNull();
+        expect(await ask(dir, '[{"isDraft":false}]')).toBeNull();
+        expect(await ask(dir, undefined)).toBeNull();
+        expect(await ask(baseChanging("docs/a.md"), "[]")).toBeNull();
+        expect(await ask(baseChanging("ui/a.txt", { branches: baseConfig.branches }), "[]")).toBeNull();
+        expect(await ask(dir, "[]", open("main"))).toBeNull();
+      });
+    });
+
+    it("goes through when git cannot answer", async () => {
+      const dir = withOrigin(25);
+      execFileSync("git", ["-C", dir, "remote", "set-url", "origin", path.join(dir, "gone.git")]);
+      expect(await decision(dir, open("batch/x"), session())).toBeNull();
+      expect(await decision(dir, open("batch/absent"), session())).toBeNull();
     });
   });
 });

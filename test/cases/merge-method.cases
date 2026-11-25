@@ -1,0 +1,17 @@
+# merge.method "merge": a pull request lands by a merge commit, so the commits
+# a repository's own hooks read are the ones that land. The gh stub answers the
+# bases: 2 develop.
+CONFIG|{"branches":{"integration":"develop","allowedPrBases":["develop"]},"merge":{"method":"merge"}}
+
+BLOCK|gh pr merge 2 --squash
+BLOCK|gh pr merge 2 -s
+BLOCK|gh pr merge 2 -sd
+BLOCK|gh pr merge 2 --rebase
+BLOCK|gh pr merge 2 -r --delete-branch
+BLOCK|gh pr merge 2
+BLOCK|gh pr merge 2 --auto --delete-branch
+ALLOW|gh pr merge 2 --merge
+ALLOW|gh pr merge 2 -m
+ALLOW|gh pr merge 2 -md
+ALLOW|gh pr merge 2 --merge --delete-branch
+ALLOW|gh pr view 2

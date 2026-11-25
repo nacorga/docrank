@@ -75,18 +75,18 @@ Every key is documented once, with its default, in [docs/config.md](docs/config.
 | Guard | Refuses | Key |
 |---|---|---|
 | Bash | `git reset --hard`, `git clean -fd`, `git checkout .`, force pushes, `git push --no-verify`, `rm -rf` of a root, the current directory or home | always on |
-| Bash | a push naming a protected branch, a bare push or `git merge` while on one, `gh pr merge --admin`, a merge into a protected branch or a base not in the allowed list | `branches.*` |
+| Bash | a push naming a protected branch, a bare push or `git merge` while on one, `gh pr merge --admin`, a merge into a protected branch or a base not in the allowed list, a merge without the flag of `merge.method` | `branches.*`, `merge.method` |
 | Bash | a push of a commit whose gates have not passed | `gates.requireBeforePush`, `gates.run` |
 | Bash | pushing tags that match a pattern, `--tags`, `--follow-tags` | `guard.blockedTagPatterns` |
 | Bash | `npm publish`, `pnpm publish` | `guard.publishBan` |
 | Bash | moving the main checkout off the integration branch, deleting an unmerged branch | `branches.integration` |
 | Bash | any command that matches a pattern the repository adds, with the case or line flags it names | `guard.extraDeny` |
 | Bash | a write or a command that runs, from a read-only agent | `judges.skill` |
-| Agent | a fork dispatch; a `general-purpose` Opus dispatch with no `Heavy:` line; completes a dispatch with the guardrails block, and sets the default model and effort | `dispatch.*` |
+| Agent | a fork dispatch; a `general-purpose` Opus dispatch with no `Heavy: <path> <slice>` line, or whose slice's line does not say heavy, or a second one for a slice already built on Opus unless the line says `heavy fixes`; completes a dispatch with the guardrails block, and sets the default model and effort | `dispatch.*` |
 | SendMessage | a message to a judge past its re-check limit, once; a message to an agent that can edit and whose transcript shows a compaction, once, asking for a fresh one | `judges.maxRechecks`; the compaction is always on |
 | Edit, Write | `.env*` except `.env.example`, lockfiles, and the repository's own rules | `paths.builtIns`, `paths.rules` |
 | ExitPlanMode | a plan without a required heading | `plan.requiredHeadings` |
-| `gh pr create` | one whose diff touches product or surface paths, with the handover checklist: once per branch, or, with `pr.requiredLines`, every time its body lacks one of the lines the diff owes (an entry with `paths` is owed only by a diff that touches them) | `pr.*`, `surface.paths` |
+| `gh pr create` | one whose diff touches product or surface paths, with the handover checklist: once per branch, or, with `pr.requiredLines`, every time its body lacks one of the lines the diff owes (an entry with `paths` is owed only by a diff that touches them); one into a shared base, when the base lacks commits the integration branch has held longer than `branches.baseFreshHours`, and a notice, never a refusal, when that base changes `pr.baseDraft.paths` and no pull request takes it into the integration branch yet | `pr.*`, `surface.paths`, `branches.baseFreshHours` |
 | MCP tools | a message through a configured tool, with a claims checklist: once per input; with `messages.evidenceHeader`, a turn that wrote a claims table passes at once, and one that did not is refused once per input, naming what is missing | `messages.*` |
 
 Around them, not refusing: the formatter and linter run on each edited file

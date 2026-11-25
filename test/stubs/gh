@@ -5,7 +5,7 @@
 # commits of merged pull requests, and nothing when it is unset; asked for
 # `headRefName` it prints $GH_STUB_MERGED_PRS instead, one `<branch><TAB><head>` per line. For the PR
 # watch: `pr view` asking for `state` prints $GH_STUB_VIEW (a JSON object);
-# `pr checks` prints $GH_STUB_CHECKS and exits $GH_STUB_CHECKS_STATUS (default
+# `pr list --json isDraft` prints $GH_STUB_DRAFTS and fails when it is unset; `pr checks` prints $GH_STUB_CHECKS and exits $GH_STUB_CHECKS_STATUS (default
 # 0), except that with $GH_STUB_FIRST_EMPTY naming a file, its first call
 # answers "no checks reported" (every call does when the file cannot be created); `pr checks --json` prints $GH_STUB_FAILED.
 case "$1 $2" in
@@ -23,6 +23,7 @@ case "$1 $2" in
     esac ;;
   "pr list")
     case "$*" in
+      *isDraft*) [ -n "$GH_STUB_DRAFTS" ] || exit 1; printf '%s\n' "$GH_STUB_DRAFTS" ;;
       *headRefName*) [ -z "$GH_STUB_MERGED_PRS" ] || printf '%s\n' "$GH_STUB_MERGED_PRS" ;;
       *) [ -z "$GH_STUB_MERGED_HEADS" ] || printf '%s\n' $GH_STUB_MERGED_HEADS ;;
     esac ;;

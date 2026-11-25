@@ -27,6 +27,7 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 |---|---|---|---|
 | `branches.protected` | string[] | `["main", "master"]` | Bash guard: refuses a push naming one, a bare push or a `git merge` while on one, any `gh pr merge` or `gh api` merge into one, whatever `allowedPrBases` says, and is a base `gh pr create` may name. Exact names, no globs |
 | `branches.integration` | string | `"main"` | Bash guard (the main checkout stays on it; a push of a commit `origin/<integration>` holds needs no gates record), worktrees (cut from the fetched `origin/<integration>`), `stickler judges` (the fork point), the PR handover guard, doc drift and `pr` defaults |
+| `branches.baseFreshHours` | number > 0 | `null` (off) | PR base guard: a `gh pr create` whose `--base` is one of `allowedPrBases` other than the integration branch is refused when the oldest first-parent commit of `origin/<integration>` that `origin/<base>` lacks was committed longer ago than this many hours: the base is to take the integration branch by a merge first. Both branches are fetched first (ten seconds at most); a git failure lets it through |
 | `branches.allowedPrBases` | glob[] | `[<integration>]` | Bash guard: `gh pr merge` is allowed only for a pull request whose base matches and is not protected (GitHub is asked; `--admin` never), and `gh pr create` or `edit` may name a protected branch or one of these as base. `[]` leaves every merge to the user |
 
 ## `guard`
@@ -55,7 +56,7 @@ Defaults that depend on `branches.integration` are written `<integration>`.
 |---|---|---|---|
 | `dispatch.defaultModel` | string | `"sonnet"` | dispatch guard: model of a `general-purpose` or `Explore` dispatch that names none |
 | `dispatch.defaultEffort` | `low`, `medium`, `high`, `xhigh`, `max` | `"medium"` | dispatch guard: effort set with the default model, unless the dispatch names one |
-| `dispatch.heavyMarker` | boolean | `true` | dispatch guard: a `general-purpose` dispatch on Opus goes ahead only with a line `Heavy: <path>` whose file says "heavy" |
+| `dispatch.heavyMarker` | boolean | `true` | dispatch guard: a `general-purpose` dispatch on Opus goes ahead only with a line `Heavy: <path> <slice>` whose file holds a line for that slice that says "heavy" (a table row whose first cell starts with the slice id, or a checklist item `- [ ] **<slice> ·`); a second Opus dispatch for the same slice in the session needs that line to say "heavy fixes" |
 | `dispatch.forkBan` | boolean | `true` | dispatch guard: refuses a fork dispatch |
 | `dispatch.guardrailsFile` | path | `null` | dispatch guard and `dispatch-guardrails`: a repository file whose text the guard appends after the plugin's default block, to every dispatch of an agent that can edit; a file that cannot be read refuses the dispatch |
 
@@ -117,7 +118,14 @@ fetched. A branch that already exists is checked out as it is.
 | `pr.productPaths` | path prefix[] | `[]` | PR handover guard: a `gh pr create` into `branches.integration` whose diff against `origin/<integration>` touches one is refused with `checklist`, the first of a branch in a session only, unless `requiredLines` decides it (a diff touching these paths that owes no entry of `requiredLines`, every entry having `paths` and none touched, gets the once-per-branch refusal too). Empty here and in `surface.paths` means off |
 | `pr.requiredLines` | (regex \| `{pattern: regex, paths: path prefix[]}`)[] | `[]` | PR handover guard: what passes it is evidence. Each entry is a regular expression, or an object with a `pattern` of that kind and the `paths` it is owed for: a bare entry is owed by every diff the guard reads, one with `paths` only when the diff touches one of them (and such a diff is read even when it touches neither `pr.productPaths` nor `surface.paths`). The pattern is tried with the flags `i`, `m` and `u` (Unicode, case-insensitive) against each line of the pull request body, which the guard reads from the command: `--body`/`-b`, or the file `--body-file`/`-F` names, resolved against the directory the command runs in. A body with a line for every entry owed passes at the first attempt; one that lacks an entry owed is refused every time, naming the missing entries beside `checklist`. `--fill`, no body flag, `-` (stdin) and a file that cannot be read count as no body. Empty, or no entry owed by a diff that touches `pr.productPaths` or `surface.paths`, means the once-per-branch refusal |
 | `pr.checklist` | string | a generic handover line | PR handover guard: the text of that refusal. The default ends by telling the session to run the command again; a replacement should too |
+| `pr.baseDraft.paths` | glob[] | `null` (off) | PR base guard: a `gh pr create` into a shared base (see `branches.baseFreshHours`) whose diff against `origin/<integration>` touches one of these globs, with no open pull request (draft or ready) from the base into the integration branch, gets a notice and never a refusal: a base that changes those paths opens its pull request into the integration branch as a draft before its last slice, so CI reads it early. Without an answer from `gh`, no notice |
 | `pr.ciBases` | glob[] | `[<integration>]` | `scripts/watch-pr.mjs`: bases whose pull requests run CI; the watcher of any other reports `NO CI` and exits 0 |
+
+## `merge`
+
+| Key | Type | Default | Read by |
+|---|---|---|---|
+| `merge.method` | `"merge"` \| `"squash"` \| `"rebase"` | `null` (off) | Bash guard: a pull request merge command without the flag of this method (`--merge`/`-m`, `--squash`/`-s`, `--rebase`/`-r`) is refused. With `"merge"`: a squash or a rebase writes a commit on GitHub that no local commit-msg hook reads |
 
 ## `docs`
 
@@ -161,7 +169,7 @@ fetched. A branch that already exists is checked out as it is.
 |---|---|---|---|
 | `handoff.enabled` | boolean | `true` | context hand-off |
 | `handoff.tokenThreshold` | integer >= 1 | `250000` | context hand-off: context size, in tokens, past which it asks for the hand-off once |
-| `handoff.location` | string | `"plan"` | context hand-off: `"plan"` is the hand-off section of the plan the work follows; any other value is a path |
+| `handoff.location` | string | `"plan"` | context hand-off: `"plan"` is the hand-off section of the plan the work follows; any other value is a path. Each hand-off replaces the one the location holds: current state, not a log |
 
 ## `memory`
 

@@ -1043,6 +1043,20 @@ quoted inside another line's string does not count. An agent with no ID in the
 dispatch record, a transcript that cannot be found or read, and one with no such
 record hold nothing: the guard never refuses on what it could not read.
 
+A third reader is `hooks/guard-dispatch.mjs` with `dispatch.heavyMarker`: it
+asks whether this session already dispatched a slice on Opus. It reads the
+session's own transcript (`transcript_path`) for an `assistant` entry whose
+`message.content` holds a block `{"type":"tool_use","name":"Agent"` (or
+`"Task"`, the tool's older name) with an `input` carrying `model` and
+`prompt`, answered by a `tool_result` block with the same `tool_use_id`
+whose `is_error` is not true: a dispatch a hook refused is recorded with
+`is_error: true` and never ran. That shape is NOT DOCUMENTED: [hooks] documents the `tool_input` of
+the PreToolUse call, which is where the guard reads the dispatch it judges,
+but not how the transcript records an earlier one; it was observed in Claude
+Code 2.1.x transcripts and is one version's observation, not a contract. The
+guard fails open: a transcript that is absent, unreadable, holds a line that
+is not JSON, or holds no such block lets the dispatch through.
+
 ## 25. `CLAUDE_CODE_ENABLE_TODO_TOOLS` in a repository's `env`: the `env` VERIFIED; the task tools from it NOT DOCUMENTED, PROVED LIVE in `-p` mode
 
 `init` offers to turn the task tools (fact 22) on for a repository by writing

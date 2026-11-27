@@ -15,50 +15,13 @@
  * and a changed message is refused anew. The record is kept per session in
  * the system's temporary directory, as types, counts and hashes, never the
  * message.
- *
- * An agent that can edit, a builder, is refused once too when its transcript
- * shows a compaction: after one it holds a summary of what it built, and each
- * call of the round re-reads the context it has grown since, so a fresh agent
- * briefed from the plan, its report and the diff costs less and sees more.
- * The transcript is the one Claude Code stores beside the session's, by the
- * agent's ID (docs/harness-facts.md, fact 24); one that cannot be found or
- * read holds nothing.
  */
-import { Buffer } from "node:buffer";
 import { createHash } from "node:crypto";
-import { appendFileSync, closeSync, openSync, readFileSync, readSync } from "node:fs";
+import { appendFileSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { isJudgeType, isReadOnlyType } from "../lib/agent-types.mjs";
+import { isJudgeType } from "../lib/agent-types.mjs";
 import { configFor, deny, readInput } from "../lib/hook.mjs";
-
-/**
- * The record Claude Code writes at a compaction. Text an agent read holds it
- * only with its quotes escaped, inside another record's string.
- */
-const COMPACTION = '"subtype":"compact_boundary"';
-
-/** Whether the agent `id`'s transcript holds a compaction, read in pieces and left at the first. */
-function hasCompacted(id, transcript) {
-  if (!/^[\w-]+$/u.test(id) || !transcript) return false;
-  let file;
-  try {
-    file = openSync(path.join(transcript.replace(/\.jsonl$/u, ""), "subagents", `agent-${id}.jsonl`), "r");
-    const piece = Buffer.alloc(1 << 20);
-    let carried = "";
-    for (;;) {
-      const read = readSync(file, piece, 0, piece.length, null);
-      if (read === 0) return false;
-      const text = carried + piece.toString("latin1", 0, read);
-      if (text.includes(COMPACTION)) return true;
-      carried = text.slice(-COMPACTION.length);
-    }
-  } catch {
-    return false;
-  } finally {
-    if (file !== undefined) closeSync(file);
-  }
-}
 
 const input = await readInput();
 const session = String(input.session_id ?? "none").replace(/[^\w-]/gu, "");
@@ -87,15 +50,7 @@ const [, , type, agent] = (to && state.findLast((line) => line.startsWith(`agent
 if (!type) process.exit(0);
 const config = configFor(input);
 const digest = createHash("sha256").update(JSON.stringify(tool)).digest("hex");
-if (!isJudgeType(type, config.root, config.judges.skill)) {
-  if (!isReadOnlyType(type, config.root) && !state.includes(`refused ${digest}`) && hasCompacted(agent, String(input.transcript_path ?? ""))) {
-    appendFileSync(stateFile, `refused ${digest}\n`);
-    deny(
-      `${to} (${type}) has compacted: what it did is a summary to it now, and every call of this round re-reads the context it has grown since. Dispatch a fresh ${type} agent in the same worktree, briefed from the plan, this agent's report and the diff, with no model so it runs on the configured default: a slice's fix rounds do not run on Opus unless its line in the plan says \`heavy fixes\`. If the fix is a line or two, send this message again unchanged.`,
-    );
-  }
-  process.exit(0);
-}
+if (!isJudgeType(type, config.root, config.judges.skill)) process.exit(0);
 
 const limit = config.judges.maxRechecks;
 const sent = state.filter((line) => line === `sent ${agent}`).length;

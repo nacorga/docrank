@@ -83,7 +83,7 @@ Every key is documented once, with its default, in [docs/config.md](docs/config.
 | Bash | any command that matches a pattern the repository adds, with the case or line flags it names | `guard.extraDeny` |
 | Bash | a write or a command that runs, from a read-only agent | `judges.skill` |
 | Agent | a fork dispatch; a `general-purpose` Opus dispatch with no `Heavy: <path> <slice>` line, or whose slice's line does not say heavy, or a second one for a slice already built on Opus unless the line says `heavy fixes`; completes a dispatch with the guardrails block, and sets the default model and effort | `dispatch.*` |
-| SendMessage | a message to a judge past its re-check limit, once; a message to an agent that can edit and whose transcript shows a compaction, once, asking for a fresh one | `judges.maxRechecks`; the compaction is always on |
+| SendMessage | a message to a judge past its re-check limit, once | `judges.maxRechecks` |
 | Edit, Write | `.env*` except `.env.example`, lockfiles, and the repository's own rules | `paths.builtIns`, `paths.rules` |
 | Edit, Write | asks the user, rather than refusing, before a change to an existing lint, formatter, type-check or commit-lint configuration, git hook, Claude Code hook or `.claude/settings*.json`, and to the repository's own patterns; creating one passes | `paths.askBuiltIns`, `paths.ask` |
 | ExitPlanMode | a plan without a required heading | `plan.requiredHeadings` |

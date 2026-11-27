@@ -108,7 +108,7 @@ The path, read from the repository root or absolute, must name a file that
 can be read, and the slice must have a line in it that contains the word
 "heavy", in any case: the plan that marks the slice. The slice's line is a
 table row whose first cell starts with the slice id, or a checklist item
-`- [ ] **<slice> ·`. A fix round, or a fresh builder after a compaction, for
+`- [ ] **<slice> ·`. A fix round for
 a slice the session already dispatched on Opus is refused unless that line
 says "heavy fixes": the build is where the stronger model pays, and a round
 re-reads a context that has only grown. A dispatch that names no model needs

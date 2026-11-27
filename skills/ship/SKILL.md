@@ -49,8 +49,8 @@ plugin lists each key with its default. Read the file once before stage 1.
    `Heavy: <path> <slice>` naming that plan and the slice, whose line in the
    plan says "heavy"; with `dispatch.heavyMarker` on, the dispatch guard
    refuses a `general-purpose` Opus dispatch without it, and one that names no
-   model runs on `dispatch.defaultModel`. Fix rounds, and a fresh builder
-   after a compaction, are dispatched with no model; the slice's line says
+   model runs on `dispatch.defaultModel`. Fix rounds
+   are dispatched with no model; the slice's line says
    "heavy fixes" to keep them on Opus.
 4. **Verify.** The gates (the `gates` skill, `-C <worktree>`), then the jobs
    `ship.pathJobs` maps to the paths the diff touches: for each entry whose

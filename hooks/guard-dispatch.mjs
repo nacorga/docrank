@@ -18,9 +18,8 @@
  *   heavy slice put every other on Opus, hence the slice.
  * - A slice's fix rounds run on the default model: when this session already
  *   dispatched the same slice on Opus, a second Opus dispatch needs the
- *   slice's line to say "heavy fixes". A fix round, or a fresh builder after
- *   a compaction, re-reads a context that has only grown; the first build is
- *   where the stronger model pays. The earlier dispatch is read from the
+ *   slice's line to say "heavy fixes". A fix round re-reads a context that
+ *   has only grown; the first build is where the stronger model pays. The earlier dispatch is read from the
  *   session's transcript (docs/harness-facts.md, fact 24); one that cannot be
  *   read lets the dispatch through.
  * - A dispatch to an agent that can edit is completed with every line of the
@@ -74,7 +73,7 @@ if (dispatch.heavyMarker && type === "general-purpose" && /opus/iu.test(tool.mod
   }
   if (!/heavy fixes/iu.test(line) && builtOnOpus(String(input.transcript_path ?? ""), heavy[1], heavy[2])) {
     deny(
-      `Slice ${heavy[2]} already ran on Opus in this session, and its fix rounds run on ${dispatch.defaultModel} (stickler \`dispatch.heavyMarker\`). Dispatch this one with no model, a fix round or a fresh builder after a compaction alike; to keep Opus for the fixes, its line in ${heavy[1]} must say "heavy fixes".`,
+      `Slice ${heavy[2]} already ran on Opus in this session, and its fix rounds run on ${dispatch.defaultModel} (stickler \`dispatch.heavyMarker\`). Dispatch this one with no model, as every fix round; to keep Opus for the fixes, its line in ${heavy[1]} must say "heavy fixes".`,
     );
   }
 }

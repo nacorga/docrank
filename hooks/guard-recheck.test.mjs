@@ -117,77 +117,23 @@ describe("guard-recheck.mjs", () => {
     }
   });
 
-  describe("an agent that can edit and has compacted", () => {
-    const COMPACT = '{"type":"system","subtype":"compact_boundary","content":"Conversation compacted"}\n';
-    const roots = [];
-    afterEach(() => roots.splice(0).forEach((r) => rmSync(r, { recursive: true, force: true })));
-
-    /** A session transcript path whose `subagents/agent-<id>.jsonl` holds `lines`, when given. */
-    function transcriptWith(id, lines) {
-      const root = project();
-      roots.push(root);
-      const transcript = path.join(root, "session-1.jsonl");
-      writeFileSync(transcript, "{}\n");
-      if (lines !== undefined) {
-        mkdirSync(path.join(root, "session-1", "subagents"), { recursive: true });
-        writeFileSync(path.join(root, "session-1", "subagents", `agent-${id}.jsonl`), lines);
+  it("does not refuse a builder whose transcript shows a compaction: it is resumed", async () => {
+    const probe = await sessionWith([["b1", "general-purpose"]]);
+    const root = project();
+    const transcript = path.join(root, "session-1.jsonl");
+    writeFileSync(transcript, "{}\n");
+    mkdirSync(path.join(root, "session-1", "subagents"), { recursive: true });
+    writeFileSync(
+      path.join(root, "session-1", "subagents", "agent-b1.jsonl"),
+      '{"type":"user"}\n{"type":"system","subtype":"compact_boundary","content":"Conversation compacted"}\n',
+    );
+    try {
+      for (const round of [1, 2, 3, 4, 5]) {
+        expect(await recheckDecision(probe, "b1", `round ${round}`, { transcript_path: transcript })).toBeNull();
       }
-      return transcript;
+    } finally {
+      rmSync(root, { recursive: true, force: true });
     }
-    const ask = (probe, to, message, transcript) => recheckDecision(probe, to, message, { transcript_path: transcript });
-
-    it("is refused once, with the fresh dispatch that replaces it, and the same message then goes through", async () => {
-      const probe = await sessionWith([["b1", "general-purpose"]]);
-      const transcript = transcriptWith("b1", `{"type":"user"}\n${COMPACT}{"type":"assistant"}\n`);
-      const refusal = await ask(probe, "b1", "fix the line", transcript);
-      expect(refusal).toContain("b1 (general-purpose) has compacted");
-      expect(refusal).toContain("Dispatch a fresh general-purpose agent");
-      expect(refusal).toContain("send this message again unchanged");
-      expect(refusal).toContain("with no model");
-      expect(refusal).toContain("heavy fixes");
-      expect(await ask(probe, "b1", "fix the line", transcript)).toBeNull();
-      expect(await ask(probe, "b1", "another round", transcript)).toContain("has compacted");
-    });
-
-    it("is found by the name it was dispatched under", async () => {
-      const probe = await sessionWith([["b2", "general-purpose", "slice-a"]]);
-      const transcript = transcriptWith("b2", COMPACT);
-      expect(await ask(probe, "slice-a", "round 1", transcript)).toContain("has compacted");
-    });
-
-    it("is not held while its transcript shows no compaction", async () => {
-      const probe = await sessionWith([["b1", "general-purpose"]]);
-      const transcript = transcriptWith("b1", '{"type":"user"}\n{"type":"assistant"}\n');
-      for (const round of [1, 2, 3, 4, 5]) expect(await ask(probe, "b1", `round ${round}`, transcript)).toBeNull();
-    });
-
-    it("is not held for the words of a record it read, only for the record itself", async () => {
-      const probe = await sessionWith([["b1", "general-purpose"]]);
-      const quoted = JSON.stringify({ type: "user", content: COMPACT.trim() }) + "\n";
-      expect(await ask(probe, "b1", "round 1", transcriptWith("b1", quoted))).toBeNull();
-    });
-
-    it("is found when the record straddles the pieces the transcript is read in", async () => {
-      const probe = await sessionWith([["b1", "general-purpose"]]);
-      const padding = "x".repeat((1 << 20) - 12);
-      const transcript = transcriptWith("b1", `${padding}${COMPACT}`);
-      expect(await ask(probe, "b1", "round 1", transcript)).toContain("has compacted");
-    });
-
-    it("is not held when the transcript is absent, unreadable or not named", async () => {
-      const probe = await sessionWith([["b1", "general-purpose"]]);
-      expect(await ask(probe, "b1", "round 1", transcriptWith("b1"))).toBeNull();
-      expect(await ask(probe, "b1", "round 2", path.join(tmpdir(), "no-such-session.jsonl"))).toBeNull();
-      expect(await recheckDecision(probe, "b1", "round 3")).toBeNull();
-    });
-
-    it("leaves an agent that cannot edit alone, and a judge to its own count", async () => {
-      const probe = await sessionWith([["s1", "scout"], ["a1", "reviewer"]]);
-      expect(await ask(probe, "s1", "round 1", transcriptWith("s1", COMPACT))).toBeNull();
-      const transcript = transcriptWith("a1", COMPACT);
-      for (const round of [1, 2, 3]) expect(await ask(probe, "a1", `round ${round}`, transcript)).toBeNull();
-      expect(await ask(probe, "a1", "round 4", transcript)).toContain("no further re-check");
-    });
   });
 
   it("states the limit only as the configured one in the protocol", () => {

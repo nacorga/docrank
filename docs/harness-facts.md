@@ -1073,22 +1073,7 @@ Write of the table and refused, twice, a copy cut before the Write. A live
 session sending through a configured tool then did both (§ 15, "The message
 guard's evidence").
 
-A second reader of a transcript is `hooks/guard-recheck.mjs`, which asks
-whether an agent that can edit has compacted before a `SendMessage` resumes it.
-It reads the agent's own transcript, which [claude-dir] and [sub-agents] place
-at `<session>/subagents/agent-<agentId>.jsonl` beside the session's (`<session>`
-being the stem of `transcript_path`, which is an inference from "Each
-transcript is stored as `agent-{agentId}.jsonl`" and the directory listing, not
-a stated rule), and looks for the text `"subtype":"compact_boundary"`. That
-record is NOT DOCUMENTED: it was observed, as `{"type":"system","subtype":
-"compact_boundary",...}`, in session transcripts of Claude Code 2.1.x on
-2026-11-24; its presence in a subagent transcript, which "the same format as
-the session transcript" implies, was not read here. The text is matched with its quotes unescaped, so a record
-quoted inside another line's string does not count. An agent with no ID in the
-dispatch record, a transcript that cannot be found or read, and one with no such
-record hold nothing: the guard never refuses on what it could not read.
-
-A third reader is `hooks/guard-dispatch.mjs` with `dispatch.heavyMarker`: it
+A second reader is `hooks/guard-dispatch.mjs` with `dispatch.heavyMarker`: it
 asks whether this session already dispatched a slice on Opus. It reads the
 session's own transcript (`transcript_path`) for an `assistant` entry whose
 `message.content` holds a block `{"type":"tool_use","name":"Agent"` (or
